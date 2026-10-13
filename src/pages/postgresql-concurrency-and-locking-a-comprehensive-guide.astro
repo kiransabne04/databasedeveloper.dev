@@ -1,7 +1,7 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 ---
-<ArticleLayout title="PostgreSQL Locking and Concurrency: Diagnose the Blocking Chain" description="A practical guide to PostgreSQL lock waits, long transactions, DDL queues and the evidence needed before changing queries or timeouts." eyebrow="PostgreSQL concurrency" published="2025-01-03" updated="2026-10-13" legacy>
+<ArticleLayout title="PostgreSQL Lock Contention: Find Blocking Queries" description="Diagnose PostgreSQL lock waits with pg_blocking_pids, transaction age and wait events. Distinguish row contention, DDL queues and deadlocks before changing timeouts." eyebrow="PostgreSQL concurrency" published="2025-01-03" updated="2026-10-13" legacy>
   <h2>Start with the waiting session, then find the blocker</h2>
   <p>PostgreSQL's MVCC lets ordinary reads and writes overlap in many cases, but transactions still acquire row and table locks. When an application endpoint slows down, a waiting query can be the victim rather than the cause. Tuning its SQL before finding the blocker may leave the incident untouched.</p>
   <p>Take a snapshot while the wait is happening. Capture the time window, affected endpoint, session state, wait event, transaction age and the sessions returned by <code>pg_blocking_pids()</code>. A long <code>idle in transaction</code> session can hold locks after its last statement has finished.</p>
@@ -13,6 +13,18 @@ WHERE datname = current_database()
 ORDER BY xact_start NULLS LAST;</code></pre>
   <p>This view is an investigation starting point, not a full incident history. Permissions affect which session details you can see, and a queue may disappear before the next sample.</p>
 
+  <h2>Turn waiting PIDs into a blocking chain</h2>
+  <p>Run this read-only query while the slowdown is active. It pairs each waiting session with the PID that PostgreSQL says is ahead of it. An idle blocker can have no current query, so its transaction age and application owner matter more than its last SQL text.</p>
+  <pre><code>SELECT w.pid AS waiting_pid, w.wait_event_type, w.wait_event,
+       b.pid AS blocking_pid, b.state AS blocking_state,
+       now() - b.xact_start AS blocking_transaction_age
+FROM pg_stat_activity AS w
+CROSS JOIN LATERAL unnest(pg_blocking_pids(w.pid)) AS blocked_by(pid)
+JOIN pg_stat_activity AS b ON b.pid = blocked_by.pid
+WHERE w.datname = current_database()
+ORDER BY blocking_transaction_age DESC NULLS LAST;</code></pre>
+  <p><code>pg_blocking_pids()</code> accounts for both held locks and processes ahead in a lock queue. This is more reliable than trying to infer blockers from a simple self-join on <code>pg_locks</code>. Record repeated snapshots if the event lasts long enough; one snapshot only describes one moment. PostgreSQL's <a href="https://www.postgresql.org/docs/17/view-pg-locks.html">pg_locks reference</a> explains the limitation.</p>
+
   <h2>Distinguish three common patterns</h2>
   <ul>
     <li><strong>Row contention:</strong> multiple transactions update or lock the same rows. Check transaction boundaries and whether the application holds a lock during network calls or other slow work.</li>
@@ -21,7 +33,12 @@ ORDER BY xact_start NULLS LAST;</code></pre>
   </ul>
   <p>For a realistic sequence of the second pattern, see the <a href="/case-studies/lab-lock-queue">synthetic DDL lock-queue walkthrough</a>.</p>
 
+  <h2>Why a quick migration can stop ordinary reads</h2>
+  <p>An <code>ALTER TABLE</code> may only change a catalog entry, yet still request an <code>ACCESS EXCLUSIVE</code> table lock. If an older transaction already holds an <code>ACCESS SHARE</code> lock, the DDL waits. Later <code>SELECT</code> statements can queue behind that waiting DDL even though they would have been compatible with the older reader. In this pattern the migration's lock wait, rather than its execution time, determines the outage window.</p>
+  <p>Compare the migration start time with application latency, and look for a waiting DDL PID between the old transaction and new readers. The <a href="/problems/postgresql-lock-contention">lock-contention triage page</a> lists the first production signals to preserve.</p>
+
   <h2>Respond to the actual cause</h2>
   <p>During an incident, identify the oldest blocker and the owner of its transaction before terminating anything. For migrations, test the lock mode the command requests, keep transactions short, and consider a short <code>lock_timeout</code> in the migration session so a change fails rather than waiting indefinitely in a busy queue. A timeout does not make an unsafe migration safe by itself.</p>
-  <p>After a change, compare wait time, queue length and application latency over a similar workload. If a query rewrite did not change the blocking graph, it did not resolve the lock issue. PostgreSQL's <a href="https://www.postgresql.org/docs/current/explicit-locking.html">lock-mode reference</a> and <a href="https://www.postgresql.org/docs/current/monitoring-stats.html">activity views</a> are the primary references for these checks.</p>
+  <p>A migration-session <code>lock_timeout</code> bounds time spent waiting to acquire each lock; it does not limit how long the command runs after it gets the lock. Build a retry path and test the migration on a representative copy. Use <code>statement_timeout</code> separately when total statement duration also needs a bound.</p>
+  <p>After a change, compare wait time, queue length and application latency over a similar workload. If a query rewrite did not change the blocking graph, it did not resolve the lock issue. PostgreSQL's <a href="https://www.postgresql.org/docs/17/explicit-locking.html">lock-mode reference</a> and <a href="https://www.postgresql.org/docs/17/monitoring-stats.html">activity views</a> are the primary references for these checks. For a bounded review of your own workload, see the <a href="/postgresql-performance-investigation">PostgreSQL performance investigation</a>.</p>
 </ArticleLayout>

@@ -13,12 +13,12 @@ import PageHero from '../../components/PageHero.astro';
   <section><div class="container">
     <div class="section-head"><div><span class="eyebrow">Revised guides</span><h2>From the DatabaseDeveloper archive</h2></div><p>These guides keep their original Hashnode URLs and have been updated for technical accuracy and production use.</p></div>
     <div class="grid three">
-      <a class="card card-link" href="/postgresql-concurrency-and-locking-a-comprehensive-guide"><span class="kicker">PostgreSQL</span><h3>Locking and concurrency</h3><p>Find the blocking chain and distinguish row contention, DDL queues and deadlocks.</p></a>
-      <a class="card card-link" href="/postgresql-indexing-when-brin-beats-b-tree"><span class="kicker">PostgreSQL</span><h3>BRIN vs B-tree</h3><p>Test physical correlation and the real query before changing index strategy.</p></a>
-      <a class="card card-link" href="/how-to-scale-postgresql-databases-with-partitioning"><span class="kicker">PostgreSQL</span><h3>Partitioning</h3><p>Check pruning, data lifecycle and constraints before expecting a speedup.</p></a>
-      <a class="card card-link" href="/mastering-clustering-in-postgresql-for-enhanced-query-performance"><span class="kicker">PostgreSQL</span><h3>CLUSTER trade-offs</h3><p>Measure the read benefit against the table rewrite and exclusive lock.</p></a>
-      <a class="card card-link" href="/sharding-postgresql-techniques-for-horizontal-scalability"><span class="kicker">PostgreSQL</span><h3>Sharding decision</h3><p>Prove a single-node limit and plan routing, rebalancing and cross-shard work.</p></a>
-      <a class="card card-link" href="/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector"><span class="kicker">pgvector</span><h3>Semantic search API</h3><p>Move from a working demo to measurable recall, filtering and latency.</p></a>
+      <a class="card card-link" href="/postgresql-concurrency-and-locking-a-comprehensive-guide"><span class="kicker">PostgreSQL</span><h3>Find blocking queries</h3><p>Use pg_blocking_pids and transaction age to separate row contention, DDL queues and deadlocks.</p></a>
+      <a class="card card-link" href="/postgresql-indexing-when-brin-beats-b-tree"><span class="kicker">PostgreSQL</span><h3>BRIN vs B-tree indexes</h3><p>Compare physical correlation, lossy rechecks and ordered access on the real query.</p></a>
+      <a class="card card-link" href="/how-to-scale-postgresql-databases-with-partitioning"><span class="kicker">PostgreSQL</span><h3>Partitioning and pruning</h3><p>Check query pruning, retention operations and key constraints before migrating a table.</p></a>
+      <a class="card card-link" href="/mastering-clustering-in-postgresql-for-enhanced-query-performance"><span class="kicker">PostgreSQL</span><h3>CLUSTER trade-offs</h3><p>Measure heap locality against rewrite time, disk space and exclusive locking.</p></a>
+      <a class="card card-link" href="/sharding-postgresql-techniques-for-horizontal-scalability"><span class="kicker">PostgreSQL</span><h3>When to shard PostgreSQL</h3><p>Prove a single-node limit and plan routing, rebalancing and cross-shard work.</p></a>
+      <a class="card card-link" href="/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector"><span class="kicker">pgvector</span><h3>Semantic search in production</h3><p>Move from a FastAPI demo to measured recall, tenant filtering and latency.</p></a>
     </div>
     <p class="small muted">The original <a href="/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive">MongoDB concurrency guide</a> remains available as a revised archive article.</p>
   </div></section>

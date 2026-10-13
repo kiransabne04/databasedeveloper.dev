@@ -7,6 +7,9 @@ interface Props {
   description?: string;
   canonical?: string;
   image?: string;
+  ogType?: 'website' | 'article';
+  published?: string;
+  updated?: string;
   noindex?: boolean;
   schema?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
@@ -16,6 +19,9 @@ const {
   description = site.description,
   canonical,
   image = `${site.url}/og-default.png`,
+  ogType = 'website',
+  published,
+  updated,
   noindex = false,
   schema
 } = Astro.props;
@@ -58,7 +64,9 @@ const schemas = [
     {noindex && <meta name="robots" content="noindex,nofollow" />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType} />
+    {ogType === 'article' && published && <meta property="article:published_time" content={published} />}
+    {ogType === 'article' && updated && <meta property="article:modified_time" content={updated} />}
     <meta property="og:url" content={canonicalUrl} />
     <meta property="og:image" content={image} />
     <meta property="og:image:width" content="1200" />

@@ -1,7 +1,7 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 ---
-<ArticleLayout title="PostgreSQL Partitioning: When It Helps and How to Validate It" description="Use PostgreSQL partitioning for data lifecycle and targeted queries, then verify pruning, constraints and planning cost before calling it a performance win." eyebrow="PostgreSQL data lifecycle" published="2025-01-05" updated="2026-10-13" legacy>
+<ArticleLayout title="PostgreSQL Partitioning: Pruning and Retention Trade-offs" description="When PostgreSQL table partitioning helps: test partition pruning, time-based retention, unique-key constraints and planning cost before migrating a large table." eyebrow="PostgreSQL data lifecycle" published="2025-01-05" updated="2026-10-13" legacy>
   <h2>The reason to partition matters</h2>
   <p>Partitioning divides one logical table into child tables by range, list or hash. It can make old-data removal and bulk maintenance easier. It can also reduce query work when a predicate lets PostgreSQL skip most partitions. A large row count alone is not a reason: a well-indexed unpartitioned table may already serve the workload efficiently.</p>
   <p>For a time-based event table, monthly range partitions can align retention with physical data removal. Bounds are half-open: the lower bound is included and the upper bound is excluded.</p>
@@ -15,6 +15,15 @@ CREATE TABLE events_2026_10 PARTITION OF events
   FOR VALUES FROM ('2026-10-01') TO ('2026-11-01');</code></pre>
   <p>Plan for rows outside defined bounds, including future dates. An insert with no matching partition fails unless an appropriate default partition exists.</p>
 
+  <h2>Check whether the query can prune partitions</h2>
+  <p>The useful predicate refers to the partition key in a form the planner or executor can use. For a monthly table, compare a bounded October query with a query that has no <code>occurred_at</code> condition. The latter still has to consider every relevant partition. Test the exact prepared statement the application sends; a plan for a literal value may differ from the plan used with parameters.</p>
+  <pre><code>EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, occurred_at
+FROM events
+WHERE occurred_at &gt;= TIMESTAMPTZ '2026-10-01 00:00:00+00'
+  AND occurred_at &lt;  TIMESTAMPTZ '2026-11-01 00:00:00+00';</code></pre>
+  <p>Read the partitions actually scanned, their buffers and planning time. PostgreSQL can also prune some partitions at execution time when a parameter becomes known; look for <code>Subplans Removed</code> or child scans marked never executed. Avoid treating the number of partitions alone as a performance metric.</p>
+
   <h2>Prove the expected benefit</h2>
   <ol>
     <li>List the highest-cost queries and identify which actually filter on the proposed partition key.</li>
@@ -22,6 +31,10 @@ CREATE TABLE events_2026_10 PARTITION OF events
     <li>Measure insert and planning overhead as partition count grows. Too many small partitions can make planning and maintenance harder.</li>
     <li>Test application assumptions about keys and constraints. On a partitioned table, a primary key or unique constraint must include the partition key.</li>
   </ol>
+  <h2>Plan the migration and daily operations</h2>
+  <p>Partitioning is most compelling when retention can remove whole time ranges. Deleting millions of old rows generates work and leaves dead tuples for vacuum; detaching or dropping an old partition changes that lifecycle. The operational plan still needs a future-partition creation job, monitoring for missing bounds, per-partition index maintenance and a tested archival path.</p>
+  <p>Existing unique identifiers are a common migration obstacle. A unique or primary-key constraint on a partitioned table must include all partition-key columns, so <code>PRIMARY KEY (id)</code> on the example parent would not work across monthly partitions; <code>PRIMARY KEY (id, occurred_at)</code> changes what foreign keys and application code must carry. Design the key before moving data.</p>
+  <p>For an existing large table, estimate backfill time and write cutover, test row routing and compare representative reads and writes before and after. The partitioning design should be reversible at the application boundary even if moving all rows back would be expensive.</p>
   <p>Partition pruning is a property of the query and partition bounds, not a blanket promise that every query gets faster. Time-based retention is often the stronger reason to partition. PostgreSQL's <a href="https://www.postgresql.org/docs/current/ddl-partitioning.html">partitioning documentation</a> covers pruning, maintenance and constraints.</p>
-  <p>For a production review, connect this design to the workload evidence in a <a href="/postgresql-performance-investigation">PostgreSQL performance investigation</a>.</p>
+  <p>For a production review, connect this design to the workload evidence in a <a href="/postgresql-performance-investigation">PostgreSQL performance investigation</a>. If the real limit is on a single node's capacity, read the separate <a href="/sharding-postgresql-techniques-for-horizontal-scalability">sharding decision guide</a>; partitioning by itself does not distribute work across servers.</p>
 </ArticleLayout>

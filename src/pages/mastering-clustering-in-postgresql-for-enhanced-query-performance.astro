@@ -1,10 +1,14 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 ---
-<ArticleLayout title="PostgreSQL CLUSTER: The Performance Trade-off and Locking Cost" description="When physical row order helps PostgreSQL range scans, how to test the benefit, and why CLUSTER requires a maintenance window." eyebrow="PostgreSQL physical design" published="2025-01-30" updated="2026-10-13" legacy>
+<ArticleLayout title="PostgreSQL CLUSTER: Locking and Performance Trade-offs" description="Test whether PostgreSQL CLUSTER improves heap locality for range scans, then account for ACCESS EXCLUSIVE locking, disk space and how quickly the benefit decays." eyebrow="PostgreSQL physical design" published="2025-01-30" updated="2026-10-13" legacy>
   <h2>What CLUSTER changes</h2>
   <p><code>CLUSTER</code> rewrites a table so its rows follow an existing index's order. It can improve locality for queries that fetch many neighboring rows in that order. PostgreSQL does not maintain that physical ordering as later inserts and updates occur, so any gain can fade as the table changes.</p>
   <p>This is different from partitioning, which splits rows into separate tables, and from adding an index, which leaves the table's physical order unchanged. A range scan that already uses a selective covering index may gain little from a rewrite.</p>
+
+  <h2>Which query might benefit?</h2>
+  <p>Look for a query that follows an index but fetches many heap rows scattered across pages. If a time-range scan reads a large number of heap blocks for relatively few useful rows, placing nearby index values near one another on disk may reduce that work. If the query is index-only, highly selective or already limited by CPU, rewriting the heap may not help.</p>
+  <p>Use <code>EXPLAIN (ANALYZE, BUFFERS)</code> on a safe read query and compare the same time window before and after on a production-like copy. Record heap blocks read, execution time and the index path; check warm and cold cache when I/O is the suspected bottleneck.</p>
 
   <h2>Measure before scheduling a rewrite</h2>
   <ol>
@@ -13,6 +17,8 @@ import ArticleLayout from '../layouts/ArticleLayout.astro';
     <li>Test <code>CLUSTER</code> on a production-like copy, then repeat the same workload. Include table rewrite time, extra disk space and recovery impact in the decision.</li>
     <li>Recheck after normal writes. A one-time benchmark immediately after the rewrite can overstate long-term value.</li>
   </ol>
-  <p>PostgreSQL acquires an <code>ACCESS EXCLUSIVE</code> lock on the table during <code>CLUSTER</code>. That blocks ordinary access and makes the operation unsuitable as a casual live tuning step. Do not disable autovacuum as a supposed shortcut; vacuuming and clustering solve different problems.</p>
+  <h2>The operational cost is part of the result</h2>
+  <p>The command is straightforward—<code>CLUSTER events USING events_occurred_at_idx;</code>—but it rewrites the table. PostgreSQL acquires an <code>ACCESS EXCLUSIVE</code> lock for the duration, blocking ordinary reads and writes. Its documentation calls for free disk space at least equal to the table plus its indexes. Test rewrite duration, replication or recovery impact and rollback on a copy before booking a maintenance window.</p>
+  <p><code>CLUSTER</code> is a one-time operation: subsequent inserts and updates do not preserve index order. Measure again after a representative amount of normal writes. If the gain fades quickly, recurring rewrites may cost more availability than they return. Do not disable autovacuum as a supposed shortcut; vacuuming and clustering solve different problems.</p>
   <p>The <a href="https://www.postgresql.org/docs/current/sql-cluster.html">PostgreSQL CLUSTER reference</a> documents the lock, disk and ordering behavior. If the question is whether a rewrite is worth the operational cost, bring the query and workload evidence to a <a href="/postgresql-performance-investigation">scoped investigation</a>.</p>
 </ArticleLayout>

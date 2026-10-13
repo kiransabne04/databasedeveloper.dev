@@ -1,10 +1,14 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 ---
-<ArticleLayout title="PostgreSQL Sharding: Prove You Need It Before Splitting Data" description="A practical decision framework for PostgreSQL sharding: capacity evidence, shard keys, cross-shard queries, routing and operational cost." eyebrow="PostgreSQL architecture" published="2025-07-05" updated="2026-10-13" legacy>
+<ArticleLayout title="PostgreSQL Sharding: When to Split Data Across Nodes" description="A PostgreSQL sharding decision guide: prove the single-node limit, choose a shard key, quantify cross-shard work and design routing, rebalancing and recovery." eyebrow="PostgreSQL architecture" published="2025-07-05" updated="2026-10-13" legacy>
   <h2>Sharding is an architecture change</h2>
   <p>Sharding places subsets of data on separate database nodes. PostgreSQL table partitioning can divide data inside one database; it does not, by itself, distribute capacity across servers. Sharding can help when a single node is a measured limit, but it adds routing, migration, cross-shard queries and failure handling to the application.</p>
   <p>Before splitting data, establish which resource is constrained. High CPU from a few inefficient statements, connection storms or missing workload isolation may follow the application to every shard. Compare query, storage, write and growth evidence with less invasive changes first.</p>
+
+  <h2>Prove the single-node limit</h2>
+  <p>Start with a time series of CPU, I/O, storage growth, WAL generation, connection use and latency at peak traffic. Rank statements by total workload cost, not only worst single-query latency. Ask whether the bottleneck is one hot tenant, a shared background job or steady growth across all tenants. Those patterns lead to different shard-key and isolation choices.</p>
+  <p>Test the simpler capacity options against the same workload: query and index changes, connection pooling, read routing where correctness permits it, data retention or moving analytical work away from the transactional primary. Sharding is justified when the measured constraint persists and a credible distribution model removes it.</p>
 
   <h2>Design around the access pattern</h2>
   <ul>
@@ -13,7 +17,12 @@ import ArticleLayout from '../layouts/ArticleLayout.astro';
     <li><strong>Cross-shard work:</strong> identify joins, transactions, aggregates and unique identifiers that currently assume one database.</li>
     <li><strong>Rebalancing:</strong> plan a way to move a tenant or range without losing writes or silently serving stale data.</li>
   </ul>
+  <p>A tenant key is attractive for a SaaS workload when most requests remain within one tenant. It can fail if one tenant dominates writes or if core reports join across tenants. Simulate data and traffic distribution, including the largest tenant and projected growth; evenly distributed row counts do not guarantee evenly distributed load.</p>
   <p><code>postgres_fdw</code> can access remote PostgreSQL tables, but remote access alone is not a complete sharding system. A distributed extension or application routing layer still needs explicit operational design. The <a href="https://www.postgresql.org/docs/current/postgres-fdw.html">PostgreSQL FDW documentation</a> describes remote-table behavior and limitations.</p>
+
+  <h2>Define the cutover before moving a row</h2>
+  <p>Write down how a request finds its shard, how the mapping changes during a move, and how both old and new locations handle concurrent writes. A rehearsal should cover backfill, change capture or dual-write reconciliation, verification, cutover and rollback. Include per-shard backups, restore tests, schema rollout order and failure isolation. Without those steps, splitting tables can reduce one bottleneck while increasing the recovery risk.</p>
+  <p>Cross-shard joins and transactions also need explicit treatment: application aggregation, an analytical copy or a distributed system may be appropriate depending on consistency needs. Ordinary PostgreSQL table partitioning remains within one server and is a separate <a href="/how-to-scale-postgresql-databases-with-partitioning">data-lifecycle and pruning decision</a>.</p>
 
   <h2>A practical decision gate</h2>
   <p>Proceed only when the expected capacity gain is tied to a measurable workload and the team can operate the routing, backups, schema changes and failure modes. The first deliverable should be a workload and risk assessment, not a shard count. See the <a href="/olap-analytical-performance">analytical workload</a> and <a href="/postgresql-performance-investigation">PostgreSQL investigation</a> pages for related review scopes.</p>

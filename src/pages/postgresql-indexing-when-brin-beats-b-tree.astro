@@ -1,10 +1,18 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 ---
-<ArticleLayout title="BRIN vs B-tree in PostgreSQL: Test the Table's Physical Order" description="A decision guide for BRIN and B-tree indexes on large PostgreSQL tables, with the correlation and query evidence that matters." eyebrow="PostgreSQL indexing" published="2025-10-15" updated="2026-10-13" legacy>
+<ArticleLayout title="BRIN vs B-tree in PostgreSQL: A Production Decision Guide" description="Choose a PostgreSQL BRIN or B-tree index from physical correlation, range selectivity, heap rechecks and ORDER BY needs—not table size alone." eyebrow="PostgreSQL indexing" published="2025-10-15" updated="2026-10-13" legacy>
   <h2>A large table does not automatically need BRIN</h2>
   <p>BRIN stores summaries for ranges of heap pages. It is compact when the indexed value follows the table's physical order, as an append-only event timestamp often does. A B-tree stores much more precise lookup information. BRIN may use less space and cost less to maintain, but it can return many candidate pages that PostgreSQL must recheck.</p>
   <p>For a time-window query on a large event table, ask how rows arrived. If events were appended roughly in timestamp order, a narrow range may map to a small part of the heap. Backfills, updates or mixed ingestion can weaken that correlation and increase rechecks.</p>
+
+  <h2>The query shape determines the useful index</h2>
+  <ul>
+    <li><strong>Large time windows on physically ordered data:</strong> BRIN can skip page ranges with a small index while still reading and rechecking rows in matching ranges.</li>
+    <li><strong>Point lookups and narrow tenant filters:</strong> a B-tree usually gives a more precise path. The correct composite key may matter more than choosing a smaller index type.</li>
+    <li><strong><code>ORDER BY occurred_at DESC LIMIT 20</code>:</strong> a B-tree can provide ordered access; BRIN does not return rows in index order. Test the endpoint's sort and limit, not only its filter.</li>
+  </ul>
+  <p>These are starting hypotheses. The planner may choose a sequential scan for a broad range, and a BRIN on a poorly correlated column may recheck so many heap pages that its small size is irrelevant.</p>
 
   <h2>Compare the two on the actual query</h2>
   <ol>
@@ -13,6 +21,18 @@ import ArticleLayout from '../layouts/ArticleLayout.astro';
     <li>Compare index size, heap blocks visited, lossy bitmap rechecks, execution time and insert cost. Test with both warm and cold cache if I/O is the concern.</li>
     <li>Keep a B-tree where point lookups or highly selective ranges need its precision. A BRIN index can complement, rather than replace, it.</li>
   </ol>
+  <p>Check correlation as a clue, then verify it against the plan. Statistics can be stale after major backfills, and a whole-table correlation value can hide local disorder.</p>
+  <pre><code>SELECT attname, correlation
+FROM pg_stats
+WHERE schemaname = 'public'
+  AND tablename = 'events'
+  AND attname = 'occurred_at';
+
+EXPLAIN (ANALYZE, BUFFERS)
+SELECT id FROM events
+WHERE occurred_at &gt;= TIMESTAMPTZ '2026-10-01 00:00:00+00'
+  AND occurred_at &lt;  TIMESTAMPTZ '2026-10-02 00:00:00+00';</code></pre>
+  <p>On a production-like copy, compare candidate indexes against the same narrow and broad windows. A BRIN bitmap path exposes lossy heap blocks and rows removed by recheck. Compare shared blocks read or hit, execution time, index size and write overhead, then check whether the choice still holds for recent versus historical data.</p>
   <p>The <code>pages_per_range</code> setting trades a smaller index for coarser summaries. Changing it requires a benchmark; a tiny BRIN index is not useful if the query still scans most heap pages. PostgreSQL's <a href="https://www.postgresql.org/docs/current/brin.html">BRIN documentation</a> explains the lossy range-summary behavior.</p>
-  <p>The <a href="https://kiransabne.dev/postgresql-indexing-when-brin-is-a-better-choice-than-b-tree">original broader BRIN walkthrough</a> remains on Kiran's personal blog. This updated page focuses on the production decision and validation steps.</p>
+  <p>If an index change is warranted on a live system, plan its build and storage cost and validate the affected write workload. A <a href="/postgresql-performance-investigation">scoped PostgreSQL investigation</a> can rank this against other causes of latency. The <a href="https://kiransabne.dev/postgresql-indexing-when-brin-is-a-better-choice-than-b-tree">original broader BRIN walkthrough</a> remains on Kiran's personal blog.</p>
 </ArticleLayout>
