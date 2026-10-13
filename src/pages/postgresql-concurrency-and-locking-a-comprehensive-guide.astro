@@ -1,0 +1,27 @@
+---
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="PostgreSQL Locking and Concurrency: Diagnose the Blocking Chain" description="A practical guide to PostgreSQL lock waits, long transactions, DDL queues and the evidence needed before changing queries or timeouts." eyebrow="PostgreSQL concurrency" published="2025-01-03" updated="2026-10-13" legacy>
+  <h2>Start with the waiting session, then find the blocker</h2>
+  <p>PostgreSQL's MVCC lets ordinary reads and writes overlap in many cases, but transactions still acquire row and table locks. When an application endpoint slows down, a waiting query can be the victim rather than the cause. Tuning its SQL before finding the blocker may leave the incident untouched.</p>
+  <p>Take a snapshot while the wait is happening. Capture the time window, affected endpoint, session state, wait event, transaction age and the sessions returned by <code>pg_blocking_pids()</code>. A long <code>idle in transaction</code> session can hold locks after its last statement has finished.</p>
+  <pre><code>SELECT pid, state, wait_event_type, wait_event,
+       now() - xact_start AS transaction_age,
+       pg_blocking_pids(pid) AS blocking_pids
+FROM pg_stat_activity
+WHERE datname = current_database()
+ORDER BY xact_start NULLS LAST;</code></pre>
+  <p>This view is an investigation starting point, not a full incident history. Permissions affect which session details you can see, and a queue may disappear before the next sample.</p>
+
+  <h2>Distinguish three common patterns</h2>
+  <ul>
+    <li><strong>Row contention:</strong> multiple transactions update or lock the same rows. Check transaction boundaries and whether the application holds a lock during network calls or other slow work.</li>
+    <li><strong>DDL queue:</strong> a schema change waits for a conflicting lock, and later application statements queue behind it. The DDL statement may be quick once granted; waiting time is the incident.</li>
+    <li><strong>Deadlock:</strong> transactions wait on each other in a cycle. PostgreSQL detects the cycle and aborts one transaction. A long lock wait without a cycle is a different problem.</li>
+  </ul>
+  <p>For a realistic sequence of the second pattern, see the <a href="/case-studies/lab-lock-queue">synthetic DDL lock-queue walkthrough</a>.</p>
+
+  <h2>Respond to the actual cause</h2>
+  <p>During an incident, identify the oldest blocker and the owner of its transaction before terminating anything. For migrations, test the lock mode the command requests, keep transactions short, and consider a short <code>lock_timeout</code> in the migration session so a change fails rather than waiting indefinitely in a busy queue. A timeout does not make an unsafe migration safe by itself.</p>
+  <p>After a change, compare wait time, queue length and application latency over a similar workload. If a query rewrite did not change the blocking graph, it did not resolve the lock issue. PostgreSQL's <a href="https://www.postgresql.org/docs/current/explicit-locking.html">lock-mode reference</a> and <a href="https://www.postgresql.org/docs/current/monitoring-stats.html">activity views</a> are the primary references for these checks.</p>
+</ArticleLayout>

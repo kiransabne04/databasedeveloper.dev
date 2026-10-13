@@ -1,0 +1,23 @@
+# Launch checklist
+
+- [x] Use the verified `kiran@databasedeveloper.dev` in `src/config/site.ts`
+- [ ] Send a fresh test inquiry to confirm delivery before launch
+- [ ] Confirm the advertised 3-business-day report turnaround is operationally sustainable
+- [ ] Confirm how many of the first three founding-price places remain and update `src/config/site.ts` when they are filled
+- [ ] `npm install`
+- [x] `npm run build` (local validation; run again before deploying)
+- [ ] Choose Vercel Pro or another host that permits commercial sites; Hobby is for personal, non-commercial use
+- [ ] Deploy preview
+- [ ] Check mobile navigation
+- [ ] Check all CTA links
+- [x] Provide a functional email-draft fallback for the contact form
+- [ ] Decide whether email-draft inquiries are sufficient for launch; a hosted form is needed to measure completed form submissions
+- [ ] Configure `PUBLIC_CONTACT_ENDPOINT` only after choosing a form provider
+- [ ] Configure analytics only after choosing the provider and reviewing privacy copy
+- [x] Verify `robots.txt` and sitemap generation locally
+- [x] Verify canonical URLs locally
+- [x] Verify PG14/AWS dates on 13 October 2026; re-check before publishing if time has passed
+- [ ] Do not enable redirects until old URL inventory is verified
+- [ ] Add Search Console
+- [ ] Review Search Console queries and real inquiry sources after launch before changing page priorities or claiming conversion optimization
+- [x] Add PlanReader CTA back to `/postgresql-performance-investigation`

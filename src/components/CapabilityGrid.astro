@@ -1,0 +1,12 @@
+---
+import { capabilities } from '../data/capabilities';
+---
+<div class="grid three">
+  {capabilities.map((item) => (
+    <a class="card card-link" href={item.href} data-track="capability_click">
+      <span class="kicker">{item.eyebrow}</span>
+      <h3>{item.name}</h3>
+      <p>{item.description}</p>
+    </a>
+  ))}
+</div>

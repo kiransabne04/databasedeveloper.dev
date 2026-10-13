@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CTA from '../components/CTA.astro';
+---
+<BaseLayout title="Snowflake Query & Workload Performance — DatabaseDeveloper" description="Snowflake query and workload performance capability across query history, warehouse sizing, pruning, spills, clustering, concurrency and cost/performance.">
+  <PageHero eyebrow="Analytical capability" title="Snowflake Query & Workload Performance" description="Investigate expensive analytical workloads by connecting query history, pruning, spills, clustering, concurrency and warehouse behavior to cost and latency." />
+  <section><div class="container grid three">
+    <div class="card"><h3>Query history</h3><p>Rank expensive or regressed workload patterns rather than optimizing one isolated SQL statement.</p></div>
+    <div class="card"><h3>Pruning / clustering</h3><p>Review whether data layout and query predicates are creating avoidable scan amplification.</p></div>
+    <div class="card"><h3>Warehouse economics</h3><p>Separate query inefficiency from concurrency/capacity needs before simply scaling warehouse size.</p></div>
+  </div></section>
+  <section><div class="container"><CTA title="Have a Snowflake workload you want reviewed?" description="Start with query history, warehouse configuration and the cost or latency symptom. Scope is agreed once the problem and evidence are clear." /></div></section>
+</BaseLayout>

@@ -1,0 +1,61 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PG14Notice from '../components/PG14Notice.astro';
+import CTA from '../components/CTA.astro';
+---
+<BaseLayout title="AWS RDS & Aurora PostgreSQL Performance — DatabaseDeveloper" description="Performance investigation for SaaS teams running PostgreSQL on AWS RDS or Aurora: Database Insights, CloudWatch, Enhanced Monitoring, parameter groups, RDS Proxy and upgrade risk.">
+  <PageHero eyebrow="AWS PostgreSQL" title="RDS/Aurora performance without defaulting to “scale the instance.”" description="Use workload evidence to separate expensive statements, plan problems, connection amplification, waits and configuration from genuine capacity constraints." />
+  <section>
+    <div class="container grid three">
+      <div class="card"><h3>Workload concentration</h3><p>Which statements, calls and I/O patterns actually account for database time?</p></div>
+      <div class="card"><h3>Capacity vs inefficiency</h3><p>Distinguish a real resource ceiling from a workload that would simply consume the larger instance too.</p></div>
+      <div class="card"><h3>Upgrade/support risk</h3><p>Combine managed-service timelines with application and performance validation rather than treating upgrades as a checkbox.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow">Evidence</span><h2>What AWS already records, and what each source answers.</h2></div>
+        <p>Most RDS and Aurora teams already have the evidence. It is spread across consoles and rarely lined up on the same timeline.</p>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Source</th><th>What it answers</th></tr></thead>
+          <tbody>
+            <tr><td>CloudWatch Database Insights (formerly Performance Insights)</td><td>Database load by wait event and by SQL statement over time. Shows whether the instance is busy on CPU, I/O, locks or client waits, and which statements drive it. Advanced mode adds execution plans and lock analysis.</td></tr>
+            <tr><td><code>pg_stat_statements</code></td><td>Total time, calls, rows and buffer use per normalized statement. Ranks the workload by total cost instead of by the slowest single query.</td></tr>
+            <tr><td>CloudWatch instance metrics</td><td>CPU, freeable memory, read/write IOPS and latency, disk queue depth, connections and replica lag. On burstable classes and gp2 storage, CPU credit and burst balance show whether the ceiling is real or a credit drain.</td></tr>
+            <tr><td>Enhanced Monitoring</td><td>OS-level view at up to one-second granularity: per-process CPU and memory, load and swap. This separates PostgreSQL work from the operating system and AWS agents.</td></tr>
+            <tr><td>Parameter group and <code>pg_settings</code></td><td>Non-default settings and what changed. For example <code>work_mem</code>, autovacuum thresholds, <code>random_page_cost</code>, <code>max_connections</code> and logging settings.</td></tr>
+            <tr><td>PostgreSQL logs (exported to CloudWatch Logs)</td><td>Slow statements via <code>log_min_duration_statement</code>, plans via <code>auto_explain</code>, lock waits via <code>log_lock_waits</code>, checkpoints and autovacuum activity.</td></tr>
+            <tr><td>RDS Proxy metrics, if used</td><td>Client and database connection counts, and sessions pinned to a backend connection. Pinning can quietly cancel the pooling you are paying for.</td></tr>
+            <tr><td>RDS events</td><td>Failovers, maintenance, minor-version upgrades, parameter changes and storage scaling. Use them to line up a regression with what changed.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">All of this is read-only. Your team exports it; no credentials or production write access are needed.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow">Common patterns</span><h2>Where RDS and Aurora performance problems usually hide.</h2></div>
+      </div>
+      <div class="grid two">
+        <div class="card"><h3>“Scale up” that only buys time</h3><p>CPU climbs and the instance class goes up a size. Database Insights still shows the same three statements dominating load, so the bigger instance fills again as data grows.</p></div>
+        <div class="card"><h3>Connection pressure, not query cost</h3><p>Connection counts spike after a deploy or a retry storm. Each query is fast; there are just too many backends competing. Pool sizing, RDS Proxy pinning and idle-in-transaction sessions matter more than indexes.</p></div>
+        <div class="card"><h3>Storage and I/O limits</h3><p>Latency rises with disk queue depth while CPU looks fine. Check provisioned IOPS and throughput, burst balance, and whether the working set still fits in memory.</p></div>
+        <div class="card"><h3>Aurora I/O and cost surprises</h3><p>On Aurora, read and write I/O is part of the bill on the Standard storage configuration. Scan-heavy workloads can show up in cost before they show up in latency.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container"><PG14Notice /></div>
+  </section>
+
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>

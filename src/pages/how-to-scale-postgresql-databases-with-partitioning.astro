@@ -1,0 +1,27 @@
+---
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="PostgreSQL Partitioning: When It Helps and How to Validate It" description="Use PostgreSQL partitioning for data lifecycle and targeted queries, then verify pruning, constraints and planning cost before calling it a performance win." eyebrow="PostgreSQL data lifecycle" published="2025-01-05" updated="2026-10-13" legacy>
+  <h2>The reason to partition matters</h2>
+  <p>Partitioning divides one logical table into child tables by range, list or hash. It can make old-data removal and bulk maintenance easier. It can also reduce query work when a predicate lets PostgreSQL skip most partitions. A large row count alone is not a reason: a well-indexed unpartitioned table may already serve the workload efficiently.</p>
+  <p>For a time-based event table, monthly range partitions can align retention with physical data removal. Bounds are half-open: the lower bound is included and the upper bound is excluded.</p>
+  <pre><code>CREATE TABLE events (
+  id bigint NOT NULL,
+  occurred_at timestamptz NOT NULL,
+  payload jsonb
+) PARTITION BY RANGE (occurred_at);
+
+CREATE TABLE events_2026_10 PARTITION OF events
+  FOR VALUES FROM ('2026-10-01') TO ('2026-11-01');</code></pre>
+  <p>Plan for rows outside defined bounds, including future dates. An insert with no matching partition fails unless an appropriate default partition exists.</p>
+
+  <h2>Prove the expected benefit</h2>
+  <ol>
+    <li>List the highest-cost queries and identify which actually filter on the proposed partition key.</li>
+    <li>Compare <code>EXPLAIN (ANALYZE, BUFFERS)</code> before and after on representative time windows. Confirm that irrelevant partitions are pruned and that latency and buffer use improve.</li>
+    <li>Measure insert and planning overhead as partition count grows. Too many small partitions can make planning and maintenance harder.</li>
+    <li>Test application assumptions about keys and constraints. On a partitioned table, a primary key or unique constraint must include the partition key.</li>
+  </ol>
+  <p>Partition pruning is a property of the query and partition bounds, not a blanket promise that every query gets faster. Time-based retention is often the stronger reason to partition. PostgreSQL's <a href="https://www.postgresql.org/docs/current/ddl-partitioning.html">partitioning documentation</a> covers pruning, maintenance and constraints.</p>
+  <p>For a production review, connect this design to the workload evidence in a <a href="/postgresql-performance-investigation">PostgreSQL performance investigation</a>.</p>
+</ArticleLayout>

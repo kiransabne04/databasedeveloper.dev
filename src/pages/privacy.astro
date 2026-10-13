@@ -1,0 +1,19 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../config/site';
+const formEndpointEnabled = Boolean(import.meta.env.PUBLIC_CONTACT_ENDPOINT);
+const gaEnabled = Boolean(import.meta.env.PUBLIC_GA_ID);
+const plausibleEnabled = Boolean(import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN);
+---
+<BaseLayout title="Privacy — DatabaseDeveloper" description="How DatabaseDeveloper handles information sent through the website and optional site analytics.">
+  <PageHero eyebrow="Privacy" title="Share only the context needed to start a conversation." description="This page describes the public website. A paid engagement has its own scope and data-handling agreement." primaryLabel="Contact" primaryHref="/contact" />
+  <section><div class="container prose">
+    <p>If you contact DatabaseDeveloper, we receive the contact details and technical context you choose to send. We use that information to respond to your inquiry and discuss a possible engagement.</p>
+    {formEndpointEnabled ? <p>The contact form sends your inquiry through the configured form service.</p> : <p>The contact form opens an email draft in your email app. Your message is sent only when you send that draft.</p>}
+    <p>Do not submit passwords, credentials, database dumps or sensitive personal/customer data through the public website.</p>
+    {(gaEnabled || plausibleEnabled) && <p>Site analytics are enabled through {gaEnabled && plausibleEnabled ? 'Google Analytics and Plausible' : gaEnabled ? 'Google Analytics' : 'Plausible'}. They help us understand page use and inquiry paths. The configured provider handles usage data under its own policy.</p>}
+    <p>Production evidence and client engagement data are handled under the specific engagement terms, not through this public contact page.</p>
+    <p>For questions about information you sent, email <a href={`mailto:${site.email}`}>{site.email}</a>.</p>
+  </div></section>
+</BaseLayout>

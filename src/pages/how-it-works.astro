@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import InvestigationWorkflow from '../components/InvestigationWorkflow.astro';
+import CTA from '../components/CTA.astro';
+---
+<BaseLayout title="How the Investigation Works — DatabaseDeveloper" description="A client-run read-only evidence workflow for PostgreSQL performance investigation: scope, collect, investigate, prioritize and validate.">
+  <PageHero eyebrow="How it works" title="The client keeps production control." description="No credentials or production access required: your team runs read-only collection and shares the resulting evidence bundle." />
+  <section><div class="container"><InvestigationWorkflow /></div></section>
+  <section><div class="container grid two">
+    <div class="card"><h3>Why client-run collection?</h3><p>It reduces the security hurdle, keeps credentials inside your environment and makes the evidence bundle inspectable before it leaves your control. <a href="/evidence-collection">Read the collector script.</a></p></div>
+    <div class="card"><h3>Why not just paste the query into AI?</h3><p>Because the decision may depend on workload frequency, writes, locks, connections, statistics, platform limits and the cost of changing the wrong thing.</p></div>
+  </div></section>
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>

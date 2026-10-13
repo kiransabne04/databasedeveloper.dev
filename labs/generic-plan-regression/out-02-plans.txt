@@ -1,0 +1,62 @@
+PREPARE
+=== custom plan, small tenant 1007
+SET
+                                                                QUERY PLAN                                                                
+------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=12.43..12.48 rows=20 width=27) (actual time=0.035..0.041 rows=18 loops=1)
+   Buffers: shared hit=5 read=3
+   ->  Sort  (cost=12.43..12.49 rows=25 width=27) (actual time=0.034..0.035 rows=18 loops=1)
+         Sort Key: created_at DESC
+         Sort Method: quicksort  Memory: 26kB
+         Buffers: shared hit=5 read=3
+         ->  Index Scan using orders_tenant_idx on orders  (cost=0.43..11.85 rows=25 width=27) (actual time=0.017..0.022 rows=18 loops=1)
+               Index Cond: (tenant_id = 1007)
+               Filter: (status = 'open'::text)
+               Rows Removed by Filter: 42
+               Buffers: shared hit=2 read=3
+ Planning:
+   Buffers: shared hit=137
+ Planning Time: 0.239 ms
+ Execution Time: 0.060 ms
+(15 rows)
+
+=== custom plan, established tenant 17
+                                                                     QUERY PLAN                                                                     
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..313.88 rows=20 width=27) (actual time=0.082..4.490 rows=20 loops=1)
+   Buffers: shared hit=5122 read=17
+   ->  Index Scan Backward using orders_created_idx on orders  (cost=0.43..128688.77 rows=8211 width=27) (actual time=0.082..4.488 rows=20 loops=1)
+         Filter: ((tenant_id = 17) AND (status = 'open'::text))
+         Rows Removed by Filter: 5088
+         Buffers: shared hit=5122 read=17
+ Planning Time: 0.024 ms
+ Execution Time: 4.495 ms
+(8 rows)
+
+=== generic plan, small tenant 1007
+SET
+                                                                      QUERY PLAN                                                                      
+------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..384.74 rows=20 width=27) (actual time=6.128..531.744 rows=18 loops=1)
+   Buffers: shared hit=2006557 read=5453
+   ->  Index Scan Backward using orders_created_idx on orders  (cost=0.43..128688.77 rows=6697 width=27) (actual time=6.127..531.739 rows=18 loops=1)
+         Filter: ((tenant_id = $1) AND (status = 'open'::text))
+         Rows Removed by Filter: 2001182
+         Buffers: shared hit=2006557 read=5453
+ Planning Time: 0.018 ms
+ Execution Time: 531.784 ms
+(8 rows)
+
+=== generic plan, established tenant 17
+                                                                     QUERY PLAN                                                                     
+----------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..384.74 rows=20 width=27) (actual time=0.011..1.309 rows=20 loops=1)
+   Buffers: shared hit=5139
+   ->  Index Scan Backward using orders_created_idx on orders  (cost=0.43..128688.77 rows=6697 width=27) (actual time=0.011..1.308 rows=20 loops=1)
+         Filter: ((tenant_id = $1) AND (status = 'open'::text))
+         Rows Removed by Filter: 5088
+         Buffers: shared hit=5139
+ Planning Time: 0.006 ms
+ Execution Time: 1.317 ms
+(8 rows)
+

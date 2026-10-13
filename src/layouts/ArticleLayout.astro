@@ -1,0 +1,43 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import CTA from '../components/CTA.astro';
+import { site } from '../config/site';
+
+interface Props {
+  title: string;
+  description: string;
+  eyebrow: string;
+  published: string;
+  updated: string;
+  legacy?: boolean;
+  ctaTitle?: string;
+  ctaDescription?: string;
+}
+
+const { title, description, eyebrow, published, updated, legacy = false, ctaTitle, ctaDescription } = Astro.props;
+const pageUrl = new URL(Astro.url.pathname, site.url).toString();
+const articleSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Article',
+  headline: title,
+  description,
+  mainEntityOfPage: pageUrl,
+  author: { '@type': 'Person', name: site.personName, url: site.personUrl },
+  publisher: { '@type': 'Organization', name: site.brand, url: site.url },
+  datePublished: published,
+  dateModified: updated
+};
+---
+<BaseLayout title={`${title} — DatabaseDeveloper`} description={description} schema={articleSchema}>
+  <article>
+    <header class="container article-header">
+      <span class="eyebrow">{eyebrow}</span>
+      <h1 class="article-title">{title}</h1>
+      <p class="lede">{description}</p>
+      <p class="small muted">By <a href="/about">{site.personName}</a> · Published <time datetime={published}>{published}</time> · Updated <time datetime={updated}>{updated}</time></p>
+      {legacy && <p class="small muted">Revised from the original DatabaseDeveloper Hashnode article at this URL. Technical guidance has been reviewed for this edition.</p>}
+    </header>
+    <section><div class="container prose article-body"><slot /></div></section>
+  </article>
+  <section><div class="container"><CTA title={ctaTitle ?? 'Need help with a production PostgreSQL problem?'} description={ctaDescription ?? 'Bring the symptom and available evidence. A scoped investigation turns competing hypotheses into a ranked validation plan.'} /></div></section>
+</BaseLayout>

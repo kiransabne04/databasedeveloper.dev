@@ -1,0 +1,28 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CTA from '../components/CTA.astro';
+---
+<BaseLayout title="pgvector Performance Review — DatabaseDeveloper" description="Production pgvector performance reviews: HNSW vs IVFFlat, recall/latency, memory, filtering, hybrid search and vector workload scaling.">
+  <PageHero eyebrow="AI + database" title="Production pgvector Performance Review" description="Vector-search performance is a database trade-off problem too: recall, latency, memory, index build cost, metadata filters and the relational workload around the vector search." />
+  <section>
+    <div class="container grid three">
+      <div class="card"><h3>HNSW vs IVFFlat</h3><p>Choose and tune based on workload, recall/latency target, update pattern and operational constraints—not popularity.</p></div>
+      <div class="card"><h3>Hybrid filtering</h3><p>Investigate metadata selectivity, query shape and vector-index interaction when filters destroy expected latency.</p></div>
+      <div class="card"><h3>Memory + builds</h3><p>Understand index build/maintenance cost, memory pressure and the effect of growth on vector workload behavior.</p></div>
+    </div>
+  </section>
+  <section>
+    <div class="container prose">
+      <h2>Typical questions</h2>
+      <ul>
+        <li>Why did latency change after vector count grew?</li>
+        <li>Should this workload use HNSW or IVFFlat?</li>
+        <li>Why does metadata filtering make ANN behavior worse?</li>
+        <li>How should recall, latency and operational cost be measured together?</li>
+        <li>Is the bottleneck vector indexing, relational filtering or application architecture?</li>
+      </ul>
+    </div>
+  </section>
+  <section><div class="container"><CTA title="Need a second set of eyes on a pgvector workload?" description="Bring the workload shape, vector/index configuration and query behavior. The first step is deciding whether a focused review is justified." /></div></section>
+</BaseLayout>

@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+---
+<BaseLayout title="Database Performance Insights — DatabaseDeveloper" description="Technical writing on PostgreSQL performance, AI-era diagnosis, pgvector and production database trade-offs.">
+  <PageHero eyebrow="Insights" title="Technical depth that supports the investigation—not content for content's sake." description="New database-specialist content lives here. Broader backend/engineering writing remains on kiransabne.dev." />
+  <section><div class="container grid three">
+    <a class="card card-link" href="/insights/what-ai-misses-postgresql"><span class="kicker">PostgreSQL</span><h3>What AI misses in production PostgreSQL diagnosis</h3><p>Why a plausible query recommendation can still be unsafe without workload context.</p></a>
+    <a class="card card-link" href="/postgresql-14-eol"><span class="kicker">Upgrade</span><h3>PostgreSQL 14 EOL planning</h3><p>Current dates and the upgrade-readiness sequence.</p></a>
+    <a class="card card-link" href="/insights/pgvector-hnsw-vs-ivfflat"><span class="kicker">pgvector</span><h3>HNSW vs IVFFlat is a workload decision</h3><p>Recall, latency, memory, build cost and filtering trade-offs.</p></a>
+  </div></section>
+</BaseLayout>

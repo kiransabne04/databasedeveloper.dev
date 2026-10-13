@@ -1,0 +1,53 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import CTA from '../../components/CTA.astro';
+---
+<BaseLayout title="High PostgreSQL CPU — DatabaseDeveloper" description="High CPU is a symptom, not a diagnosis. Practical evidence to collect, common wrong assumptions and when a deeper investigation is justified.">
+  <PageHero eyebrow="Problem guide" title="High PostgreSQL CPU" description="High CPU is a symptom, not a diagnosis." />
+  <section><div class="container grid three">
+    <div class="card"><h3>Workload concentration</h3><p>Rank statements by total workload cost, not only worst single latency.</p></div>
+<div class="card"><h3>Wait / I/O context</h3><p>Check whether CPU is actually the primary constraint or merely correlated with another bottleneck.</p></div>
+<div class="card"><h3>Application amplification</h3><p>Retries, connection storms and N+1 behavior can multiply database work after a release.</p></div>
+  </div></section>
+  <section><div class="container prose">
+    <h2>Investigation principle</h2>
+    <blockquote>Before upgrading the instance, establish whether the workload would simply consume the larger instance too.</blockquote>
+    <h2>Common wrong assumptions</h2>
+    <ul>
+      <li><strong>“A bigger instance will fix it.”</strong> If three statements account for most of the database time, more vCPUs only delay the problem. Growth fills the larger instance too.</li>
+      <li><strong>“The slowest query is the culprit.”</strong> A 2 ms query called millions of times an hour often costs more in total than a 10-second report. Rank by total time, not mean time.</li>
+      <li><strong>“High CPU means the work is CPU-bound.”</strong> Lightweight-lock contention and more active sessions than cores can also show up as CPU. Check how many sessions are active and what they are waiting on.</li>
+      <li><strong>“It started with the release, so the release is the cause.”</strong> Plans also change when statistics are refreshed or data crosses a size threshold. Line the CPU curve up against deploys, autoanalyze runs and data growth.</li>
+    </ul>
+    <h2>First queries to run</h2>
+    <p>Read-only. Run them during the problem window if you can; most of these views show current state, not history.</p>
+<pre><code>-- Top statements by total execution time (pg_stat_statements, PostgreSQL 13+)
+SELECT queryid,
+       calls,
+       round(total_exec_time::numeric / 1000, 1)                   AS total_s,
+       round(mean_exec_time::numeric, 2)                           AS mean_ms,
+       round((100 * total_exec_time / sum(total_exec_time) OVER ())::numeric, 1) AS pct_of_total,
+       shared_blks_hit + shared_blks_read                           AS blocks,
+       left(query, 80)                                              AS query
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 15;
+
+-- What active sessions are doing right now
+SELECT coalesce(wait_event_type, 'none (on CPU)') AS wait_type,
+       wait_event,
+       count(*)
+FROM pg_stat_activity
+WHERE state = 'active' AND pid &lt;&gt; pg_backend_pid()
+GROUP BY 1, 2
+ORDER BY 3 DESC;</code></pre>
+    <h2>When a deeper investigation is justified</h2>
+    <ul>
+      <li>The top statements explain less than half of total time, or the ranking changed without a deploy.</li>
+      <li>The instance has already been scaled once and CPU came back.</li>
+      <li>The obvious fix is an index on a write-heavy table, so the read win has a write cost to weigh.</li>
+    </ul>
+  </div></section>
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>

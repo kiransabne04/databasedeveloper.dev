@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CTA from '../components/CTA.astro';
+---
+<BaseLayout title="PostgreSQL Evidence Collector — DatabaseDeveloper" description="The read-only psql script your team runs before a PostgreSQL performance investigation: what it collects, what it doesn’t, and how to review the output before sending it.">
+  <PageHero eyebrow="Evidence collection" title="Read the collector before you run it." description="The investigation starts from a read-only psql script that your team runs and reviews. No credentials leave your environment, and nothing is installed." primaryLabel="Download the collector (.sql)" primaryHref="/collector/pg-evidence-collector.sql" secondaryLabel="How it works" secondaryHref="/how-it-works" />
+
+  <section><div class="container prose">
+    <h2>How to run it</h2>
+<pre><code>psql "host=... dbname=... user=..." -X -f pg-evidence-collector.sql -o evidence.txt</code></pre>
+    <ul>
+      <li>Connect to the application database as a role with <code>pg_monitor</code>. On RDS or Aurora, the master user can grant it to a dedicated role: <code>GRANT pg_monitor TO your_role;</code></li>
+      <li>The script sets <code>default_transaction_read_only = on</code>, a 30-second <code>statement_timeout</code> and a 1-second <code>lock_timeout</code> for its own session.</li>
+      <li>Supports PostgreSQL 13 and later. Tested against PostgreSQL 14 and 17 with a <code>pg_monitor</code> role. Not yet tested against RDS or Aurora themselves.</li>
+      <li>Run it once during a normal period and, if you can, once while the problem is happening.</li>
+    </ul>
+
+    <h2>What it collects</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Section</th><th>Source</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Server and settings</td><td><code>version()</code>, <code>pg_settings</code> (non-default only), extensions</td><td>Context for every other number</td></tr>
+          <tr><td>Database activity</td><td><code>pg_stat_database</code></td><td>Cache hit ratio, temp files, rollbacks, deadlocks</td></tr>
+          <tr><td>Top statements</td><td><code>pg_stat_statements</code>, top 50 by total time</td><td>Where database time actually goes</td></tr>
+          <tr><td>Tables and indexes</td><td><code>pg_stat_user_tables</code>, <code>pg_stat_user_indexes</code></td><td>Size, scan patterns, dead tuples, vacuum and analyze timing, unused indexes</td></tr>
+          <tr><td>Connections and waits</td><td><code>pg_stat_activity</code>, <code>pg_blocking_pids()</code></td><td>Pool behaviour, idle transactions, current blocking</td></tr>
+          <tr><td>Maintenance health</td><td>Transaction ID age, checkpoints, replication slots, vacuum progress</td><td>Problems that build up slowly before they hurt</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>What it does not collect</h2>
+    <ul>
+      <li>No table data. It reads only statistics and catalog views.</li>
+      <li>No passwords or connection strings.</li>
+      <li>No literal values from <code>pg_stat_statements</code>. PostgreSQL normalizes them to <code>$1</code>, <code>$2</code>, ….</li>
+    </ul>
+
+    <h2>Review before you send</h2>
+    <p>The output is a plain text file. Read it first. Table, column and index names appear throughout, and the current-activity section includes the first 120 characters of running queries, which can contain literal values. Delete or redact anything you are not comfortable sharing; the investigation notes what was removed.</p>
+
+    <h2>What else helps</h2>
+    <ul>
+      <li>Representative <code>EXPLAIN (ANALYZE, BUFFERS)</code> output for the slow requests, from a safe environment.</li>
+      <li>A short timeline: when the symptom started, plus deploys, migrations and configuration changes around it.</li>
+      <li>On RDS or Aurora: Database Insights and CloudWatch exports for the same window. See <a href="/aws-rds-aurora-postgresql">what each source answers</a>.</li>
+    </ul>
+  </div></section>
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>

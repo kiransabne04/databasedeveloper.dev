@@ -1,0 +1,20 @@
+---
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="PostgreSQL Sharding: Prove You Need It Before Splitting Data" description="A practical decision framework for PostgreSQL sharding: capacity evidence, shard keys, cross-shard queries, routing and operational cost." eyebrow="PostgreSQL architecture" published="2025-07-05" updated="2026-10-13" legacy>
+  <h2>Sharding is an architecture change</h2>
+  <p>Sharding places subsets of data on separate database nodes. PostgreSQL table partitioning can divide data inside one database; it does not, by itself, distribute capacity across servers. Sharding can help when a single node is a measured limit, but it adds routing, migration, cross-shard queries and failure handling to the application.</p>
+  <p>Before splitting data, establish which resource is constrained. High CPU from a few inefficient statements, connection storms or missing workload isolation may follow the application to every shard. Compare query, storage, write and growth evidence with less invasive changes first.</p>
+
+  <h2>Design around the access pattern</h2>
+  <ul>
+    <li><strong>Shard key:</strong> choose a key present in the most important reads and writes, and test for hot tenants or uneven growth.</li>
+    <li><strong>Routing:</strong> define where the application looks up a shard, how mappings change and how requests behave when a shard is unavailable.</li>
+    <li><strong>Cross-shard work:</strong> identify joins, transactions, aggregates and unique identifiers that currently assume one database.</li>
+    <li><strong>Rebalancing:</strong> plan a way to move a tenant or range without losing writes or silently serving stale data.</li>
+  </ul>
+  <p><code>postgres_fdw</code> can access remote PostgreSQL tables, but remote access alone is not a complete sharding system. A distributed extension or application routing layer still needs explicit operational design. The <a href="https://www.postgresql.org/docs/current/postgres-fdw.html">PostgreSQL FDW documentation</a> describes remote-table behavior and limitations.</p>
+
+  <h2>A practical decision gate</h2>
+  <p>Proceed only when the expected capacity gain is tied to a measurable workload and the team can operate the routing, backups, schema changes and failure modes. The first deliverable should be a workload and risk assessment, not a shard count. See the <a href="/olap-analytical-performance">analytical workload</a> and <a href="/postgresql-performance-investigation">PostgreSQL investigation</a> pages for related review scopes.</p>
+</ArticleLayout>

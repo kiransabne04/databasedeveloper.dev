@@ -1,0 +1,125 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import InvestigationWorkflow from '../components/InvestigationWorkflow.astro';
+import CTA from '../components/CTA.astro';
+import { site } from '../config/site';
+---
+<BaseLayout
+  title="PostgreSQL Performance Investigation — DatabaseDeveloper"
+  description="Evidence-first PostgreSQL performance investigation for SaaS teams dealing with latency, CPU, locking, connection pressure, plan regressions or database cost."
+>
+  <PageHero
+    eyebrow="Core offer"
+    title="PostgreSQL Performance Investigation"
+    description="A bounded investigation of one production PostgreSQL cluster and its dominant workload—using read-only evidence, human-reviewed findings and a measurable validation plan."
+    secondaryLabel="See sample report"
+    secondaryHref="/sample-report"
+  />
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow">Good fit</span><h2>When the team knows something is wrong, but not which change is safe.</h2></div>
+      </div>
+      <div class="grid three">
+        <div class="card"><h3>Latency / CPU</h3><p>p95/p99 grows, database CPU climbs, or a few statements dominate total workload time.</p></div>
+        <div class="card"><h3>Regressions</h3><p>A release, version change, data growth or statistics shift changed plan behavior.</p></div>
+        <div class="card"><h3>Concurrency</h3><p>Blocking, lock queues, long transactions, connection storms or pool saturation appear under load.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head"><div><span class="eyebrow">Process</span><h2>Bounded and async-first.</h2></div><p>Report delivered within {site.investigationTurnaround} of receiving the agreed evidence. No 24×7 incident-response promise and no production write access.</p></div>
+      <InvestigationWorkflow />
+    </div>
+  </section>
+
+  <section>
+    <div class="container grid two">
+      <div class="card">
+        <span class="kicker">Useful evidence</span>
+        <h3>Client-run, read-only inputs</h3>
+        <p class="muted">Most of this comes from one <a href="/evidence-collection">read-only collector script</a>.</p>
+        <ul class="muted">
+          <li>pg_stat_statements or equivalent workload evidence</li>
+          <li>Representative execution plans</li>
+          <li>Schema and relevant indexes</li>
+          <li>pg_stat_activity / waits / locks where relevant</li>
+          <li>Connection and vacuum/statistics context</li>
+          <li>Relevant non-default settings</li>
+          <li>Application symptom and recent-change timeline</li>
+          <li>On RDS/Aurora: Database Insights, CloudWatch and Enhanced Monitoring exports for the same window (<a href="/aws-rds-aurora-postgresql">what each answers</a>)</li>
+        </ul>
+        <p><a href={site.planReaderUrl} data-track="planreader_click">Inspect a PostgreSQL plan with PlanReader ↗</a></p>
+      </div>
+      <div class="card">
+        <span class="kicker">You receive</span>
+        <h3>Ranked, actionable findings</h3>
+        <ul class="muted">
+          <li>Report within {site.investigationTurnaround} of receiving evidence</li>
+          <li>Executive summary</li>
+          <li>Top findings ranked by impact/confidence</li>
+          <li>Evidence references</li>
+          <li>Recommendation and trade-offs</li>
+          <li>Risk and rollback consideration</li>
+          <li>Validation plan</li>
+          <li>60-minute review call</li>
+          <li>Bounded async clarification after delivery</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container prose">
+      <h2>Questions before you request an investigation</h2>
+      <h3>What does the initial scope cover?</h3>
+      <p>One PostgreSQL cluster and its dominant production workload. The fit review identifies the symptom, evidence available and decision your team needs to make. Additional clusters or unrelated workloads need a separate scope.</p>
+      <h3>Do we have to grant database access?</h3>
+      <p>No. Your team runs agreed read-only collection and reviews the evidence before sharing it. Credentials and production dumps should stay in your environment.</p>
+      <h3>What if the evidence does not support one clear fix?</h3>
+      <p>The report separates supported findings from hypotheses, states confidence and missing evidence, and recommends the next useful test. A guaranteed performance gain is not part of the offer.</p>
+      <h3>Who implements the changes?</h3>
+      <p>Your engineering team owns production changes. If implementation help is useful, a bounded remediation sprint can be scoped separately after the findings are reviewed.</p>
+      <p><a class="button primary" data-track="primary_cta_click" href="/contact">Request a fit review</a></p>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head"><div><span class="eyebrow">Scope guardrail</span><h2>What this is not.</h2></div></div>
+      <div class="grid two">
+        <div class="card"><h3>No production write access</h3><p>Your team executes changes. DatabaseDeveloper investigates, prioritizes and defines validation.</p></div>
+        <div class="card"><h3>No emergency SLA</h3><p>This is scheduled specialist work, not a substitute for an on-call DBA/SRE incident function.</p></div>
+        <div class="card"><h3>No guaranteed percentage</h3><p>Performance improvement depends on workload, implementation and system constraints.</p></div>
+        <div class="card"><h3>No generic “AI report”</h3><p>Candidate analysis may use automation, but client-facing findings remain human-reviewed and evidence-linked.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="grid two">
+        <div class="card price-card">
+          <span class="kicker">Founding</span>
+          <h3>First three suitable engagements</h3>
+          <div class="price">{site.foundingOffer.international} <small>/ {site.foundingOffer.india}</small></div>
+          <p class="muted">Used to build independent proof and refine the delivery system.</p>
+          <a class="button primary" href="/contact">Request fit review</a>
+        </div>
+        <div class="card price-card">
+          <span class="kicker">Standard</span>
+          <h3>After founding proof</h3>
+          <div class="price">{site.standardOffer.international} <small>/ {site.standardOffer.india}</small></div>
+          <p class="muted">Final scope depends on cluster/workload complexity and evidence available.</p>
+          <a class="button" href="/pricing">See pricing model</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>

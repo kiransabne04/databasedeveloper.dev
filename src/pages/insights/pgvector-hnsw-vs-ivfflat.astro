@@ -1,0 +1,15 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+---
+<BaseLayout title="pgvector: HNSW vs IVFFlat Is a Workload Decision — DatabaseDeveloper" description="A practical framing for choosing pgvector HNSW vs IVFFlat using recall, latency, memory, build and filtering trade-offs.">
+  <PageHero eyebrow="pgvector" title="HNSW vs IVFFlat is not a popularity contest." description="The useful choice depends on recall/latency goals, memory, build/maintenance cost, filters and how the vector workload coexists with relational queries." primaryLabel="View pgvector capability" primaryHref="/pgvector-performance" secondaryLabel="PlanReader" secondaryHref="https://planreader.dev" />
+  <section><div class="container prose">
+    <h2>Start with the service-level question</h2>
+    <p>What recall and latency matter to the product, and at what vector count/update rate?</p>
+    <h2>Measure the relational part too</h2>
+    <p>Metadata filters, joins and tenant boundaries can dominate the end-to-end query even when ANN lookup looks fast in isolation.</p>
+    <h2>Operational cost belongs in the benchmark</h2>
+    <p>Index build time, memory, maintenance and data growth matter alongside point-query latency.</p>
+  </div></section>
+</BaseLayout>

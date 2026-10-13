@@ -1,0 +1,48 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import CTA from '../../components/CTA.astro';
+---
+<BaseLayout title="PostgreSQL Plan Regression — DatabaseDeveloper" description="Same SQL. Different plan. Very different production behavior. Practical evidence to collect, common wrong assumptions and when a deeper investigation is justified.">
+  <PageHero eyebrow="Problem guide" title="PostgreSQL Plan Regression" description="Same SQL. Different plan. Very different production behavior." />
+  <section><div class="container grid three">
+    <div class="card"><h3>Cardinality</h3><p>Compare estimated vs actual rows and data distribution changes.</p></div>
+<div class="card"><h3>Prepared statements</h3><p>Generic/custom plan behavior can create parameter-sensitive regressions.</p></div>
+<div class="card"><h3>Change timeline</h3><p>Tie plan changes back to deployment, statistics, data growth, version or configuration changes.</p></div>
+  </div></section>
+  <section><div class="container prose">
+    <h2>Investigation principle</h2>
+    <blockquote>Do not force a plan before understanding why the optimizer changed its choice.</blockquote>
+    <h2>Common wrong assumptions</h2>
+    <ul>
+      <li><strong>“The SQL didn’t change, so the plan didn’t.”</strong> Plans depend on statistics, parameter values, data volume, settings and version. Any of them can change while the SQL text stays the same.</li>
+      <li><strong>“Running ANALYZE fixed it, so we’re done.”</strong> Then find out why autoanalyze didn’t keep up. Large tables can wait a long time between automatic analyzes, and correlated columns may need extended statistics (<code>CREATE STATISTICS</code>).</li>
+      <li><strong>“EXPLAIN in psql shows what the app gets.”</strong> The application may use prepared statements, generic plans or different session settings. The <a href="/sample-report">sample report</a> shows a case where psql looks fine and the application doesn’t.</li>
+      <li><strong>“Just force the old plan.”</strong> Disabling planner node types or pinning plans hides the cause. It also breaks again when the data shifts.</li>
+    </ul>
+    <h2>First queries to run</h2>
+    <p>Read-only. Run them during the problem window if you can; most of these views show current state, not history.</p>
+<pre><code>-- Tables with the most changes since their last analyze
+SELECT relname,
+       n_live_tup,
+       n_mod_since_analyze,
+       last_analyze,
+       last_autoanalyze
+FROM pg_stat_user_tables
+ORDER BY n_mod_since_analyze DESC
+LIMIT 10;
+
+-- Then, in a safe environment, compare estimated vs actual rows on each plan node:
+EXPLAIN (ANALYZE, BUFFERS) &lt;the regressed query with representative parameters&gt;;
+
+-- To capture the plan production actually ran, use auto_explain:
+--   auto_explain.log_min_duration = '500ms'  (session_preload_libraries or shared_preload_libraries)</code></pre>
+    <h2>When a deeper investigation is justified</h2>
+    <ul>
+      <li>The regression comes and goes, which points at parameter values, statistics timing or plan caching.</li>
+      <li>Estimates are off by orders of magnitude and the cause isn’t obvious from one plan.</li>
+      <li>The candidate fixes (statistics, an index, a query rewrite or plan-cache settings) each carry risk, and someone has to pick one.</li>
+    </ul>
+  </div></section>
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>

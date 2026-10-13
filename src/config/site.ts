@@ -1,0 +1,31 @@
+export const site = {
+  brand: 'DatabaseDeveloper',
+  legalName: 'DatabaseDeveloper',
+  url: 'https://databasedeveloper.dev',
+  description:
+    'Evidence-first PostgreSQL performance investigations for SaaS engineering teams, with specialist capability across SQL Server, pgvector, Snowflake and OLAP workloads.',
+  email: 'kiran@databasedeveloper.dev',
+  personName: 'Kiran Sabne',
+  personUrl: 'https://kiransabne.dev',
+  planReaderUrl: 'https://planreader.dev',
+  foundingOffer: {
+    enabled: true,
+    international: '$450',
+    india: '₹29,000',
+    label: 'Founding investigation'
+  },
+  investigationTurnaround: '3 business days',
+  standardOffer: {
+    international: '$750+',
+    india: '₹45,000+'
+  }
+} as const;
+
+export const nav = [
+  { label: 'Investigation', href: '/postgresql-performance-investigation' },
+  { label: 'Upgrade', href: '/postgresql-upgrade-readiness' },
+  { label: 'Problems', href: '/problems' },
+  { label: 'Capabilities', href: '/capabilities' },
+  { label: 'Insights', href: '/insights' },
+  { label: 'Pricing', href: '/pricing' }
+] as const;

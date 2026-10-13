@@ -1,0 +1,175 @@
+---
+import '../styles/global.css';
+import { site, nav } from '../config/site';
+
+interface Props {
+  title?: string;
+  description?: string;
+  canonical?: string;
+  image?: string;
+  noindex?: boolean;
+  schema?: Record<string, unknown> | Array<Record<string, unknown>>;
+}
+
+const {
+  title = `${site.brand} — PostgreSQL Performance Investigation`,
+  description = site.description,
+  canonical,
+  image = `${site.url}/og-default.png`,
+  noindex = false,
+  schema
+} = Astro.props;
+
+const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site.url).toString();
+const schemas = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ProfessionalService',
+    name: site.brand,
+    url: site.url,
+    description: site.description,
+    founder: {
+      '@type': 'Person',
+      name: site.personName,
+      url: site.personUrl
+    },
+    areaServed: 'Worldwide',
+    serviceType: [
+      'PostgreSQL performance investigation',
+      'PostgreSQL upgrade readiness',
+      'SQL Server performance review',
+      'pgvector performance review',
+      'Snowflake query performance review'
+    ]
+  },
+  ...(schema ? (Array.isArray(schema) ? schema : [schema]) : [])
+];
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonicalUrl} />
+    {noindex && <meta name="robots" content="noindex,nofollow" />}
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content={canonicalUrl} />
+    <meta property="og:image" content={image} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content={image} />
+    <meta name="theme-color" content="#07100e" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {schemas.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item)} />)}
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="container nav-shell">
+        <a class="brand" href="/" aria-label="DatabaseDeveloper home">
+          <span class="brand-mark" aria-hidden="true">DD</span>
+          <span>DatabaseDeveloper</span>
+        </a>
+        <nav class="desktop-nav" aria-label="Primary navigation">
+          {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+          <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
+          <a class="nav-cta" data-track="primary_cta_click" href="/contact">Request investigation</a>
+        </nav>
+        <details class="mobile-menu">
+          <summary>Menu</summary>
+          <div class="mobile-menu-panel">
+            {nav.map((item) => <a href={item.href}>{item.label}</a>)}
+            <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
+            <a href="/contact">Request investigation</a>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a class="brand" href="/">
+            <span class="brand-mark" aria-hidden="true">DD</span>
+            <span>DatabaseDeveloper</span>
+          </a>
+          <p>Evidence-first database performance investigations by <a href={site.personUrl}>{site.personName}</a>.</p>
+          <p class="small">PostgreSQL first. Specialist capability across SQL Server, pgvector, Snowflake and analytical/OLAP workloads.</p>
+        </div>
+        <div class="footer-links">
+          <div>
+            <strong>Work</strong>
+            <a href="/postgresql-performance-investigation">Investigation</a>
+            <a href="/postgresql-upgrade-readiness">Upgrade readiness</a>
+            <a href="/pricing">Pricing</a>
+          </div>
+          <div>
+            <strong>Learn</strong>
+            <a href="/problems">Problems</a>
+            <a href="/case-studies">Case studies</a>
+            <a href="/insights">Insights</a>
+          </div>
+          <div>
+            <strong>Connect</strong>
+            <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
+            <a href={site.personUrl}>KiranSabne.dev ↗</a>
+            <a href="/contact">Contact</a>
+            <a href="/privacy">Privacy</a>
+            <a href="/terms">Terms</a>
+          </div>
+        </div>
+      </div>
+    </footer>
+
+    <script is:inline define:vars={{ gaId: import.meta.env.PUBLIC_GA_ID, plausibleDomain: import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN }}>
+      if (plausibleDomain) {
+        const s = document.createElement('script');
+        s.defer = true;
+        s.dataset.domain = plausibleDomain;
+        s.src = 'https://plausible.io/js/script.js';
+        document.head.appendChild(s);
+      }
+
+      if (gaId) {
+        const s = document.createElement('script');
+        s.async = true;
+        s.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function(){ dataLayer.push(arguments); };
+        gtag('js', new Date());
+        gtag('config', gaId);
+      }
+
+      const campaign = new URLSearchParams(location.search).get('utm_campaign') || undefined;
+      const source = new URLSearchParams(location.search).get('utm_source') || undefined;
+      function track(name) {
+        const props = { source_page: location.pathname, ...(source ? { utm_source: source } : {}), ...(campaign ? { utm_campaign: campaign } : {}) };
+        if (window.plausible) window.plausible(name, { props });
+        if (window.gtag) window.gtag('event', name, props);
+      }
+
+      document.addEventListener('click', (event) => {
+        const target = event.target instanceof Element ? event.target.closest('[data-track]') : null;
+        if (target?.dataset.track) track(target.dataset.track);
+      });
+      window.addEventListener('dd:track', (event) => {
+        if (typeof event.detail === 'string') track(event.detail);
+      });
+      const path = location.pathname.replace(/\/$/, '') || '/';
+      if (path === '/postgresql-performance-investigation') track('investigation_page_view');
+      if (path === '/postgresql-upgrade-readiness') track('upgrade_page_view');
+      if (['/sql-server-performance', '/pgvector-performance', '/snowflake-performance', '/olap-analytical-performance'].includes(path)) track('capability_page_view');
+    </script>
+  </body>
+</html>

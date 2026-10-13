@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../config/site';
+---
+<BaseLayout title="About DatabaseDeveloper — Kiran Sabne" description="DatabaseDeveloper is the database-performance practice of Kiran Sabne, focused on PostgreSQL performance investigation and specialist database workloads.">
+  <PageHero eyebrow="About" title="Work directly with Kiran Sabne." description="DatabaseDeveloper is Kiran's specialist practice for investigating production database performance and planning changes your engineering team can validate." primaryLabel="Request an investigation" primaryHref="/contact" secondaryLabel="Read Kiran's technical writing" secondaryHref={site.personUrl} />
+  <section><div class="container prose">
+    <h2>Focus</h2>
+    <p>Production database performance, execution plans, indexing, concurrency, workload analysis and safe validation of changes.</p>
+    <h2>Capability</h2>
+    <p>PostgreSQL is the primary focus. SQL Server, pgvector, Snowflake and OLAP/analytical work is offered where the problem matches real experience.</p>
+    <h2>What collaboration looks like</h2>
+    <p>Your team describes the symptom and runs agreed read-only evidence collection. Kiran reviews the workload, writes ranked findings with risks and validation steps, then walks through the recommendations with your team. Scope and timing are agreed before work starts.</p>
+    <h2>Confidentiality</h2>
+    <p>Employer/client proprietary data is not used as public proof. The example cases on this site are synthetic scenarios. Real case studies are published only with explicit permission.</p>
+  </div></section>
+</BaseLayout>

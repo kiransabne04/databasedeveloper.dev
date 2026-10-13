@@ -1,0 +1,60 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { pg14Facts } from '../data/facts';
+---
+<BaseLayout
+  title="PostgreSQL 14 End of Life: Upgrade Planning — DatabaseDeveloper"
+  description="PostgreSQL 14 stops receiving community fixes on 12 November 2026. Review the current RDS and Aurora support timelines, early minor-version deadlines and a practical upgrade-readiness checklist."
+>
+  <PageHero
+    eyebrow="Time-sensitive guide"
+    title="PostgreSQL 14 reaches community end of life on 12 November 2026."
+    description="If PG14 is still in production, the immediate job is not panic—it is inventory, target-version choice, compatibility testing, workload baselining and a controlled validation plan."
+    primaryLabel="Review upgrade readiness"
+    primaryHref="/postgresql-upgrade-readiness"
+    secondaryLabel="AWS RDS/Aurora"
+    secondaryHref="/aws-rds-aurora-postgresql"
+  />
+  <section>
+    <div class="container prose">
+      <h2>Current dates</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Milestone</th><th>Date</th></tr></thead>
+          <tbody>
+            <tr><td>PostgreSQL 14 community fixes end</td><td>{pg14Facts.communityEol}</td></tr>
+            <tr><td>RDS and Aurora PostgreSQL 14 standard support ends</td><td>{pg14Facts.rdsStandardSupportEnd}</td></tr>
+            <tr><td>Extended Support year-1 pricing begins</td><td>{pg14Facts.rdsExtendedSupportYear1Start}</td></tr>
+            <tr><td>Extended Support year-3 pricing begins</td><td>{pg14Facts.rdsExtendedSupportYear3Start}</td></tr>
+            <tr><td>Extended Support ends</td><td>{pg14Facts.rdsExtendedSupportEnd}</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="small muted">Dates verified {pg14Facts.verifiedOn}. Re-check provider timelines before scheduling a change.</p>
+
+      <h2>Check your minor version first</h2>
+      <p>Some PostgreSQL 14 minor versions reach end of standard support before the major version does. Per the AWS release calendars:</p>
+      <ul>
+        <li><strong>RDS for PostgreSQL</strong> {pg14Facts.rdsEarlyMinorEnds}</li>
+        <li><strong>Aurora PostgreSQL</strong> {pg14Facts.auroraEarlyMinorEnds}</li>
+      </ul>
+      <p>If you are on one of these, you may need a minor-version upgrade before the major-version decision. Either way, test it like a change: baseline first, then compare after.</p>
+
+      <h2>What to do first</h2>
+      <ol>
+        <li>Inventory PG14 instances, extensions and client libraries.</li>
+        <li>Choose a supported target version based on application constraints and support horizon.</li>
+        <li>Capture representative query/workload baselines before the change.</li>
+        <li>Test extensions and migrations in a realistic staging environment.</li>
+        <li>Compare important plans and latency after upgrade.</li>
+        <li>Define rollback criteria before the maintenance window.</li>
+      </ol>
+
+      <h2>Primary sources</h2>
+      <p><a href={pg14Facts.postgresqlSource}>PostgreSQL versioning and support policy ↗</a></p>
+      <p><a href={pg14Facts.awsSource}>Amazon RDS for PostgreSQL release calendar ↗</a></p>
+      <p><a href={pg14Facts.auroraSource}>Aurora PostgreSQL release calendar ↗</a></p>
+    </div>
+  </section>
+</BaseLayout>

@@ -1,0 +1,16 @@
+2026-10-13 03:37:54.590 UTC [449] LOG:  duration: 555.793 ms  plan:
+	Query Text: SELECT id, status, created_at, amount
+	FROM orders
+	WHERE tenant_id = $1 AND status = 'open'
+	ORDER BY created_at DESC
+	LIMIT 20;
+	Query Parameters: $1 = '1020'
+	Limit  (cost=0.43..384.74 rows=20 width=27)
+	  ->  Index Scan Backward using orders_created_idx on orders  (cost=0.43..128688.77 rows=6697 width=27)
+	        Filter: ((tenant_id = $1) AND (status = 'open'::text))
+2026-10-13 03:37:54.590 UTC [451] LOG:  duration: 599.067 ms  plan:
+	Query Text: SELECT id, status, created_at, amount
+	FROM orders
+	WHERE tenant_id = $1 AND status = 'open'
+	ORDER BY created_at DESC
+	LIMIT 20;

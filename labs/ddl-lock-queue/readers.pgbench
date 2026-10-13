@@ -1,0 +1,3 @@
+-- Ordinary application reads: primary-key lookups.
+\set id random(1, 200000)
+SELECT id, status, amount FROM orders WHERE id = :id;

@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CTA from '../components/CTA.astro';
+---
+<BaseLayout title="OLAP & Analytical Workload Performance — DatabaseDeveloper" description="Analytical workload performance reviews across partitioning, clustering, data skew, scan amplification, distributed joins and cost/performance trade-offs.">
+  <PageHero eyebrow="OLAP / Big Data" title="Analytical Workload Performance" description="Large analytical workloads fail differently from OLTP systems. Review scan amplification, partitioning, clustering, skew, distributed joins and workload isolation as a system—not as isolated SQL syntax." />
+  <section><div class="container grid three">
+    <div class="card"><h3>Scan amplification</h3><p>Find why an apparently selective query still reads far more data than the business question suggests.</p></div>
+    <div class="card"><h3>Skew + joins</h3><p>Review distribution and join behavior when one stage dominates elapsed time or resource usage.</p></div>
+    <div class="card"><h3>Cost/performance</h3><p>Connect architecture and workload isolation decisions to the actual latency and spend profile.</p></div>
+  </div></section>
+  <section><div class="container"><CTA title="Need an analytical-workload review?" description="Start with the platform, workload pattern and cost/latency symptom. Scope is agreed once the problem and evidence are clear." /></div></section>
+</BaseLayout>

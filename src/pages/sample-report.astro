@@ -1,0 +1,93 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CTA from '../components/CTA.astro';
+---
+<BaseLayout title="Sample PostgreSQL Performance Investigation Report — DatabaseDeveloper" description="A full evidence-linked PostgreSQL finding from a reproducible lab: plans, workload statistics, ranked recommendation, risk, rollback and measured validation.">
+  <PageHero eyebrow="Sample deliverable" title="See how a finding is written before you buy the investigation." description="This finding comes from a synthetic lab run on PostgreSQL 17, not a client system. Every number below is from that run." primaryLabel="Request an investigation" primaryHref="/contact" secondaryLabel="How it works" secondaryHref="/how-it-works" />
+
+  <section>
+    <div class="container">
+      <div class="report">
+        <div class="report-head">
+          <div><strong>Finding P-01</strong><div class="small muted">Synthetic lab · PostgreSQL 17.11 · 2.0M-row multi-tenant table</div></div>
+          <span class="badge high">High severity · High confidence</span>
+        </div>
+        <div class="report-body">
+          <h2>Generic plans forced for the app role send small-tenant queries through a 2-million-row index scan</h2>
+          <dl class="finding-grid">
+            <dt>Observation</dt>
+            <dd>After <code>plan_cache_mode = force_generic_plan</code> was set on the <code>app</code> role, the “recent open orders” statement went from 0.91 ms to 12.98 ms mean execution time, and its max went from 8.83 ms to 735 ms. On the same 4-connection load, throughput fell from about 4,100 to about 300 statements per second. Every execution logged above 100 ms was for a small tenant (ids 1001–1020).</dd>
+
+            <dt>Evidence</dt>
+            <dd>
+              <strong>E1</strong> pg_stat_statements for the statement, 30 s per run:
+              <div class="table-wrap report-table">
+                <table>
+                  <thead><tr><th>Run</th><th>Mean</th><th>Stddev</th><th>Max</th><th>Calls / 30 s</th><th>&gt;100 ms logged</th></tr></thead>
+                  <tbody>
+                    <tr><td>A. Default (<code>auto</code>)</td><td>0.91 ms</td><td>0.28 ms</td><td>8.83 ms</td><td>122,878</td><td>0</td></tr>
+                    <tr><td>B. Generic plans forced</td><td>12.98 ms</td><td>82.82 ms</td><td>735.00 ms</td><td>9,248</td><td>191</td></tr>
+                  </tbody>
+                </table>
+              </div>
+              <strong>E2</strong> auto_explain entry from run B (one of 191):
+<pre>duration: 555.793 ms  plan:
+  Query Parameters: $1 = '1020'
+  Limit  (cost=0.43..384.74 rows=20 width=27)
+    -&gt;  Index Scan Backward using orders_created_idx on orders  (cost=0.43..128688.77 rows=6697 width=27)
+          Filter: ((tenant_id = $1) AND (status = 'open'::text))</pre>
+              <strong>E3</strong> EXPLAIN (ANALYZE, BUFFERS) for small tenant 1007, generic plan compared with custom plan:
+<pre>-- generic plan
+Index Scan Backward using orders_created_idx on orders
+  (cost=0.43..128688.77 rows=6697) (actual time=6.127..531.739 rows=18 loops=1)
+  Rows Removed by Filter: 2001182
+Execution Time: 531.784 ms
+
+-- custom plan
+Index Scan using orders_tenant_idx on orders
+  (cost=0.43..11.85 rows=25) (actual time=0.017..0.022 rows=18 loops=1)
+  Rows Removed by Filter: 42
+Execution Time: 0.060 ms</pre>
+              <strong>E4</strong> Change timeline: the latency shift starts when the role-level setting is applied. Under the default <code>auto</code> mode, PostgreSQL kept custom plans for this statement, and no execution exceeded 100 ms.
+            </dd>
+
+            <dt>Likely cause</dt>
+            <dd>The generic plan is costed for an “average” tenant: an estimated 6,697 open orders. That makes it look cheap to read <code>orders_created_idx</code> backward and stop after 20 matches, and for an established tenant with 40,000 orders that is true (1.3 ms). A small tenant has only 18 open orders, so the scan never fills <code>LIMIT 20</code>. It reads the whole index and discards 2,001,182 rows. A custom plan knows the tenant is small and uses <code>orders_tenant_idx</code> instead.</dd>
+
+            <dt>Impact</dt>
+            <dd>Small tenants wait 0.5–0.7 s on this endpoint. Slow calls also hold pooled connections, which is why total throughput fell for every tenant, not only the small ones. New customers are the ones in this cohort.</dd>
+
+            <dt>Recommendation</dt>
+            <dd>
+              <ol>
+                <li><strong>First:</strong> run <code>ALTER ROLE app RESET plan_cache_mode;</code> This returns to the known prior state. It applies only to new sessions, so recycle the application pool after the change. Measured: mean 1.08 ms, max 10.62 ms, nothing above 100 ms.</li>
+                <li><strong>Then:</strong> run <code>CREATE INDEX CONCURRENTLY orders_tenant_created_idx ON orders (tenant_id, created_at);</code> The index serves both the tenant filter and the sort, so every tenant gets a good plan whichever plan mode is active. Measured with generic plans still forced: mean 0.03 ms, max 5.24 ms, 1,474,772 calls in 30 s.</li>
+                <li><strong>Not recommended:</strong> setting <code>force_custom_plan</code> globally. It treats the symptom on this statement and adds planning cost to every other one.</li>
+              </ol>
+            </dd>
+
+            <dt>Risk</dt>
+            <dd>Resetting the role setting brings back planning work that the setting was probably added to save, so check planning time and CPU after the change. The new index adds 60 MB (heap: 130 MB) and some write cost on every insert. A failed concurrent build leaves an <code>INVALID</code> index that has to be dropped. <code>orders_tenant_idx</code> may become redundant, but do not drop it in the same change.</dd>
+
+            <dt>Rollback</dt>
+            <dd>To undo step 1, re-apply the role setting. To undo step 2, run <code>DROP INDEX CONCURRENTLY orders_tenant_created_idx;</code>. Neither step changes table data.</dd>
+
+            <dt>Validation</dt>
+            <dd>Compare the same pg_stat_statements queryid over the same time window (mean, stddev and max). For tenant ids 1001–1020, auto_explain should log nothing above 100 ms. EXPLAIN for one small and one established tenant should show <code>orders_tenant_created_idx</code>. After the index exists, check insert latency and WAL volume.</dd>
+          </dl>
+          <p class="small muted">Lab conditions: PostgreSQL 17.11 in Docker on a laptop, warm cache, pgbench with 4 clients for 30 s per run, 98% of calls from established tenants and 2% from small tenants. The absolute timings won’t transfer to your system; the relative change and the plan shapes are what matter. In a real engagement, this evidence comes from your client-run, read-only collection.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container grid three">
+      <div class="card"><span class="kicker">Confidence</span><h3>Uncertainty is explicit</h3><p>Low-confidence hypotheses do not silently become executive-summary facts.</p></div>
+      <div class="card"><span class="kicker">Safety</span><h3>Risk + rollback</h3><p>A recommendation is incomplete if it ignores the operational downside or how to reverse it.</p></div>
+      <div class="card"><span class="kicker">Measurement</span><h3>Validation</h3><p>The report defines how the team should know whether the change improved the intended workload.</p></div>
+    </div>
+  </section>
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>

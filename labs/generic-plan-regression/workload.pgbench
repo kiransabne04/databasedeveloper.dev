@@ -1,0 +1,12 @@
+-- Call mix: 98% established tenants, 2% small/new tenants.
+\set r random(1, 100)
+\if :r <= 2
+\set tenant random(1001, 1020)
+\else
+\set tenant random(1, 50)
+\endif
+SELECT id, status, created_at, amount
+FROM orders
+WHERE tenant_id = :tenant AND status = 'open'
+ORDER BY created_at DESC
+LIMIT 20;

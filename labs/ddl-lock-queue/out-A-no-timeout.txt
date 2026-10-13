@@ -1,0 +1,86 @@
+[t=10] DDL issued:  ALTER TABLE orders ADD COLUMN note text;
+[t=14] blocking-chain snapshot
+ pid | blocked_by |        state        |       wait        | xact_age_s | in_state_s |                        query                         
+-----+------------+---------------------+-------------------+------------+------------+------------------------------------------------------
+ 252 | {}         | idle in transaction | Client:ClientRead |        9.1 |        9.0 | SELECT count(*) FROM orders WHERE tenant_id = 7;
+ 259 | {252}      | active              | Lock:relation     |        4.1 |        4.1 | ALTER TABLE orders ADD COLUMN note text;
+ 242 | {259}      | active              | Lock:relation     |        4.1 |        4.1 | SELECT id, status, amount FROM orders WHERE id = $1;
+ 240 | {259}      | active              | Lock:relation     |        4.1 |        4.1 | SELECT id, status, amount FROM orders WHERE id = $1;
+ 237 | {259}      | active              | Lock:relation     |        4.1 |        4.1 | SELECT id, status, amount FROM orders WHERE id = $1;
+ 241 | {259}      | active              | Lock:relation     |        4.1 |        4.1 | SELECT id, status, amount FROM orders WHERE id = $1;
+ 243 | {259}      | active              | Lock:relation     |        4.1 |        4.1 | SELECT id, status, amount FROM orders WHERE id = $1;
+ 238 | {259}      | active              | Lock:relation     |        4.1 |        4.1 | SELECT id, status, amount FROM orders WHERE id = $1;
+ 239 | {259}      | active              | Lock:relation     |        4.1 |        4.1 | SELECT id, status, amount FROM orders WHERE id = $1;
+ 244 | {259}      | active              | Lock:relation     |        4.1 |        4.1 | SELECT id, status, amount FROM orders WHERE id = $1;
+(10 rows)
+
+ sessions_waiting_on_lock | longest_wait_s 
+--------------------------+----------------
+                        9 |            4.1
+(1 row)
+
+ pid |        mode         | granted | sessions_in_same_state 
+-----+---------------------+---------+------------------------
+ 252 | AccessShareLock     | t       |                      1
+ 259 | AccessExclusiveLock | f       |                      1
+ 243 | AccessShareLock     | f       |                      8
+ 238 | AccessShareLock     | f       |                      8
+ 242 | AccessShareLock     | f       |                      8
+(5 rows)
+
+Time: 14955.586 ms (00:14.956)
+[DDL session finished]
+pgbench (17.11 (Debian 17.11-1.pgdg13+2))
+progress: 1.0 s, 163432.3 tps, lat 0.046 ms stddev 0.024, 0 failed
+progress: 2.0 s, 165182.6 tps, lat 0.045 ms stddev 0.024, 0 failed
+progress: 3.0 s, 163883.2 tps, lat 0.046 ms stddev 0.024, 0 failed
+progress: 4.0 s, 165967.7 tps, lat 0.045 ms stddev 0.024, 0 failed
+progress: 5.0 s, 167271.7 tps, lat 0.045 ms stddev 0.025, 0 failed
+progress: 6.0 s, 142143.4 tps, lat 0.053 ms stddev 0.027, 0 failed
+progress: 7.0 s, 141674.0 tps, lat 0.053 ms stddev 0.022, 0 failed
+progress: 8.0 s, 153625.9 tps, lat 0.049 ms stddev 0.024, 0 failed
+progress: 9.0 s, 162269.8 tps, lat 0.046 ms stddev 0.024, 0 failed
+progress: 10.0 s, 156651.6 tps, lat 0.047 ms stddev 0.027, 0 failed
+progress: 11.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 12.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 13.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 14.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 15.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 16.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 17.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 18.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 19.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 20.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 21.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 22.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 23.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 24.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 25.0 s, 4849.0 tps, lat 25.028 ms stddev 610.252, 0 failed
+progress: 26.0 s, 133079.0 tps, lat 0.056 ms stddev 0.021, 0 failed
+progress: 27.0 s, 137959.8 tps, lat 0.054 ms stddev 0.021, 0 failed
+progress: 28.0 s, 150112.6 tps, lat 0.050 ms stddev 0.023, 0 failed
+progress: 29.0 s, 162828.6 tps, lat 0.046 ms stddev 0.023, 0 failed
+progress: 30.0 s, 159823.7 tps, lat 0.047 ms stddev 0.023, 0 failed
+progress: 31.0 s, 164974.5 tps, lat 0.046 ms stddev 0.024, 0 failed
+progress: 32.0 s, 162373.3 tps, lat 0.046 ms stddev 0.024, 0 failed
+progress: 33.0 s, 157329.1 tps, lat 0.048 ms stddev 0.024, 0 failed
+progress: 34.0 s, 157877.5 tps, lat 0.048 ms stddev 0.025, 0 failed
+progress: 35.0 s, 158554.6 tps, lat 0.047 ms stddev 0.025, 0 failed
+progress: 36.0 s, 159731.8 tps, lat 0.047 ms stddev 0.025, 0 failed
+progress: 37.0 s, 143199.3 tps, lat 0.052 ms stddev 0.023, 0 failed
+progress: 38.0 s, 154670.3 tps, lat 0.049 ms stddev 0.024, 0 failed
+progress: 39.0 s, 155526.3 tps, lat 0.048 ms stddev 0.024, 0 failed
+progress: 40.0 s, 163254.0 tps, lat 0.046 ms stddev 0.024, 0 failed
+transaction type: /tmp/readers.pgbench
+scaling factor: 1
+query mode: prepared
+number of clients: 8
+number of threads: 4
+maximum number of tries: 1
+duration: 40 s
+number of transactions actually processed: 3908353
+number of failed transactions: 0 (0.000%)
+latency average = 0.079 ms
+latency stddev = 21.397 ms
+initial connection time = 3.027 ms
+tps = 97712.640679 (without initial connection time)

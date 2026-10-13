@@ -1,0 +1,79 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../config/site';
+const endpoint = import.meta.env.PUBLIC_CONTACT_ENDPOINT;
+const action = endpoint || `mailto:${site.email}`;
+---
+<BaseLayout title="Request a Database Investigation — DatabaseDeveloper" description="Tell DatabaseDeveloper what is happening in production, which database/platform you run and what evidence is available.">
+  <PageHero eyebrow="Contact" title="Tell me what PostgreSQL is doing in production." description="A short description is enough to start. Kiran will review whether a bounded investigation fits, then agree on scope and timing before any paid work." primaryLabel="Email Kiran directly" primaryHref={`mailto:${site.email}?subject=${encodeURIComponent('Database investigation request')}`} secondaryLabel="How it works" secondaryHref="/how-it-works" />
+  <section>
+    <div class="container grid two">
+      <form id="inquiry-form" class="card" action={action} method="POST" enctype={endpoint ? undefined : "text/plain"} data-email={site.email} data-mailto-fallback={endpoint ? "false" : "true"}>
+        <div class="form-grid">
+          <div class="field"><label for="name">Name</label><input id="name" name="name" required autocomplete="name" /></div>
+          <div class="field"><label for="email">Email</label><input id="email" type="email" name="email" required autocomplete="email" /></div>
+          <div class="field full"><label for="problem">What is happening?</label><textarea id="problem" name="problem" required placeholder="What changed, what users see, and what your team has tried"></textarea></div>
+          <details class="field full optional-fields">
+            <summary>Add platform, impact or evidence (optional)</summary>
+            <div class="form-grid">
+              <div class="field"><label for="database">Database / platform</label><select id="database" name="database"><option value="">Select if known</option><option>PostgreSQL</option><option>AWS RDS PostgreSQL</option><option>Aurora PostgreSQL</option><option>SQL Server</option><option>pgvector</option><option>Snowflake</option><option>OLAP / analytical</option><option>Other</option></select></div>
+              <div class="field"><label for="version">Version</label><input id="version" name="version" placeholder="e.g. PostgreSQL 14.24" /></div>
+              <div class="field full"><label for="evidence">Evidence available</label><input id="evidence" name="evidence" placeholder="pg_stat_statements, plans, Query Store, logs…" /></div>
+              <div class="field"><label for="impact">Production impact</label><input id="impact" name="impact" placeholder="e.g. p95 latency or rising cost" /></div>
+              <div class="field"><label for="timeline">Desired timeline</label><input id="timeline" name="timeline" placeholder="e.g. within 2 weeks" /></div>
+            </div>
+          </details>
+        </div>
+        <div class="actions"><button class="button primary" type="submit">{endpoint ? 'Send request' : 'Open email draft'}</button></div>
+        {!endpoint && <p class="small muted">Your email app will open with these details filled in. Review and send the draft there.</p>}
+      </form>
+
+      <aside class="card">
+        <span class="kicker">Before sending</span>
+        <h3>Useful context if you have it</h3>
+        <ul class="muted">
+          <li>Database/version and hosting platform</li>
+          <li>What changed or when the symptom started</li>
+          <li>Business impact</li>
+          <li>What your team already tried</li>
+          <li>What evidence can be exported safely</li>
+        </ul>
+        <p class="notice"><strong>Do not send credentials, production dumps or confidential customer data through this form.</strong></p>
+        <p>Email: <a href={`mailto:${site.email}`}>{site.email}</a></p>
+      </aside>
+    </div>
+  </section>
+  <script>
+    const form = document.querySelector<HTMLFormElement>('#inquiry-form');
+    if (form) {
+      let started = false;
+      form.addEventListener('focusin', () => {
+        if (!started) {
+          window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_start' }));
+          started = true;
+        }
+      });
+      form.addEventListener('submit', (event) => {
+        if (form.dataset.mailtoFallback !== 'true') {
+          window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_submit' }));
+          return;
+        }
+        event.preventDefault();
+        window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_draft_open' }));
+        const fields = new FormData(form);
+        const labels: Record<string, string> = {
+          name: 'Name', email: 'Email', database: 'Database / platform', version: 'Version',
+          problem: 'Problem', evidence: 'Evidence available', impact: 'Production impact', timeline: 'Desired timeline'
+        };
+        const body = Object.entries(labels)
+          .filter(([key]) => String(fields.get(key) ?? '').trim())
+          .map(([key, label]) => `${label}: ${String(fields.get(key)).trim()}`)
+          .join('\n');
+        const subject = encodeURIComponent('Database investigation request');
+        const message = encodeURIComponent(body);
+        window.location.href = `mailto:${form.dataset.email}?subject=${subject}&body=${message}`;
+      });
+    }
+  </script>
+</BaseLayout>

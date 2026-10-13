@@ -1,0 +1,14 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CTA from '../components/CTA.astro';
+---
+<BaseLayout title="SQL Server Performance Review — DatabaseDeveloper" description="SQL Server performance review covering Query Store, plan regressions, blocking, parameter sensitivity, indexing and ORM-generated workload behavior.">
+  <PageHero eyebrow="Secondary capability" title="SQL Server Performance Review" description="Evidence-led review of Query Store, plan changes, blocking, parameter sensitivity, indexing and application-generated SQL." />
+  <section><div class="container grid three">
+    <div class="card"><h3>Query Store</h3><p>Identify dominant statements, plan changes and regressions using historical workload evidence.</p></div>
+    <div class="card"><h3>Blocking</h3><p>Review blocking chains, transaction scope and concurrency behavior before treating waits as isolated events.</p></div>
+    <div class="card"><h3>EF Core / ORM</h3><p>Connect generated SQL, parameter behavior, migrations and indexes back to application patterns.</p></div>
+  </div></section>
+  <section><div class="container"><CTA title="Have a SQL Server performance problem?" description="Share the symptom and the evidence available. The first step is deciding whether a bounded review is a fit." /></div></section>
+</BaseLayout>

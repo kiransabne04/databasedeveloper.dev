@@ -1,0 +1,43 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import PG14Notice from '../components/PG14Notice.astro';
+import CTA from '../components/CTA.astro';
+---
+<BaseLayout
+  title="PostgreSQL Upgrade Readiness Review — DatabaseDeveloper"
+  description="A bounded PostgreSQL major-version upgrade readiness review covering extensions, application risks, plan regressions, baselines and validation."
+>
+  <PageHero
+    eyebrow="Upgrade track"
+    title="PostgreSQL Upgrade Readiness Review"
+    description="Reduce upgrade uncertainty before the maintenance window: inventory dependencies, establish a performance baseline, identify compatibility and plan-regression risks, and define post-upgrade validation."
+  />
+  <section><div class="container"><PG14Notice /></div></section>
+  <section>
+    <div class="container">
+      <div class="grid three">
+        <div class="card"><span class="kicker">Inventory</span><h3>Version + extensions</h3><p>Identify extension and application dependencies that can affect the target-version path.</p></div>
+        <div class="card"><span class="kicker">Performance</span><h3>Baseline before change</h3><p>Capture representative workload behavior so regressions are observable rather than anecdotal.</p></div>
+        <div class="card"><span class="kicker">Validation</span><h3>Know what to compare</h3><p>Define critical queries, plans, latency and operational checks for the post-upgrade window.</p></div>
+      </div>
+    </div>
+  </section>
+  <section>
+    <div class="container prose">
+      <h2>Typical review areas</h2>
+      <ul>
+        <li>Current engine and extension inventory</li>
+        <li>Target-version choice and support horizon</li>
+        <li>Application/ORM compatibility checklist</li>
+        <li>Major plan-regression risks</li>
+        <li>Staging/replay strategy</li>
+        <li>Pre-upgrade workload baseline</li>
+        <li>Post-upgrade validation and rollback considerations</li>
+        <li>RDS/Aurora-specific path where relevant</li>
+      </ul>
+      <p class="notice"><strong>Important:</strong> DatabaseDeveloper does not execute the production upgrade as part of this review unless separately scoped. Your team or managed-service provider owns the change window.</p>
+    </div>
+  </section>
+  <section><div class="container"><CTA eyebrow="Upgrade readiness" title="Still on PostgreSQL 14?" description="Start with your version, platform and extension list. The first step is scoping the smallest useful readiness review." /></div></section>
+</BaseLayout>

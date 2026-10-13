@@ -1,0 +1,12 @@
+---
+import { problems } from '../data/problems';
+---
+<div class="grid two">
+  {problems.map((item) => (
+    <a class="card card-link" href={item.href}>
+      <span class="kicker">Problem guide</span>
+      <h3>{item.title}</h3>
+      <p>{item.description}</p>
+    </a>
+  ))}
+</div>

@@ -1,0 +1,18 @@
+---
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="PostgreSQL CLUSTER: The Performance Trade-off and Locking Cost" description="When physical row order helps PostgreSQL range scans, how to test the benefit, and why CLUSTER requires a maintenance window." eyebrow="PostgreSQL physical design" published="2025-01-30" updated="2026-10-13" legacy>
+  <h2>What CLUSTER changes</h2>
+  <p><code>CLUSTER</code> rewrites a table so its rows follow an existing index's order. It can improve locality for queries that fetch many neighboring rows in that order. PostgreSQL does not maintain that physical ordering as later inserts and updates occur, so any gain can fade as the table changes.</p>
+  <p>This is different from partitioning, which splits rows into separate tables, and from adding an index, which leaves the table's physical order unchanged. A range scan that already uses a selective covering index may gain little from a rewrite.</p>
+
+  <h2>Measure before scheduling a rewrite</h2>
+  <ol>
+    <li>Identify a high-cost range or ordered-read workload and capture its plan, buffers, latency and row count.</li>
+    <li>Check whether physical correlation is actually poor for the relevant column. Compare the existing index strategy before attributing the issue to heap order.</li>
+    <li>Test <code>CLUSTER</code> on a production-like copy, then repeat the same workload. Include table rewrite time, extra disk space and recovery impact in the decision.</li>
+    <li>Recheck after normal writes. A one-time benchmark immediately after the rewrite can overstate long-term value.</li>
+  </ol>
+  <p>PostgreSQL acquires an <code>ACCESS EXCLUSIVE</code> lock on the table during <code>CLUSTER</code>. That blocks ordinary access and makes the operation unsuitable as a casual live tuning step. Do not disable autovacuum as a supposed shortcut; vacuuming and clustering solve different problems.</p>
+  <p>The <a href="https://www.postgresql.org/docs/current/sql-cluster.html">PostgreSQL CLUSTER reference</a> documents the lock, disk and ordering behavior. If the question is whether a rewrite is worth the operational cost, bring the query and workload evidence to a <a href="/postgresql-performance-investigation">scoped investigation</a>.</p>
+</ArticleLayout>

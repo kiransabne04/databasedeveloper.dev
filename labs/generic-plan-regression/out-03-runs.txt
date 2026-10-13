@@ -1,0 +1,40 @@
+### A. auto (default), indexes (tenant_id), (created_at)
+number of transactions actually processed: 122878
+latency average = 0.977 ms
+tps = 4095.846774 (without initial connection time)
+ calls  | mean_ms | stddev_ms | min_ms | max_ms | total_ms 
+--------+---------+-----------+--------+--------+----------
+ 122878 |    0.91 |      0.28 |   0.01 |   8.83 |   111913
+(1 row)
+
+auto_explain >100ms entries: 0
+### B. ALTER ROLE app SET plan_cache_mode = force_generic_plan
+number of transactions actually processed: 9248
+latency average = 13.152 ms
+tps = 304.135403 (without initial connection time)
+ calls | mean_ms | stddev_ms | min_ms | max_ms | total_ms 
+-------+---------+-----------+--------+--------+----------
+  9248 |   12.98 |     82.82 |   0.44 | 735.00 |   120067
+(1 row)
+
+auto_explain >100ms entries: 191
+### C. force_generic_plan kept + index (tenant_id, created_at)
+number of transactions actually processed: 1474772
+latency average = 0.081 ms
+tps = 49150.611123 (without initial connection time)
+  calls  | mean_ms | stddev_ms | min_ms | max_ms | total_ms 
+---------+---------+-----------+--------+--------+----------
+ 1474772 |    0.03 |      0.01 |   0.01 |   5.24 |    41012
+(1 row)
+
+auto_explain >100ms entries: 0
+### D. role setting reverted (auto), no new index
+number of transactions actually processed: 103884
+latency average = 1.155 ms
+tps = 3462.241771 (without initial connection time)
+ calls  | mean_ms | stddev_ms | min_ms | max_ms | total_ms 
+--------+---------+-----------+--------+--------+----------
+ 103884 |    1.08 |      0.31 |   0.01 |  10.62 |   112255
+(1 row)
+
+auto_explain >100ms entries: 0

@@ -1,0 +1,22 @@
+---
+const {
+  eyebrow = 'Production evidence',
+  title = 'Need an independent PostgreSQL investigation?',
+  description = 'Start with the problem and the evidence you already have. You will get a direct answer on whether a scoped investigation is the right next step.',
+  primaryLabel = 'Request an investigation',
+  primaryHref = '/contact',
+  secondaryLabel = 'See sample report',
+  secondaryHref = '/sample-report'
+} = Astro.props;
+---
+<div class="cta-panel">
+  <div>
+    <span class="eyebrow">{eyebrow}</span>
+    <h2>{title}</h2>
+    <p class="muted">{description}</p>
+  </div>
+  <div class="actions">
+    <a class="button primary" data-track="primary_cta_click" href={primaryHref}>{primaryLabel}</a>
+    <a class="button" data-track="sample_report_click" href={secondaryHref}>{secondaryLabel}</a>
+  </div>
+</div>

@@ -1,0 +1,12 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+---
+<BaseLayout title="Terms — DatabaseDeveloper" description="Website terms and disclaimers for DatabaseDeveloper.dev.">
+  <PageHero eyebrow="Terms" title="Technical content is educational, not a production change instruction." description="Engagement scope, confidentiality, deliverables and commercial terms are agreed separately for paid work." primaryLabel="Contact" primaryHref="/contact" />
+  <section><div class="container prose">
+    <p>Public content on this site is general technical information. Database behavior depends on workload and environment; do not treat an article as a substitute for testing, change control or professional review of your system.</p>
+    <p>Performance examples labeled as synthetic/lab are not client results.</p>
+    <p>No specific performance improvement is guaranteed.</p>
+  </div></section>
+</BaseLayout>

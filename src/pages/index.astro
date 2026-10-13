@@ -1,0 +1,115 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import CapabilityGrid from '../components/CapabilityGrid.astro';
+import ProblemGrid from '../components/ProblemGrid.astro';
+import InvestigationWorkflow from '../components/InvestigationWorkflow.astro';
+import PG14Notice from '../components/PG14Notice.astro';
+import CTA from '../components/CTA.astro';
+import { site } from '../config/site';
+---
+<BaseLayout
+  title="DatabaseDeveloper — PostgreSQL Performance Investigation"
+  description="Production PostgreSQL performance investigated from evidence—not guesses. For SaaS teams running PostgreSQL, especially AWS RDS/Aurora."
+>
+  <div class="container hero">
+    <div class="hero-grid">
+      <div>
+        <span class="eyebrow">PostgreSQL performance for SaaS teams</span>
+        <h1>Production PostgreSQL performance, investigated from evidence—not guesses.</h1>
+        <p class="lede">
+          For SaaS engineering teams dealing with rising latency, high database cost, query regressions,
+          locking, connection pressure or risky PostgreSQL upgrades.
+        </p>
+        <div class="actions">
+          <a class="button primary" data-track="primary_cta_click" href="/contact">Request an investigation</a>
+          <a class="button ghost" data-track="sample_report_click" href="/sample-report">See sample report</a>
+        </div>
+        {site.foundingOffer.enabled && (
+          <p class="small muted">Founding investigation: {site.foundingOffer.international} / {site.foundingOffer.india} for the first three suitable engagements.</p>
+        )}
+        <p class="small muted">One cluster and its dominant workload · client-run, read-only evidence · written findings and review call</p>
+      </div>
+      <aside class="hero-proof">
+        <span class="eyebrow">The deliverable</span>
+        <h3>A decision your team can use</h3>
+        <ul class="signal-list">
+          <li>Ranked findings linked to workload evidence</li>
+          <li>Trade-offs across reads, writes and concurrency</li>
+          <li>Implementation risk and rollback considerations</li>
+          <li>Before-and-after checks for meaningful changes</li>
+        </ul>
+      </aside>
+    </div>
+  </div>
+
+  <section>
+    <div class="container"><PG14Notice /></div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow">Symptoms</span><h2>Start with what production is doing.</h2></div>
+        <p>Performance is rarely one isolated SQL statement. The useful question is which evidence explains the workload behavior and what change is safe to test first.</p>
+      </div>
+      <ProblemGrid />
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow">Method</span><h2>Evidence → judgment → validation.</h2></div>
+        <p>AI can explain an execution plan. The investigation is about what surrounds that plan: workload concentration, locks, connections, statistics, indexing and deployment context.</p>
+      </div>
+      <InvestigationWorkflow />
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow">Deliverable</span><h2>A ranked change plan, not a dump of findings.</h2></div>
+        <p>Every finding is tied to evidence, confidence, risk and a validation step so your engineering team can make an informed change.</p>
+      </div>
+      <div class="grid three">
+        <div class="card"><span class="kicker">Evidence</span><h3>Why this finding exists</h3><p>Plans, workload statistics, waits/locks, schema/indexes and relevant configuration.</p></div>
+        <div class="card"><span class="kicker">Decision</span><h3>What matters first</h3><p>Findings are ranked by expected impact, confidence, risk and effort—not by how impressive they sound.</p></div>
+        <div class="card"><span class="kicker">Validation</span><h3>How to know it worked</h3><p>Each recommendation includes a measurable verification path and rollback consideration.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow">Capabilities</span><h2>PostgreSQL first. Broader where the workload demands it.</h2></div>
+        <p>PostgreSQL is the core service. Specialist reviews cover transactional, vector and analytical workloads where the problem calls for them.</p>
+      </div>
+      <CapabilityGrid />
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow">See the work</span><h2>Review the method before you get in touch.</h2></div>
+        <p>Read a sample report and two reproducible synthetic labs. Their numbers come from lab runs, not client systems, and show how a finding is investigated and communicated.</p>
+      </div>
+      <div class="grid two">
+        <a class="card card-link" href="/case-studies/lab-generic-plan-regression">
+          <span class="kicker">Synthetic scenario</span><h3>Generic plan regression under prepared statements</h3>
+          <p>See what to compare when one prepared query behaves differently across tenant sizes.</p>
+        </a>
+        <a class="card card-link" href="/case-studies/lab-lock-queue">
+          <span class="kicker">Synthetic lab</span><h3>DDL lock queue behind an idle transaction</h3>
+          <p>A catalog-only ALTER TABLE stopped every read for 14 seconds. Blocking chain, lock modes and a measured fix.</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container"><CTA /></div>
+  </section>
+</BaseLayout>

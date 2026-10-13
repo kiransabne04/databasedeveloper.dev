@@ -1,0 +1,18 @@
+---
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="MongoDB Locking and Concurrency: Diagnose the Contended Operation" description="An updated guide to MongoDB WiredTiger concurrency, write conflicts, lock waits and the evidence needed to investigate throughput drops." eyebrow="Database archive · MongoDB" published="2025-07-19" updated="2026-10-13" legacy ctaTitle="Need an independent database performance review?" ctaDescription="Describe the workload and the symptom. We will confirm whether a bounded investigation fits the platform and evidence available.">
+  <h2>Do not treat every slow write as a collection lock</h2>
+  <p>MongoDB's WiredTiger engine uses document-level concurrency control for writes and intent locks at broader levels. Many operations on different documents can run concurrently. A slow or retried write may come from a hot document, a long transaction, resource pressure or an application retry pattern; a simplistic lock-mode table will not identify which one.</p>
+  <p>Write conflicts and lock waits are different signals. WiredTiger can detect a conflict between operations and retry one; application-level transactions may need explicit retry handling. An operation waiting for a lock should be investigated alongside its command, duration and competing activity.</p>
+
+  <h2>Evidence to collect during the event</h2>
+  <ol>
+    <li>Identify the slow endpoint or job, affected collection, time window and whether latency is in reads, writes or transaction commits.</li>
+    <li>Inspect current operations and lock statistics, using the deployment's supported tooling and permissions. Compare with CPU, cache pressure, disk activity and transaction metrics.</li>
+    <li>Look for repeated updates to the same document, long-running transactions, large batch operations and retries that multiply traffic.</li>
+    <li>Change one cause at a time, then compare throughput, error/retry rate and tail latency over similar traffic.</li>
+  </ol>
+  <p>MongoDB's <a href="https://www.mongodb.com/docs/manual/core/wiredtiger/">WiredTiger documentation</a> describes document-level concurrency and transparent retries. Its <a href="https://www.mongodb.com/docs/manual/faq/concurrency/">concurrency FAQ</a> explains lock visibility and monitoring options.</p>
+  <p>This article is retained for readers of the original DatabaseDeveloper publication. The current consulting practice is <a href="/postgresql-performance-investigation">PostgreSQL-first</a>; other database work is scoped individually.</p>
+</ArticleLayout>

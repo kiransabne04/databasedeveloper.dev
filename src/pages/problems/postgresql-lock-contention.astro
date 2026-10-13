@@ -1,0 +1,52 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import CTA from '../../components/CTA.astro';
+---
+<BaseLayout title="PostgreSQL Lock Contention — DatabaseDeveloper" description="The slow query may be waiting on work that is already finished. Practical evidence to collect, common wrong assumptions and when a deeper investigation is justified.">
+  <PageHero eyebrow="Problem guide" title="PostgreSQL Lock Contention" description="The slow query may be waiting on work that is already finished." />
+  <section><div class="container grid three">
+    <div class="card"><h3>Blocking chain</h3><p>Identify blockers and waiters rather than optimizing the waiting statement in isolation.</p></div>
+<div class="card"><h3>Transaction scope</h3><p>Long transactions can turn ordinary DDL/DML into queues that amplify latency.</p></div>
+<div class="card"><h3>DDL interaction</h3><p>A fast DDL statement can still be dangerous if it waits for or queues behind long-running transactions.</p></div>
+  </div></section>
+  <section><div class="container prose">
+    <h2>Investigation principle</h2>
+    <blockquote>Capture lock state and transaction age during the event when possible; screenshots after the fact often miss the chain.</blockquote>
+    <h2>Common wrong assumptions</h2>
+    <ul>
+      <li><strong>“The waiting query is slow.”</strong> It is waiting, not working. Tuning it changes nothing. Find the head of the queue.</li>
+      <li><strong>“The DDL is fast, so it is safe.”</strong> A catalog-only <code>ALTER TABLE</code> still needs an exclusive lock. While it waits, every new query on the table waits behind it. See the <a href="/case-studies/lab-lock-queue">lock-queue lab</a>: 14 seconds of zero reads.</li>
+      <li><strong>“Lock problems would show up as deadlock errors.”</strong> PostgreSQL detects deadlocks and cancels one side. Long blocking chains raise no error at all. They show up only as latency, unless <code>log_lock_waits</code> is on.</li>
+      <li><strong>“<code>pg_locks</code> will show the row.”</strong> A session waiting on a row lock usually shows as waiting on the other transaction’s <code>transactionid</code>, not on a row. <code>pg_blocking_pids()</code> resolves that for you.</li>
+    </ul>
+    <h2>First queries to run</h2>
+    <p>Read-only. Run them during the problem window if you can; most of these views show current state, not history.</p>
+<pre><code>-- Blocking chain: who waits on whom
+SELECT pid,
+       pg_blocking_pids(pid)                     AS blocked_by,
+       state,
+       wait_event_type || ':' || wait_event      AS wait,
+       now() - xact_start                        AS xact_age,
+       left(query, 60)                           AS query
+FROM pg_stat_activity
+WHERE cardinality(pg_blocking_pids(pid)) &gt; 0
+   OR pid IN (SELECT unnest(pg_blocking_pids(pid)) FROM pg_stat_activity)
+ORDER BY xact_start;
+
+-- Long-running and idle transactions
+SELECT pid, usename, application_name, state,
+       now() - xact_start AS xact_age,
+       left(query, 60)    AS last_query
+FROM pg_stat_activity
+WHERE xact_start &lt; now() - interval '1 minute'
+ORDER BY xact_start;</code></pre>
+    <h2>When a deeper investigation is justified</h2>
+    <ul>
+      <li>Stalls happen during deploys or batch jobs, but nobody captured the chain while it was happening.</li>
+      <li>Migrations run without <code>lock_timeout</code>, and adding one needs retry logic in the deploy tool.</li>
+      <li>Long or idle transactions come from a code path or job that nobody has identified.</li>
+    </ul>
+  </div></section>
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>

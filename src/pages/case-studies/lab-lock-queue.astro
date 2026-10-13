@@ -1,0 +1,71 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import CTA from '../../components/CTA.astro';
+---
+<BaseLayout title="Lab Case: PostgreSQL DDL Lock Queue — DatabaseDeveloper" description="A reproducible PostgreSQL 17 lab: an idle transaction plus a catalog-only ALTER TABLE stopped all reads for 14 seconds. Blocking chain, lock modes and a measured lock_timeout fix.">
+  <PageHero eyebrow="Synthetic lab case" title="A trivial ALTER TABLE stopped every read for 14 seconds." description="A reproducible lab on PostgreSQL 17: one idle transaction, one ALTER TABLE, eight readers. Every number below comes from the lab run; no client result is claimed." />
+  <section><div class="container prose">
+    <h2>Setup</h2>
+    <p>An <code>orders</code> table with 200,000 rows and eight clients running primary-key reads at roughly 150,000 per second. At t=5 s, a session opens a transaction, reads from <code>orders</code> and then sits idle. This is the pattern an application leaves behind when it forgets to commit, or when it does slow work in the middle of a transaction. At t=10 s, a migration runs <code>ALTER TABLE orders ADD COLUMN note text</code>, which adds a nullable column with no default. That is a catalog-only change; it needs a brief exclusive lock but does not rewrite the table.</p>
+
+    <h2>What happened</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Time</th><th>Reader throughput</th><th>Event</th></tr></thead>
+        <tbody>
+          <tr><td>t=10 s</td><td>156,652 reads/s</td><td>DDL issued</td></tr>
+          <tr><td>t=11–24 s</td><td>0 reads/s</td><td>All readers waiting</td></tr>
+          <tr><td>t=25 s</td><td>4,849 reads/s</td><td>Idle transaction commits; DDL runs; queue drains</td></tr>
+          <tr><td>t=26 s</td><td>133,079 reads/s</td><td>Back to normal</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The DDL waited 14.96 s for its lock. The readers saw no errors, only a 14-second stall.</p>
+
+    <h2>Evidence: the blocking chain</h2>
+    <p>Snapshot at t=14 s from <code>pg_stat_activity</code> and <code>pg_blocking_pids()</code> (trimmed):</p>
+<pre> pid | blocked_by |        state        |       wait        | xact_age_s | query
+-----+------------+---------------------+-------------------+------------+--------------------------------------
+ 252 | {}         | idle in transaction | Client:ClientRead |        9.1 | SELECT count(*) FROM orders WHERE …
+ 259 | {252}      | active              | Lock:relation     |        4.1 | ALTER TABLE orders ADD COLUMN note text;
+ 242 | {259}      | active              | Lock:relation     |        4.1 | SELECT id, status, amount FROM orders …
+ 240 | {259}      | active              | Lock:relation     |        4.1 | SELECT id, status, amount FROM orders …
+ … 6 more readers, all blocked_by {259}</pre>
+    <p>Lock modes from <code>pg_locks</code> at the same moment:</p>
+<pre> pid |        mode         | granted | sessions in same state
+-----+---------------------+---------+-----------------------
+ 252 | AccessShareLock     | t       | 1
+ 259 | AccessExclusiveLock | f       | 1
+ 242 | AccessShareLock     | f       | 8</pre>
+
+    <h2>Why reads stopped</h2>
+    <p>The readers do not conflict with the idle transaction: both take <code>AccessShareLock</code>. They conflict with the DDL’s <em>queued</em> request for <code>AccessExclusiveLock</code>. PostgreSQL grants locks in queue order, so a new request that conflicts with a waiting request lines up behind it. The idle transaction blocks the DDL, and the DDL blocks everyone else.</p>
+    <p>This is why <code>blocked_by</code> matters. The readers point at pid 259, the DDL, not at the session that is actually holding things up. Killing readers or tuning their query would change nothing. The head of the queue is pid 252, a transaction that has done no work for 9 seconds.</p>
+
+    <h2>The fix, measured</h2>
+    <p>Same timeline, with the migration session running <code>SET lock_timeout = '2s';</code> before the DDL:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th></th><th>No lock_timeout</th><th>lock_timeout = 2s</th></tr></thead>
+        <tbody>
+          <tr><td>DDL outcome</td><td>Waited 14.96 s, then ran</td><td>Cancelled after 2.01 s</td></tr>
+          <tr><td>Reader stall</td><td>t=11–24 s (0 reads/s)</td><td>t=11–12 s</td></tr>
+          <tr><td>Reads in 40 s run</td><td>3.91M</td><td>5.51M</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>With the timeout, the migration fails fast and can retry; the application doesn’t stall. That moves the cost to the migration tooling, which needs a retry with backoff. It also leaves the real cause untouched: something left a transaction idle. <code>idle_in_transaction_session_timeout</code> limits that, but it terminates sessions, so check what the application expects before you set it.</p>
+
+    <h2>What an investigation would add</h2>
+    <ol>
+      <li>Find what opened the idle transaction. <code>application_name</code>, <code>client_addr</code> and the last query of the blocking pid usually point at a job or code path.</li>
+      <li>Check how many migrations already set <code>lock_timeout</code>, and whether the deploy tool retries.</li>
+      <li>Confirm the timeline from logs. <code>log_lock_waits</code> records waits longer than <code>deadlock_timeout</code>, which helps when nobody captured a snapshot during the event.</li>
+    </ol>
+    <p>See PostgreSQL’s documentation on <a href="https://www.postgresql.org/docs/current/explicit-locking.html">lock modes and conflicts</a> and on <a href="https://www.postgresql.org/docs/current/runtime-config-client.html">lock_timeout and idle_in_transaction_session_timeout</a>.</p>
+
+    <p class="small muted">Lab conditions: PostgreSQL 17.11 in Docker on a laptop, default settings, pgbench with 8 clients for 40 s per run. Absolute throughput is not a production prediction; the shape of the timeline is the point.</p>
+  </div></section>
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>

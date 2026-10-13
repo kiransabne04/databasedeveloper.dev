@@ -1,0 +1,45 @@
+Timing is on.
+CREATE INDEX
+Time: 603.822 ms
+  idx  |  heap  
+-------+--------
+ 60 MB | 130 MB
+(1 row)
+
+Time: 0.388 ms
+ANALYZE
+Time: 35.032 ms
+PREPARE
+Time: 0.194 ms
+SET
+Time: 0.073 ms
+                                                                        QUERY PLAN                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..96.96 rows=20 width=27) (actual time=0.007..0.013 rows=18 loops=1)
+   Buffers: shared hit=33
+   ->  Index Scan Backward using orders_tenant_created_idx on orders  (cost=0.43..28546.32 rows=5914 width=27) (actual time=0.006..0.012 rows=18 loops=1)
+         Index Cond: (tenant_id = $1)
+         Filter: (status = 'open'::text)
+         Rows Removed by Filter: 42
+         Buffers: shared hit=33
+ Planning:
+   Buffers: shared hit=50 read=1
+ Planning Time: 0.109 ms
+ Execution Time: 0.024 ms
+(11 rows)
+
+Time: 0.269 ms
+                                                                        QUERY PLAN                                                                        
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=0.43..96.96 rows=20 width=27) (actual time=0.005..0.051 rows=20 loops=1)
+   Buffers: shared hit=105
+   ->  Index Scan Backward using orders_tenant_created_idx on orders  (cost=0.43..28546.32 rows=5914 width=27) (actual time=0.005..0.049 rows=20 loops=1)
+         Index Cond: (tenant_id = $1)
+         Filter: (status = 'open'::text)
+         Rows Removed by Filter: 80
+         Buffers: shared hit=105
+ Planning Time: 0.001 ms
+ Execution Time: 0.055 ms
+(9 rows)
+
+Time: 0.118 ms

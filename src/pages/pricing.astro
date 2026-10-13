@@ -1,0 +1,38 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { site } from '../config/site';
+---
+<BaseLayout title="Pricing — DatabaseDeveloper" description="Starting pricing for PostgreSQL Performance Investigation, PostgreSQL Upgrade Readiness, remediation sprints and bounded advisory.">
+  <PageHero eyebrow="Pricing" title="Start with a bounded scope." description="Transparent starting prices help both sides decide whether the problem is worth investigating before a long sales process." primaryLabel="Request fit review" primaryHref="/contact" />
+  <section>
+    <div class="container grid two">
+      <div class="card price-card">
+        <span class="kicker">Core</span><h3>PostgreSQL Performance Investigation</h3>
+        <div class="price">{site.foundingOffer.international} <small>/ {site.foundingOffer.india} founding</small></div>
+        <p class="muted">First three suitable engagements. Standard price after founding engagements: {site.standardOffer.international} / {site.standardOffer.india}.</p>
+        <ul><li>One cluster</li><li>One primary workload</li><li>Evidence-linked findings</li><li>Report in {site.investigationTurnaround}</li><li>Review call</li></ul>
+        <a class="button primary" href="/postgresql-performance-investigation">View scope</a>
+      </div>
+      <div class="card price-card">
+        <span class="kicker">Deadline track</span><h3>PostgreSQL Upgrade Readiness</h3>
+        <div class="price">$750–900 <small>/ ₹45k–55k</small></div>
+        <p class="muted">Version/extensions, application risk, baseline, plan-regression checks and post-upgrade validation.</p>
+        <a class="button" href="/postgresql-upgrade-readiness">View review</a>
+      </div>
+      <div class="card price-card">
+        <span class="kicker">After investigation</span><h3>Remediation Sprint</h3>
+        <div class="price">$2k–3k <small>/ ₹1.2L–1.75L</small></div>
+        <p class="muted">Bounded implementation support and before/after validation with the client engineering team.</p>
+        <a class="button" href="/contact">Discuss scope</a>
+      </div>
+      <div class="card price-card">
+        <span class="kicker">Recurring</span><h3>Database Advisory</h3>
+        <div class="price">~$900+ <small>/ ~₹50k/mo</small></div>
+        <p class="muted">Release/schema/query reviews and bounded async advisory. No emergency/on-call SLA.</p>
+        <a class="button" href="/contact">Discuss fit</a>
+      </div>
+    </div>
+  </section>
+  <section><div class="container prose"><p class="notice"><strong>Scope note:</strong> Prices are starting points, not a promise for every environment. Final scope depends on evidence, number of workloads, platform complexity and turnaround.</p></div></section>
+</BaseLayout>

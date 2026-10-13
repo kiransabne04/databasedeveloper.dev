@@ -1,0 +1,22 @@
+---
+const {
+  eyebrow,
+  title,
+  description,
+  primaryLabel = 'Request an investigation',
+  primaryHref = '/contact',
+  secondaryLabel,
+  secondaryHref
+} = Astro.props;
+---
+<div class="container hero">
+  <div class="content">
+    <span class="eyebrow">{eyebrow}</span>
+    <h1>{title}</h1>
+    <p class="lede">{description}</p>
+    <div class="actions">
+      <a class="button primary" data-track="primary_cta_click" href={primaryHref}>{primaryLabel}</a>
+      {secondaryLabel && secondaryHref && <a class="button ghost" href={secondaryHref}>{secondaryLabel}</a>}
+    </div>
+  </div>
+</div>

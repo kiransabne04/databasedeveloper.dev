@@ -1,0 +1,77 @@
+[t=10] DDL issued: SET lock_timeout = '2s'; ALTER TABLE orders ADD COLUMN note text;
+Time: 0.028 ms
+ERROR:  canceling statement due to lock timeout
+Time: 2008.535 ms (00:02.009)
+[t=14] blocking-chain snapshot
+ pid | blocked_by |        state        |       wait        | xact_age_s | in_state_s |                        query                         
+-----+------------+---------------------+-------------------+------------+------------+------------------------------------------------------
+ 298 | {}         | idle in transaction | Client:ClientRead |        9.0 |        9.0 | SELECT count(*) FROM orders WHERE tenant_id = 7;
+ 288 | {}         | active              |                   |        0.0 |        0.0 | SELECT id, status, amount FROM orders WHERE id = $1;
+(2 rows)
+
+ sessions_waiting_on_lock | longest_wait_s 
+--------------------------+----------------
+                        0 |               
+(1 row)
+
+ pid |      mode       | granted | sessions_in_same_state 
+-----+-----------------+---------+------------------------
+ 287 | AccessShareLock | t       |                      2
+ 298 | AccessShareLock | t       |                      2
+(2 rows)
+
+[DDL session finished]
+pgbench (17.11 (Debian 17.11-1.pgdg13+2))
+progress: 1.0 s, 154248.1 tps, lat 0.049 ms stddev 0.024, 0 failed
+progress: 2.0 s, 146989.0 tps, lat 0.051 ms stddev 0.023, 0 failed
+progress: 3.0 s, 149828.9 tps, lat 0.050 ms stddev 0.023, 0 failed
+progress: 4.0 s, 152400.7 tps, lat 0.049 ms stddev 0.023, 0 failed
+progress: 5.0 s, 151168.0 tps, lat 0.050 ms stddev 0.024, 0 failed
+progress: 6.0 s, 141141.9 tps, lat 0.053 ms stddev 0.023, 0 failed
+progress: 7.0 s, 149831.7 tps, lat 0.050 ms stddev 0.023, 0 failed
+progress: 8.0 s, 149519.7 tps, lat 0.050 ms stddev 0.023, 0 failed
+progress: 9.0 s, 146672.0 tps, lat 0.051 ms stddev 0.023, 0 failed
+progress: 10.0 s, 145251.6 tps, lat 0.051 ms stddev 0.024, 0 failed
+progress: 11.0 s, 0.0 tps, lat 0.000 ms stddev 0.000, 0 failed
+progress: 12.0 s, 471.6 tps, lat 34.489 ms stddev 260.309, 0 failed
+progress: 13.0 s, 134056.5 tps, lat 0.056 ms stddev 0.022, 0 failed
+progress: 14.0 s, 144482.6 tps, lat 0.052 ms stddev 0.023, 0 failed
+progress: 15.0 s, 131892.6 tps, lat 0.057 ms stddev 0.020, 0 failed
+progress: 16.0 s, 140182.0 tps, lat 0.054 ms stddev 0.022, 0 failed
+progress: 17.0 s, 148710.6 tps, lat 0.051 ms stddev 0.023, 0 failed
+progress: 18.0 s, 140188.1 tps, lat 0.054 ms stddev 0.024, 0 failed
+progress: 19.0 s, 143972.6 tps, lat 0.052 ms stddev 0.023, 0 failed
+progress: 20.0 s, 149005.4 tps, lat 0.051 ms stddev 0.023, 0 failed
+progress: 21.0 s, 147569.1 tps, lat 0.051 ms stddev 0.023, 0 failed
+progress: 22.0 s, 141626.4 tps, lat 0.053 ms stddev 0.023, 0 failed
+progress: 23.0 s, 131181.1 tps, lat 0.057 ms stddev 0.021, 0 failed
+progress: 24.0 s, 144813.4 tps, lat 0.052 ms stddev 0.023, 0 failed
+progress: 25.0 s, 145478.9 tps, lat 0.052 ms stddev 0.024, 0 failed
+progress: 26.0 s, 145130.9 tps, lat 0.052 ms stddev 0.023, 0 failed
+progress: 27.0 s, 143395.1 tps, lat 0.053 ms stddev 0.023, 0 failed
+progress: 28.0 s, 148092.1 tps, lat 0.051 ms stddev 0.024, 0 failed
+progress: 29.0 s, 149025.7 tps, lat 0.051 ms stddev 0.024, 0 failed
+progress: 30.0 s, 146830.1 tps, lat 0.051 ms stddev 0.024, 0 failed
+progress: 31.0 s, 145964.0 tps, lat 0.052 ms stddev 0.023, 0 failed
+progress: 32.0 s, 144447.1 tps, lat 0.052 ms stddev 0.024, 0 failed
+progress: 33.0 s, 136101.9 tps, lat 0.055 ms stddev 0.022, 0 failed
+progress: 34.0 s, 144581.0 tps, lat 0.052 ms stddev 0.024, 0 failed
+progress: 35.0 s, 145647.7 tps, lat 0.052 ms stddev 0.025, 0 failed
+progress: 36.0 s, 144720.8 tps, lat 0.052 ms stddev 0.024, 0 failed
+progress: 37.0 s, 144486.3 tps, lat 0.052 ms stddev 0.024, 0 failed
+progress: 38.0 s, 146639.7 tps, lat 0.051 ms stddev 0.024, 0 failed
+progress: 39.0 s, 145697.1 tps, lat 0.052 ms stddev 0.024, 0 failed
+progress: 40.0 s, 144849.5 tps, lat 0.052 ms stddev 0.024, 0 failed
+transaction type: /tmp/readers.pgbench
+scaling factor: 1
+query mode: prepared
+number of clients: 8
+number of threads: 4
+maximum number of tries: 1
+duration: 40 s
+number of transactions actually processed: 5507020
+number of failed transactions: 0 (0.000%)
+latency average = 0.055 ms
+latency stddev = 2.421 ms
+initial connection time = 2.936 ms
+tps = 137680.153589 (without initial connection time)

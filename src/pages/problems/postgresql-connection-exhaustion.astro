@@ -1,0 +1,49 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import CTA from '../../components/CTA.astro';
+---
+<BaseLayout title="PostgreSQL Connection Exhaustion — DatabaseDeveloper" description="More connections can make the database less available. Practical evidence to collect, common wrong assumptions and when a deeper investigation is justified.">
+  <PageHero eyebrow="Problem guide" title="PostgreSQL Connection Exhaustion" description="More connections can make the database less available." />
+  <section><div class="container grid three">
+    <div class="card"><h3>Pool behavior</h3><p>Check application pools, PgBouncer mode, idle connections and concurrency limits.</p></div>
+<div class="card"><h3>Long transactions</h3><p>Idle-in-transaction sessions and slow transactions can retain locks/resources while pools keep opening work.</p></div>
+<div class="card"><h3>Storms after deploy</h3><p>Retries and synchronized reconnects can turn an application event into database saturation.</p></div>
+  </div></section>
+  <section><div class="container prose">
+    <h2>Investigation principle</h2>
+    <blockquote>Treat connection count as part of workload/concurrency design, not just a max_connections setting.</blockquote>
+    <h2>Common wrong assumptions</h2>
+    <ul>
+      <li><strong>“Raise <code>max_connections</code>.”</strong> Each backend uses memory, and more active backends than cores means they compete for CPU and locks. A higher limit often turns a connection error into a slow outage.</li>
+      <li><strong>“Each service’s pool is small.”</strong> Pools multiply. Forty pods with a pool of twenty is 800 possible connections, before deploys briefly run old and new pods together.</li>
+      <li><strong>“Idle connections are harmless.”</strong> Plain <code>idle</code> sessions cost memory. <code>idle in transaction</code> sessions hold locks and old snapshots, which block DDL and stop vacuum from cleaning up.</li>
+      <li><strong>“A pooler solves it.”</strong> Transaction pooling breaks session state such as session-level <code>SET</code>, advisory locks and <code>LISTEN</code>. With RDS Proxy, pinned sessions quietly lose the pooling benefit.</li>
+    </ul>
+    <h2>First queries to run</h2>
+    <p>Read-only. Run them during the problem window if you can; most of these views show current state, not history.</p>
+<pre><code>-- Who holds connections, and in what state
+SELECT usename,
+       application_name,
+       state,
+       count(*)                       AS sessions,
+       max(now() - state_change)      AS longest_in_state
+FROM pg_stat_activity
+WHERE backend_type = 'client backend'
+GROUP BY 1, 2, 3
+ORDER BY sessions DESC;
+
+-- Headroom
+SELECT current_setting('max_connections')::int AS max_connections,
+       count(*)                                AS client_backends
+FROM pg_stat_activity
+WHERE backend_type = 'client backend';</code></pre>
+    <h2>When a deeper investigation is justified</h2>
+    <ul>
+      <li>Connection spikes line up with deploys, retries or autoscaling, and nobody owns the total pool budget.</li>
+      <li><code>idle in transaction</code> sessions show up regularly and the code path is unknown.</li>
+      <li>You are deciding between a bigger instance, a pooler and application changes, and each one has a different cost.</li>
+    </ul>
+  </div></section>
+  <section><div class="container"><CTA /></div></section>
+</BaseLayout>
