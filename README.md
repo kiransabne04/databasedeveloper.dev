@@ -41,9 +41,7 @@ npm run build
 
 ## AI context
 
-- `AGENTS.md` is for Codex/code agents.
-- `CLAUDE.md` is for Claude/Claude Code.
-- `docs/business/` contains the shared strategy/implementation context.
+`AGENTS.md`, `CLAUDE.md` and `docs/business/` hold the agent instructions and business strategy. They are kept locally and excluded from this public repository by `.gitignore`.
 
 Codex should implement/code.
 Claude should review strategy/copy/delivery docs.

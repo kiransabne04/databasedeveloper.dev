@@ -28,7 +28,7 @@ npm run build
 
 ## 4. Connect source control
 
-This local folder does not currently contain a `.git` directory. Connect it to your intended repository before committing or deploying from Git. Confirm the remote and branch before pushing.
+The repository is public at github.com/kiransabne04/databasedeveloper.dev (branch `main`). Agent instructions and business strategy (`AGENTS.md`, `CLAUDE.md`, `docs/business/`) are local-only and gitignored; never commit them. Confirm the remote and branch before pushing.
 
 ## 5. Vercel
 
@@ -39,9 +39,9 @@ The public Hashnode sitemap has been inventoried in `docs/MIGRATION_FROM_HASHNOD
 ## AI agents
 
 Codex:
-read `AGENTS.md` + `docs/business/CODEX_MASTER_PROMPT.md`.
+read `AGENTS.md` + `docs/business/CODEX_MASTER_PROMPT.md` (local only).
 
 Claude:
-read `CLAUDE.md` + `docs/business/CLAUDE_MASTER_PROMPT.md`.
+read `CLAUDE.md` + `docs/business/CLAUDE_MASTER_PROMPT.md` (local only).
 
 The site is already implemented. Ask agents to improve/review it, not regenerate a generic consulting website.

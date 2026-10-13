@@ -6,3 +6,8 @@ dist/
 !.env.example
 .DS_Store
 .vercel/
+
+# Internal strategy and AI context (local only, not published)
+CLAUDE.md
+AGENTS.md
+docs/business/
