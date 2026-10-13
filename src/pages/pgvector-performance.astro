@@ -23,6 +23,27 @@ import CTA from '../components/CTA.astro';
         <li>Is the bottleneck vector indexing, relational filtering or application architecture?</li>
       </ul>
       <p>Start with the <a href="/insights/pgvector-hnsw-vs-ivfflat">HNSW versus IVFFlat benchmark guide</a>. The <a href="/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector">semantic search API guide</a> covers the application architecture and production checks.</p>
+
+      <h2>How the planner and the vector index interact</h2>
+      <p>A vector index is only one access path the PostgreSQL planner can choose. The plan, not the index definition, decides what the query actually does.</p>
+      <ul>
+        <li><strong>The index needs the right query shape.</strong> pgvector's approximate indexes are used for <code>ORDER BY embedding &lt;op&gt; $1 LIMIT k</code>, with the distance operator matching the index operator class (for example <code>&lt;=&gt;</code> with <code>vector_cosine_ops</code>). An expression around the distance, a descending sort or a missing <code>LIMIT</code> means no index scan.</li>
+        <li><strong>Filters run after the approximate scan.</strong> With the default <code>hnsw.ef_search</code> of 40 and a filter matching 10% of rows, pgvector's documentation notes only about four rows survive on average. The query asked for ten and returns fewer, quickly.</li>
+        <li><strong>The planner may skip the vector index.</strong> With a selective filter, a B-tree on the filter column plus an exact distance sort over the remaining rows can be both faster and exact. That is often the right plan; check it is chosen for the right reason.</li>
+        <li><strong>Iterative scans change the trade-off.</strong> Since pgvector 0.8.0, <code>hnsw.iterative_scan</code> and <code>ivfflat.iterative_scan</code> let a filtered query keep scanning until enough rows match, bounded by settings such as <code>hnsw.max_scan_tuples</code>. That improves result count at a latency cost that needs measuring.</li>
+        <li><strong>Few distinct filter values</strong> suit a partial index per value; many values (such as tenants) usually point to partitioning or a different design.</li>
+      </ul>
+      <p>The evidence is <code>EXPLAIN (ANALYZE, BUFFERS)</code> for representative filtered queries, the returned row count against the requested <code>k</code>, and recall against an exact-search baseline.</p>
+
+      <h2>What changes as vector count grows</h2>
+      <ul>
+        <li><strong>HNSW build time and memory.</strong> Builds are much faster while the graph fits in <code>maintenance_work_mem</code>. PostgreSQL logs a notice when it no longer fits, and the build slows sharply from that point. Raising the setting has to leave memory for the rest of the server.</li>
+        <li><strong>Index size versus cache.</strong> Once the index no longer fits in memory alongside the hot relational data, latency becomes I/O-bound and less predictable. Compare index size with instance memory, and watch buffer reads in the plans.</li>
+        <li><strong>IVFFlat lists go stale.</strong> Lists are fixed at build time from the data present then. pgvector suggests <code>rows / 1000</code> lists up to a million rows and <code>sqrt(rows)</code> above that. After heavy growth or distribution shift, recall can drift until the index is rebuilt.</li>
+        <li><strong>Writes and maintenance.</strong> HNSW inserts cost more than a B-tree insert, and updates and deletes leave work for vacuum. A write-heavy embedding pipeline can compete with query latency.</li>
+        <li><strong>Dimensions and type.</strong> <code>vector</code> indexes support up to 2,000 dimensions and <code>halfvec</code> up to 4,000. Half precision halves storage and index size; measure its recall effect before switching.</li>
+      </ul>
+      <p class="small muted">Version-specific details from the <a href="https://github.com/pgvector/pgvector#readme">pgvector documentation</a> (0.8.x), checked 13 October 2026. Managed services may ship an older pgvector; check <code>SELECT extversion FROM pg_extension WHERE extname = 'vector';</code> first.</p>
     </div>
   </section>
   <section><div class="container"><CTA title="Need a second set of eyes on a pgvector workload?" description="Bring the workload shape, vector/index configuration and query behavior. The first step is deciding whether a focused review is justified." /></div></section>

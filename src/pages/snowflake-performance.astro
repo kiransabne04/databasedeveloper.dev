@@ -10,5 +10,30 @@ import CTA from '../components/CTA.astro';
     <div class="card"><h3>Pruning / clustering</h3><p>Review whether data layout and query predicates are creating avoidable scan amplification.</p></div>
     <div class="card"><h3>Warehouse economics</h3><p>Separate query inefficiency from concurrency/capacity needs before simply scaling warehouse size.</p></div>
   </div></section>
+  <section><div class="container prose">
+    <h2>Start from query history, not one query</h2>
+    <p><code>SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY</code> keeps a year of queries, with up to 45 minutes of latency. Grouping by <code>query_parameterized_hash</code>, warehouse and <code>query_tag</code> shows which workload patterns account for elapsed time and warehouse use. The columns that usually explain a slow or expensive pattern:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Columns</th><th>What they suggest</th></tr></thead>
+        <tbody>
+          <tr><td><code>partitions_scanned</code> vs <code>partitions_total</code></td><td>Whether predicates prune micro-partitions. Scanning most partitions for a narrow question points to data layout or predicate shape.</td></tr>
+          <tr><td><code>bytes_spilled_to_local_storage</code>, <code>bytes_spilled_to_remote_storage</code></td><td>Memory pressure in joins, sorts or aggregations. Remote spilling is the expensive case.</td></tr>
+          <tr><td><code>queued_overload_time</code></td><td>Queries waiting because the warehouse is busy: a concurrency problem, not a single-query problem.</td></tr>
+          <tr><td><code>queued_provisioning_time</code></td><td>Time waiting for a warehouse to start or resume.</td></tr>
+          <tr><td><code>compilation_time</code> vs <code>execution_time</code></td><td>Whether time goes to planning very large or generated SQL or to running it.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Workload isolation and concurrency</h2>
+    <p>A common pattern is one warehouse serving dashboards, ad hoc analysis, scheduled transformations and loads. A heavy batch job then shows up as queueing on interactive queries, and the usual response is a bigger warehouse for everyone.</p>
+    <ul>
+      <li><strong>Separate warehouses by workload</strong> when the patterns have different latency needs or schedules. Each can then be sized, suspended and attributed on its own.</li>
+      <li><strong>Size versus clusters.</strong> A larger warehouse helps individual heavy queries and spills. Multi-cluster warehouses (Enterprise Edition) add clusters for concurrency; Snowflake's documentation describes them as less useful for speeding up a single slow query. The Standard scaling policy favors avoiding queues, Economy favors credits.</li>
+      <li><strong>Check before scaling.</strong> If <code>queued_overload_time</code> is low and the slow pattern scans most partitions, more compute will cost more without fixing the cause.</li>
+    </ul>
+    <p class="small muted">From Snowflake's documentation for <a href="https://docs.snowflake.com/en/sql-reference/account-usage/query_history">QUERY_HISTORY</a> and <a href="https://docs.snowflake.com/en/user-guide/warehouses-multicluster">multi-cluster warehouses</a>, checked 13 October 2026.</p>
+  </div></section>
   <section><div class="container"><CTA title="Have a Snowflake workload you want reviewed?" description="Start with query history, warehouse configuration and the cost or latency symptom. Scope is agreed once the problem and evidence are clear." /></div></section>
 </BaseLayout>

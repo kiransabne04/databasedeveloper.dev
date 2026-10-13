@@ -10,5 +10,29 @@ import CTA from '../components/CTA.astro';
     <div class="card"><h3>Skew + joins</h3><p>Review distribution and join behavior when one stage dominates elapsed time or resource usage.</p></div>
     <div class="card"><h3>Cost/performance</h3><p>Connect architecture and workload isolation decisions to the actual latency and spend profile.</p></div>
   </div></section>
+  <section><div class="container prose">
+    <h2>Ingestion and query performance pull in different directions</h2>
+    <p>Many analytical slowdowns start in the write path. Choices that make data arrive quickly and cheaply often make every later read more expensive, and the cost shows up weeks later as data grows.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Ingestion choice</th><th>Benefit</th><th>Query-side cost</th></tr></thead>
+        <tbody>
+          <tr><td>Frequent small batches or streaming</td><td>Fresher data</td><td>Many small files or partitions, more metadata and less effective pruning until compaction runs</td></tr>
+          <tr><td>Loading in arrival order</td><td>Simple, append-only</td><td>Rows for one customer or date spread across the table; filters read far more than they return</td></tr>
+          <tr><td>Fine-grained partitions</td><td>Precise pruning for the expected filter</td><td>Too many partitions to plan and manage; queries filtering on other columns gain nothing</td></tr>
+          <tr><td>Updates and late-arriving data in place</td><td>Correct current values</td><td>Rewrites, merges or dead rows that reorganization must later clean up</td></tr>
+          <tr><td>More indexes or clustering keys</td><td>Faster targeted reads</td><td>Slower loads and more background maintenance</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <h2>What to measure</h2>
+    <ul>
+      <li>Bytes or partitions read per query against rows returned, before and after a load cycle.</li>
+      <li>File or partition counts and sizes over time, and when compaction or reorganization last ran.</li>
+      <li>Load duration and freshness lag against the business requirement. Minute-level freshness is often requested and rarely needed.</li>
+      <li>Whether loads and heavy queries share compute, and what queueing or contention they cause each other.</li>
+    </ul>
+    <p>The useful outcome is an explicit trade-off: the freshness the business needs, the layout that serves the main query patterns, and the maintenance that keeps both true as data grows. In PostgreSQL, the same trade-off appears in <a href="/how-to-scale-postgresql-databases-with-partitioning">partitioning</a> and <a href="/postgresql-indexing-when-brin-beats-b-tree">BRIN versus B-tree</a> decisions.</p>
+  </div></section>
   <section><div class="container"><CTA title="Need an analytical-workload review?" description="Start with the platform, workload pattern and cost/latency symptom. Scope is agreed once the problem and evidence are clear." /></div></section>
 </BaseLayout>
