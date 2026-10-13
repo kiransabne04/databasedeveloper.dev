@@ -37,7 +37,7 @@ npm run build
 3. Optionally set analytics env vars.
 4. Deploy to a Vercel Pro preview or another host that permits commercial sites. Vercel Hobby is limited to personal, non-commercial use.
 5. Verify content/links/mobile.
-6. Inventory every existing Hashnode URL and choose a relevant retained page or redirect before switching the domain.
+6. Review `docs/MIGRATION_FROM_HASHNODE.md`. The public sitemap's eight articles are mapped; test all retained paths and redirects on the preview, then compare Search Console for any additional indexed URLs before switching the domain.
 
 ## AI context
 
@@ -52,4 +52,4 @@ ChatGPT should be used for current research, market/lead monitoring and orchestr
 ## Truthfulness
 
 No fake clients, logos, staff or performance claims.
-Synthetic cases are clearly labeled.
+Synthetic cases are clearly labeled and backed by reproducible local lab output.

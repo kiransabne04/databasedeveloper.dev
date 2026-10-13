@@ -48,6 +48,7 @@ ORDER BY 3 DESC;</code></pre>
       <li>The instance has already been scaled once and CPU came back.</li>
       <li>The obvious fix is an index on a write-heavy table, so the read win has a write cost to weigh.</li>
     </ul>
+    <p>For that index decision, see <a href="/postgresql-indexing-when-brin-beats-b-tree">how to test BRIN against B-tree</a> on large, physically ordered tables.</p>
   </div></section>
   <section><div class="container"><CTA /></div></section>
 </BaseLayout>

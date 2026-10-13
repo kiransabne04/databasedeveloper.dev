@@ -4,13 +4,14 @@ import PageHero from '../components/PageHero.astro';
 import CTA from '../components/CTA.astro';
 ---
 <BaseLayout title="Sample PostgreSQL Performance Investigation Report — DatabaseDeveloper" description="A full evidence-linked PostgreSQL finding from a reproducible lab: plans, workload statistics, ranked recommendation, risk, rollback and measured validation.">
-  <PageHero eyebrow="Sample deliverable" title="See how a finding is written before you buy the investigation." description="This finding comes from a synthetic lab run on PostgreSQL 17, not a client system. Every number below is from that run." primaryLabel="Request an investigation" primaryHref="/contact" secondaryLabel="How it works" secondaryHref="/how-it-works" />
+  <PageHero eyebrow="Sample deliverable" title="See how a finding is written before you buy the investigation." description="A measured PostgreSQL 17 lab finding, written in the format of an investigation report. Follow the evidence, recommendation, risk and validation." primaryLabel="Request an investigation" primaryHref="/contact" secondaryLabel="How it works" secondaryHref="/how-it-works" />
 
   <section>
     <div class="container">
+      <p class="small muted"><strong>Sample disclosure:</strong> This report uses synthetic data from an isolated PostgreSQL lab. It does not describe a client engagement.</p>
       <div class="report">
         <div class="report-head">
-          <div><strong>Finding P-01</strong><div class="small muted">Synthetic lab · PostgreSQL 17.11 · 2.0M-row multi-tenant table</div></div>
+          <div><strong>Finding P-01</strong><div class="small muted">Measured lab · PostgreSQL 17.11 · 2.0M-row multi-tenant table</div></div>
           <span class="badge high">High severity · High confidence</span>
         </div>
         <div class="report-body">

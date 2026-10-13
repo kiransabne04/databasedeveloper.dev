@@ -1,15 +1,21 @@
 ---
-import BaseLayout from '../../layouts/BaseLayout.astro';
-import PageHero from '../../components/PageHero.astro';
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
 ---
-<BaseLayout title="pgvector: HNSW vs IVFFlat Is a Workload Decision — DatabaseDeveloper" description="A practical framing for choosing pgvector HNSW vs IVFFlat using recall, latency, memory, build and filtering trade-offs.">
-  <PageHero eyebrow="pgvector" title="HNSW vs IVFFlat is not a popularity contest." description="The useful choice depends on recall/latency goals, memory, build/maintenance cost, filters and how the vector workload coexists with relational queries." primaryLabel="View pgvector capability" primaryHref="/pgvector-performance" secondaryLabel="PlanReader" secondaryHref="https://planreader.dev" />
-  <section><div class="container prose">
-    <h2>Start with the service-level question</h2>
-    <p>What recall and latency matter to the product, and at what vector count/update rate?</p>
-    <h2>Measure the relational part too</h2>
-    <p>Metadata filters, joins and tenant boundaries can dominate the end-to-end query even when ANN lookup looks fast in isolation.</p>
-    <h2>Operational cost belongs in the benchmark</h2>
-    <p>Index build time, memory, maintenance and data growth matter alongside point-query latency.</p>
-  </div></section>
-</BaseLayout>
+<ArticleLayout title="pgvector HNSW vs IVFFlat: Benchmark for Your Filters and Recall" description="Choose a pgvector ANN index by measuring recall, filtered result count, p95 latency, build cost and write overhead on your actual workload." eyebrow="pgvector performance" published="2026-10-13" updated="2026-10-13" ctaTitle="Need a pgvector performance review?" ctaDescription="Bring the query, filter pattern, vector count and latency or recall target. The first step is scoping a bounded review of the complete PostgreSQL workload.">
+  <h2>Start with an exact baseline</h2>
+  <p>Approximate nearest-neighbor indexes trade some recall for speed. Before comparing HNSW and IVFFlat, run representative queries with exact search and save the top-k results. That gives you a ground truth for recall at k, not merely a lower latency number. Include common and difficult queries, multiple tenants, metadata filters and the vector count you expect after growth.</p>
+
+  <h2>What changes between HNSW and IVFFlat?</h2>
+  <p>HNSW uses a graph and can be built before data is loaded. It often offers a strong speed–recall trade-off, with more memory and slower build or maintenance cost. IVFFlat groups vectors into lists and is best created after representative data is available; its probe count controls how many lists are searched. Neither is automatically the right choice for a small collection, a rapidly changing dataset or a heavily filtered query.</p>
+  <p>Filtering is a common surprise. With approximate indexes, a metadata predicate can reduce the candidates left after the vector scan, so a query requesting ten results may return fewer than ten. The answer may involve filter design, a different index strategy, higher search effort or iterative scans, depending on pgvector version and workload. Test the returned-result count as well as latency.</p>
+
+  <h2>A benchmark that supports a decision</h2>
+  <ol>
+    <li>Fix the embedding model, distance metric, top-k value and dataset for all runs.</li>
+    <li>Record exact-search results, then compare HNSW and IVFFlat at several search-effort settings. For HNSW, include <code>hnsw.ef_search</code>; for IVFFlat, include <code>ivfflat.probes</code>.</li>
+    <li>Measure recall@k, p50/p95 latency, returned-result count and the complete SQL query with filters and joins.</li>
+    <li>Measure index size, build time, insert/update cost and memory under realistic concurrency.</li>
+    <li>Repeat after a realistic data-growth and deletion cycle. Do not choose from a single warm-cache microbenchmark.</li>
+  </ol>
+  <p>The <a href="https://github.com/pgvector/pgvector#readme">pgvector project documentation</a> describes index types, search settings and iterative scans. For the API architecture that feeds this workload, see the <a href="/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector">semantic search API guide</a>. For a production review, see <a href="/pgvector-performance">pgvector performance capability</a>.</p>
+</ArticleLayout>

@@ -5,6 +5,21 @@
       "source": "/crack-sql-interviews-with-these-postgresql-internals-and-real-questions",
       "destination": "https://kiransabne.dev/cracking-the-sql-interview-real-questions-and-postgresql-internals-you-should-know",
       "permanent": true
+    },
+    {
+      "source": "/archive",
+      "destination": "/insights",
+      "permanent": true
+    },
+    {
+      "source": "/recommendations",
+      "destination": "/insights",
+      "permanent": true
+    },
+    {
+      "source": "/sitemap.xml",
+      "destination": "/sitemap-index.xml",
+      "permanent": true
     }
   ],
   "headers": [

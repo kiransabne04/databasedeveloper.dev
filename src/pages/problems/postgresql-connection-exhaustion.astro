@@ -44,6 +44,7 @@ WHERE backend_type = 'client backend';</code></pre>
       <li><code>idle in transaction</code> sessions show up regularly and the code path is unknown.</li>
       <li>You are deciding between a bigger instance, a pooler and application changes, and each one has a different cost.</li>
     </ul>
+    <p>If old transactions are part of the spike, use the <a href="/postgresql-concurrency-and-locking-a-comprehensive-guide">locking and concurrency guide</a> to identify who is blocking whom.</p>
   </div></section>
   <section><div class="container"><CTA /></div></section>
 </BaseLayout>

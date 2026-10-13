@@ -34,7 +34,7 @@ This local folder does not currently contain a `.git` directory. Connect it to y
 
 Use Vercel Pro or another host that permits commercial sites. Import the connected repository and deploy a preview first.
 
-Do not switch Hashnode/DNS or add old-URL redirects until the old article inventory is verified.
+The public Hashnode sitemap has been inventoried in `docs/MIGRATION_FROM_HASHNODE.md`. Test the retained article paths and redirects on the preview, compare Search Console for any additional indexed URLs, and then plan the DNS switch.
 
 ## AI agents
 

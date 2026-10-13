@@ -3,69 +3,37 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
 import CTA from '../../components/CTA.astro';
 ---
-<BaseLayout title="Lab Case: PostgreSQL DDL Lock Queue — DatabaseDeveloper" description="A reproducible PostgreSQL 17 lab: an idle transaction plus a catalog-only ALTER TABLE stopped all reads for 14 seconds. Blocking chain, lock modes and a measured lock_timeout fix.">
-  <PageHero eyebrow="Synthetic lab case" title="A trivial ALTER TABLE stopped every read for 14 seconds." description="A reproducible lab on PostgreSQL 17: one idle transaction, one ALTER TABLE, eight readers. Every number below comes from the lab run; no client result is claimed." />
+<BaseLayout title="PostgreSQL DDL Lock Queue: Measured Incident Lab — DatabaseDeveloper" description="A reproducible PostgreSQL 17 lab where an idle transaction and waiting ALTER TABLE stopped eight readers for 14 seconds; includes a measured lock-timeout response.">
+  <PageHero eyebrow="Reproduced lab · PostgreSQL 17" title="One idle transaction. A waiting migration. Then reads stop." description="A queued DDL lock stopped eight test readers for 14 seconds. Follow the captured blocking chain and the measured timeout response." secondaryLabel="Locking guide" secondaryHref="/postgresql-concurrency-and-locking-a-comprehensive-guide" />
   <section><div class="container prose">
-    <h2>Setup</h2>
-    <p>An <code>orders</code> table with 200,000 rows and eight clients running primary-key reads at roughly 150,000 per second. At t=5 s, a session opens a transaction, reads from <code>orders</code> and then sits idle. This is the pattern an application leaves behind when it forgets to commit, or when it does slow work in the middle of a transaction. At t=10 s, a migration runs <code>ALTER TABLE orders ADD COLUMN note text</code>, which adds a nullable column with no default. That is a catalog-only change; it needs a brief exclusive lock but does not rewrite the table.</p>
+    <p class="small muted"><strong>Lab disclosure:</strong> Synthetic workload and generated data in an isolated PostgreSQL 17 environment. This is a measured reproduction, not a client incident.</p>
+    <h2>The trigger and symptom</h2>
+    <p>Eight clients ran primary-key reads against a 200,000-row <code>orders</code> table. Five seconds into the run, another session selected from the table and then sat idle inside its transaction. At ten seconds, a deployment issued a catalog-only <code>ALTER TABLE orders ADD COLUMN note text</code>. The operation needed an <code>AccessExclusiveLock</code> and waited behind the open transaction.</p>
+    <p>Reader throughput fell to zero from seconds 11 through 24. The DDL itself took 14.96 seconds because it waited for the old transaction to commit at second 25. This is the kind of incident where query plans remain healthy while an ordinary endpoint appears to freeze after a migration begins.</p>
 
-    <h2>What happened</h2>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th>Time</th><th>Reader throughput</th><th>Event</th></tr></thead>
-        <tbody>
-          <tr><td>t=10 s</td><td>156,652 reads/s</td><td>DDL issued</td></tr>
-          <tr><td>t=11–24 s</td><td>0 reads/s</td><td>All readers waiting</td></tr>
-          <tr><td>t=25 s</td><td>4,849 reads/s</td><td>Idle transaction commits; DDL runs; queue drains</td></tr>
-          <tr><td>t=26 s</td><td>133,079 reads/s</td><td>Back to normal</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>The DDL waited 14.96 s for its lock. The readers saw no errors, only a 14-second stall.</p>
+    <h2>What PostgreSQL showed during the queue</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Session</th><th>State / statement</th><th>Relation lock</th><th>Granted?</th><th>Blocked by</th></tr></thead>
+      <tbody>
+        <tr><td>A · pid 252</td><td>Idle in transaction</td><td>AccessShareLock</td><td>Yes</td><td>—</td></tr>
+        <tr><td>B · pid 259</td><td>ALTER TABLE waiting</td><td>AccessExclusiveLock</td><td>No</td><td>A</td></tr>
+        <tr><td>Eight readers</td><td>Primary-key SELECT waiting</td><td>AccessShareLock</td><td>No</td><td>B</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small muted">This is the snapshot taken four seconds after the DDL was issued. PIDs and exact timings vary by run. The repository's <code>labs/ddl-lock-queue</code> folder contains the setup, workload script and captured output.</p>
+    <p>The idle reader did not directly block the later readers. The pending <code>AccessExclusiveLock</code> request sat between them in the lock queue. <code>pg_blocking_pids()</code> showed the DDL blocked by the idle transaction, and every reader blocked by the DDL. PostgreSQL's <a href="https://www.postgresql.org/docs/current/explicit-locking.html">lock-mode documentation</a> explains why an exclusive request conflicts with ordinary reads.</p>
 
-    <h2>Evidence: the blocking chain</h2>
-    <p>Snapshot at t=14 s from <code>pg_stat_activity</code> and <code>pg_blocking_pids()</code> (trimmed):</p>
-<pre> pid | blocked_by |        state        |       wait        | xact_age_s | query
------+------------+---------------------+-------------------+------------+--------------------------------------
- 252 | {}         | idle in transaction | Client:ClientRead |        9.1 | SELECT count(*) FROM orders WHERE …
- 259 | {252}      | active              | Lock:relation     |        4.1 | ALTER TABLE orders ADD COLUMN note text;
- 242 | {259}      | active              | Lock:relation     |        4.1 | SELECT id, status, amount FROM orders …
- 240 | {259}      | active              | Lock:relation     |        4.1 | SELECT id, status, amount FROM orders …
- … 6 more readers, all blocked_by {259}</pre>
-    <p>Lock modes from <code>pg_locks</code> at the same moment:</p>
-<pre> pid |        mode         | granted | sessions in same state
------+---------------------+---------+-----------------------
- 252 | AccessShareLock     | t       | 1
- 259 | AccessExclusiveLock | f       | 1
- 242 | AccessShareLock     | f       | 8</pre>
+    <h2>The measured response</h2>
+    <p>The lab was repeated with <code>lock_timeout = '2s'</code> set only for the migration session. The DDL failed after 2.01 seconds instead of waiting nearly 15 seconds, and reader throughput recovered by second 13. The timed-out migration still needed to be retried later. A bounded timeout reduced the queue's duration; it did not make the schema change unnecessary or guarantee a safe deployment.</p>
 
-    <h2>Why reads stopped</h2>
-    <p>The readers do not conflict with the idle transaction: both take <code>AccessShareLock</code>. They conflict with the DDL’s <em>queued</em> request for <code>AccessExclusiveLock</code>. PostgreSQL grants locks in queue order, so a new request that conflicts with a waiting request lines up behind it. The idle transaction blocks the DDL, and the DDL blocks everyone else.</p>
-    <p>This is why <code>blocked_by</code> matters. The readers point at pid 259, the DDL, not at the session that is actually holding things up. Killing readers or tuning their query would change nothing. The head of the queue is pid 252, a transaction that has done no work for 9 seconds.</p>
-
-    <h2>The fix, measured</h2>
-    <p>Same timeline, with the migration session running <code>SET lock_timeout = '2s';</code> before the DDL:</p>
-    <div class="table-wrap">
-      <table>
-        <thead><tr><th></th><th>No lock_timeout</th><th>lock_timeout = 2s</th></tr></thead>
-        <tbody>
-          <tr><td>DDL outcome</td><td>Waited 14.96 s, then ran</td><td>Cancelled after 2.01 s</td></tr>
-          <tr><td>Reader stall</td><td>t=11–24 s (0 reads/s)</td><td>t=11–12 s</td></tr>
-          <tr><td>Reads in 40 s run</td><td>3.91M</td><td>5.51M</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <p>With the timeout, the migration fails fast and can retry; the application doesn’t stall. That moves the cost to the migration tooling, which needs a retry with backoff. It also leaves the real cause untouched: something left a transaction idle. <code>idle_in_transaction_session_timeout</code> limits that, but it terminates sessions, so check what the application expects before you set it.</p>
-
-    <h2>What an investigation would add</h2>
+    <h2>Response in a production incident</h2>
     <ol>
-      <li>Find what opened the idle transaction. <code>application_name</code>, <code>client_addr</code> and the last query of the blocking pid usually point at a job or code path.</li>
-      <li>Check how many migrations already set <code>lock_timeout</code>, and whether the deploy tool retries.</li>
-      <li>Confirm the timeline from logs. <code>log_lock_waits</code> records waits longer than <code>deadlock_timeout</code>, which helps when nobody captured a snapshot during the event.</li>
+      <li>Capture the blocking graph and transaction age while the event is active; identify the oldest blocker and the owner of its session.</li>
+      <li>Coordinate with the migration owner. If canceling the waiting DDL is safe, it may release later readers. Do not terminate the blocker blindly; it may be doing essential work.</li>
+      <li>For the next migration, test the lock mode, keep transactions short and use a bounded migration-session <code>lock_timeout</code> with a deliberate retry path.</li>
+      <li>Validate with reader throughput, endpoint latency and lock-wait signals after the queue clears. A faster SELECT plan would not have addressed this incident.</li>
     </ol>
-    <p>See PostgreSQL’s documentation on <a href="https://www.postgresql.org/docs/current/explicit-locking.html">lock modes and conflicts</a> and on <a href="https://www.postgresql.org/docs/current/runtime-config-client.html">lock_timeout and idle_in_transaction_session_timeout</a>.</p>
-
-    <p class="small muted">Lab conditions: PostgreSQL 17.11 in Docker on a laptop, default settings, pgbench with 8 clients for 40 s per run. Absolute throughput is not a production prediction; the shape of the timeline is the point.</p>
+    <p>The laptop throughput values are not a production promise. The repeatable result is the blocking chain and the shorter stall when the waiting DDL fails promptly. For the broader diagnostic method, see the <a href="/postgresql-concurrency-and-locking-a-comprehensive-guide">PostgreSQL concurrency guide</a>.</p>
   </div></section>
-  <section><div class="container"><CTA /></div></section>
+  <section><div class="container"><CTA eyebrow="Lock contention" title="Need to explain a production lock queue?" description="Bring the time window, application symptom and available wait or activity snapshots. The investigation connects the queue to a safe next change." /></div></section>
 </BaseLayout>

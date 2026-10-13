@@ -47,6 +47,7 @@ ORDER BY xact_start;</code></pre>
       <li>Migrations run without <code>lock_timeout</code>, and adding one needs retry logic in the deploy tool.</li>
       <li>Long or idle transactions come from a code path or job that nobody has identified.</li>
     </ul>
+    <p>For the wider diagnostic sequence, read the <a href="/postgresql-concurrency-and-locking-a-comprehensive-guide">PostgreSQL locking and concurrency guide</a>.</p>
   </div></section>
   <section><div class="container"><CTA /></div></section>
 </BaseLayout>

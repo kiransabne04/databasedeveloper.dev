@@ -2,10 +2,10 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
 ---
-<BaseLayout title="PostgreSQL Investigation Examples — DatabaseDeveloper" description="Synthetic PostgreSQL scenarios showing the evidence and reasoning used to investigate generic-plan regressions and lock queues.">
-  <PageHero eyebrow="Investigation examples" title="See the reasoning behind a finding." description="These are synthetic labs, not client incidents. They show what evidence to collect and how to test a hypothesis. Where a lab includes numbers, they come from a reproducible run." secondaryLabel="See sample report" secondaryHref="/sample-report" />
+<BaseLayout title="PostgreSQL Investigation Lab Cases — DatabaseDeveloper" description="Measured synthetic PostgreSQL lab cases showing the evidence and response to a generic-plan regression and DDL lock queue.">
+  <PageHero eyebrow="Investigation examples" title="See the reasoning behind a finding." description="Two reproduced PostgreSQL problems with captured plans, locks, timings and tested responses." secondaryLabel="See sample report" secondaryHref="/sample-report" />
   <section><div class="container grid two">
-    <a class="card card-link" href="/case-studies/lab-generic-plan-regression"><span class="kicker">Synthetic scenario</span><h3>Generic plan regression</h3><p>Which plans and row counts would reveal a parameter-sensitive problem?</p></a>
-    <a class="card card-link" href="/case-studies/lab-lock-queue"><span class="kicker">Synthetic lab</span><h3>DDL lock queue</h3><p>An idle transaction, one ALTER TABLE and 14 seconds of zero reads, reproduced and measured.</p></a>
-  </div></section>
+    <a class="card card-link" href="/case-studies/lab-generic-plan-regression"><span class="kicker">Measured lab</span><h3>Generic plan regression</h3><p>A plan setting hurt small tenants. Follow the change, plan evidence and tested response.</p></a>
+    <a class="card card-link" href="/case-studies/lab-lock-queue"><span class="kicker">Measured lab</span><h3>DDL lock queue</h3><p>An idle transaction, one ALTER TABLE and 14 seconds of zero reads, reproduced and measured.</p></a>
+  </div><div class="container"><p class="small muted">These are synthetic labs using generated data in an isolated environment, not client incidents.</p></div></section>
 </BaseLayout>

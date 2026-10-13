@@ -3,22 +3,27 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
 import CTA from '../../components/CTA.astro';
 ---
-<BaseLayout title="Generic Plan Regression: Synthetic PostgreSQL Scenario — DatabaseDeveloper" description="An illustrative PostgreSQL scenario showing what evidence to compare when prepared-statement plans behave differently across tenants.">
-  <PageHero eyebrow="Synthetic scenario" title="When one prepared query behaves like two different workloads." description="Consider a skewed multi-tenant workload. Here is how to test whether plan selection explains different latency across tenant groups; no client result is claimed." />
+<BaseLayout title="PostgreSQL Generic Plan Regression: Measured Lab Walkthrough — DatabaseDeveloper" description="A reproducible PostgreSQL 17 lab where forcing generic plans slowed small tenants, with the trigger, evidence, response and validation explained.">
+  <PageHero eyebrow="Reproduced lab · PostgreSQL 17" title="A plan setting sped up large tenants—and stalled new ones." description="A role-level plan setting created a parameter-sensitive regression in a 2-million-row test workload. Follow the captured plans, latency and tested response." secondaryLabel="Read the sample report" secondaryHref="/sample-report" />
   <section><div class="container prose">
-    <h2>Context</h2><p>A multi-tenant table holds 50 established tenants and a handful of small, new tenants. The application uses prepared statements.</p>
-    <h2>Symptom</h2><p>Established tenants are fine, but the same endpoint takes half a second for small tenants, and throughput drops for everyone as slow calls hold pooled connections.</p>
-    <p>The <a href="/sample-report">sample report</a> works through this scenario in a reproducible lab on PostgreSQL 17, with measured before and after numbers.</p>
-    <h2>Investigation</h2><p>Compare representative plans and actual row counts for different tenant cohorts, then connect those plans back to workload frequency and total time.</p>
-    <h2>Evidence that would test the hypothesis</h2>
+    <p class="small muted"><strong>Lab disclosure:</strong> Synthetic tenant and order data in an isolated PostgreSQL 17 environment. Measurements are from the lab, not a client system.</p>
+    <h2>The change that triggered it</h2>
+    <p>The lab models an orders endpoint shared by 50 established tenants and 20 small, new tenants. The query asks for a tenant's 20 most recent open orders. The application uses prepared statements. Initially, PostgreSQL's default <code>plan_cache_mode = auto</code> kept custom plans for this statement. Then the <code>app</code> role was changed to <code>force_generic_plan</code>, a plausible attempt to reduce planning work.</p>
+
+    <h2>The symptom</h2>
+    <p>With four load clients, throughput fell from about 4,100 to about 300 statements per second. Mean execution time rose from 0.91 ms to 12.98 ms, but the average hid the worst cohort: the maximum reached 735 ms. Every execution logged above 100 ms belonged to a small tenant. In a real SaaS service, this could appear as new-customer requests timing out while established tenants look healthy.</p>
+
+    <h2>The evidence that narrowed the cause</h2>
+    <p>The generic plan read the <code>orders_created_idx</code> index backwards, expecting to find 20 matching open orders quickly. A small tenant had only 18 matching rows. One measured plan scanned through the full index and removed 2,001,182 rows by filter, taking 531.8 ms. A custom plan used <code>orders_tenant_idx</code>, removed 42 rows by filter and completed in 0.06 ms for that tenant.</p>
+    <p>The timing of the role-setting change, the tenant cohort in <code>auto_explain</code> logs and the plan comparison all supported the same explanation. The <a href="/sample-report">sample investigation report</a> includes the evidence table, plan excerpts, risk, rollback and validation details. PostgreSQL's <a href="https://www.postgresql.org/docs/current/sql-prepare.html">PREPARE documentation</a> explains how generic and custom plans differ.</p>
+
+    <h2>Response and validation</h2>
     <ol>
-      <li>Capture the prepared statement and compare <code>EXPLAIN EXECUTE</code> for a small and a large tenant in a safe environment. Record whether the plan is generic or uses the supplied parameter values.</li>
-      <li>Compare estimated and actual rows, buffers, and execution time for both cohorts. Include planning time when testing a change to plan behavior.</li>
-      <li>Check how often each tenant cohort executes the statement. A faster outlier plan is useful only if the whole workload improves.</li>
-      <li>Test candidate changes, such as statistics, indexing, query shape, or prepare behavior, against both cohorts before recommending one.</li>
+      <li><strong>Restore the known prior behavior:</strong> reset <code>plan_cache_mode</code> on the app role and recycle its connections, since role defaults apply to new sessions. The lab returned to a 1.08 ms mean and had no execution above 100 ms.</li>
+      <li><strong>Test a structural alternative:</strong> a composite <code>(tenant_id, created_at)</code> index gave both tenant groups a useful ordered access path even while generic plans were forced. The lab measured 0.03 ms mean execution time for that run.</li>
+      <li><strong>Check the trade-off:</strong> the new index was 60 MB against a 130 MB heap. A real decision would measure write latency, WAL, storage and index-build risk before keeping it.</li>
     </ol>
-    <p>PostgreSQL documents how <a href="https://www.postgresql.org/docs/current/sql-prepare.html">generic and custom plans work with prepared statements</a>.</p>
-    <h2>Lesson</h2><p>The goal is not to declare “generic plans are bad.” It is to identify whether one plan choice is inappropriate for a meaningful parameter distribution and test the safest correction.</p>
+    <p>These are warm-cache laptop results from 30-second runs; their absolute throughput is not a production promise. The reproducible SQL, workload and captured output live in the repository's <code>labs/generic-plan-regression</code> folder. The investigation lesson is to compare parameter cohorts and total workload impact before forcing a plan policy or adding an index.</p>
   </div></section>
-  <section><div class="container"><CTA /></div></section>
+  <section><div class="container"><CTA eyebrow="Plan regression" title="One query, different tenant outcomes?" description="Bring the prepared statement, representative plans and workload distribution. A bounded investigation can separate a plan problem from a workload problem." /></div></section>
 </BaseLayout>

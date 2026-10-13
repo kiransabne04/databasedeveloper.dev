@@ -2,6 +2,8 @@
 
 Checked against the live `databasedeveloper.dev` Hashnode publication on 13 October 2026. It listed eight posts. The new site retains seven original paths with technically revised articles and redirects the one short interview pointer to its existing full article on `kiransabne.dev`.
 
+The public Hashnode sitemap was checked as well. It contained those eight posts plus `/archive` and `/recommendations`; both listing routes redirect to `/insights`. The old `/rss.xml` feed path is retained with a new feed, and `/sitemap.xml` redirects to the new `/sitemap-index.xml`.
+
 | Old path | Original type | New handling |
 | --- | --- | --- |
 | `/postgresql-indexing-when-brin-beats-b-tree` | Short pointer to a fuller personal article | New, distinct production decision guide at the same path; links to the personal deep dive |

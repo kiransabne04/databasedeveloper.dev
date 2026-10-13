@@ -2,12 +2,24 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
 ---
-<BaseLayout title="Database Performance Insights — DatabaseDeveloper" description="Technical writing on PostgreSQL performance, AI-era diagnosis, pgvector and production database trade-offs.">
-  <PageHero eyebrow="Insights" title="Technical depth that supports the investigation—not content for content's sake." description="New database-specialist content lives here. Broader backend/engineering writing remains on kiransabne.dev." />
+<BaseLayout title="PostgreSQL Performance Guides and Database Insights — DatabaseDeveloper" description="Practical guides to PostgreSQL locking, indexing, partitioning, pgvector and evidence-led production performance diagnosis.">
+  <PageHero eyebrow="Insights" title="Database performance guides grounded in workload decisions." description="Use these guides to frame the evidence and trade-offs behind a production change. Broader engineering writing remains on kiransabne.dev." />
   <section><div class="container grid three">
     <a class="card card-link" href="/insights/postgresql-14-minor-version-deadlines"><span class="kicker">Upgrade · Oct 2026</span><h3>RDS PostgreSQL 14.18/14.19 lose standard support on 31 October</h3><p>Minor-version deadlines that arrive before the PG14 major-version dates, and how to check your instances.</p></a>
     <a class="card card-link" href="/insights/what-ai-misses-postgresql"><span class="kicker">PostgreSQL</span><h3>What AI misses in production PostgreSQL diagnosis</h3><p>Why a plausible query recommendation can still be unsafe without workload context.</p></a>
     <a class="card card-link" href="/postgresql-14-eol"><span class="kicker">Upgrade</span><h3>PostgreSQL 14 EOL planning</h3><p>Current dates and the upgrade-readiness sequence.</p></a>
     <a class="card card-link" href="/insights/pgvector-hnsw-vs-ivfflat"><span class="kicker">pgvector</span><h3>HNSW vs IVFFlat is a workload decision</h3><p>Recall, latency, memory, build cost and filtering trade-offs.</p></a>
+  </div></section>
+  <section><div class="container">
+    <div class="section-head"><div><span class="eyebrow">Revised guides</span><h2>From the DatabaseDeveloper archive</h2></div><p>These guides keep their original Hashnode URLs and have been updated for technical accuracy and production use.</p></div>
+    <div class="grid three">
+      <a class="card card-link" href="/postgresql-concurrency-and-locking-a-comprehensive-guide"><span class="kicker">PostgreSQL</span><h3>Locking and concurrency</h3><p>Find the blocking chain and distinguish row contention, DDL queues and deadlocks.</p></a>
+      <a class="card card-link" href="/postgresql-indexing-when-brin-beats-b-tree"><span class="kicker">PostgreSQL</span><h3>BRIN vs B-tree</h3><p>Test physical correlation and the real query before changing index strategy.</p></a>
+      <a class="card card-link" href="/how-to-scale-postgresql-databases-with-partitioning"><span class="kicker">PostgreSQL</span><h3>Partitioning</h3><p>Check pruning, data lifecycle and constraints before expecting a speedup.</p></a>
+      <a class="card card-link" href="/mastering-clustering-in-postgresql-for-enhanced-query-performance"><span class="kicker">PostgreSQL</span><h3>CLUSTER trade-offs</h3><p>Measure the read benefit against the table rewrite and exclusive lock.</p></a>
+      <a class="card card-link" href="/sharding-postgresql-techniques-for-horizontal-scalability"><span class="kicker">PostgreSQL</span><h3>Sharding decision</h3><p>Prove a single-node limit and plan routing, rebalancing and cross-shard work.</p></a>
+      <a class="card card-link" href="/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector"><span class="kicker">pgvector</span><h3>Semantic search API</h3><p>Move from a working demo to measurable recall, filtering and latency.</p></a>
+    </div>
+    <p class="small muted">The original <a href="/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive">MongoDB concurrency guide</a> remains available as a revised archive article.</p>
   </div></section>
 </BaseLayout>

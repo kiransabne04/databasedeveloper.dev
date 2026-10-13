@@ -94,18 +94,19 @@ import { site } from '../config/site';
     <div class="container">
       <div class="section-head">
         <div><span class="eyebrow">See the work</span><h2>Review the method before you get in touch.</h2></div>
-        <p>Read a sample report and two reproducible synthetic labs. Their numbers come from lab runs, not client systems, and show how a finding is investigated and communicated.</p>
+        <p>Explore two reproduced PostgreSQL problems and a sample report. The captured plans, waits and timings show how evidence leads to a safer decision.</p>
       </div>
       <div class="grid two">
         <a class="card card-link" href="/case-studies/lab-generic-plan-regression">
-          <span class="kicker">Synthetic scenario</span><h3>Generic plan regression under prepared statements</h3>
-          <p>See what to compare when one prepared query behaves differently across tenant sizes.</p>
+          <span class="kicker">Measured lab</span><h3>Generic plan regression under prepared statements</h3>
+          <p>A role-level plan setting slowed small tenants. See the plan evidence and tested response.</p>
         </a>
         <a class="card card-link" href="/case-studies/lab-lock-queue">
-          <span class="kicker">Synthetic lab</span><h3>DDL lock queue behind an idle transaction</h3>
-          <p>A catalog-only ALTER TABLE stopped every read for 14 seconds. Blocking chain, lock modes and a measured fix.</p>
+          <span class="kicker">Measured lab</span><h3>DDL lock queue behind an idle transaction</h3>
+          <p>A catalog-only ALTER TABLE stalled eight readers for 14 seconds. See the blocking chain and timeout test.</p>
         </a>
       </div>
+      <p class="small muted">Both examples are synthetic labs using generated data; their measurements are not client results.</p>
     </div>
   </section>
 

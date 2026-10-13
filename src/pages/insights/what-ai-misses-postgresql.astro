@@ -1,0 +1,24 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="What AI Misses in a Production PostgreSQL Performance Diagnosis" description="AI can help interpret a PostgreSQL plan. A safe production recommendation also needs workload frequency, waits, write cost, change history and validation." eyebrow="PostgreSQL investigation" published="2026-10-13" updated="2026-10-13">
+  <h2>A plausible answer can be the wrong production change</h2>
+  <p>Paste a slow <code>EXPLAIN</code> plan into an assistant and it may suggest a missing index or a query rewrite. That can be useful as a hypothesis. It does not establish that this statement dominates the workload, that the plan caused the user's wait, or that the proposed index improves the system after its write and storage costs are included.</p>
+  <p>For example, a query with a good plan can still be slow because it is blocked behind a transaction. The first useful evidence is then the blocker and wait timeline, not another index. Conversely, a fast individual query executed thousands of times per request can dominate total database time. Single-plan analysis misses both patterns.</p>
+
+  <h2>Put the artifact back into its workload</h2>
+  <ul>
+    <li><strong>Frequency and total cost:</strong> compare calls, mean and tail latency, and total execution time for important statements. A rare outlier and a frequent moderate query need different priorities.</li>
+    <li><strong>Waits and concurrency:</strong> check whether the session was using CPU, reading I/O, waiting on a lock or sitting behind a saturated pool. See the <a href="/problems/postgresql-lock-contention">lock contention guide</a>.</li>
+    <li><strong>Data distribution:</strong> compare representative parameter values, actual versus estimated rows and plan shapes. A prepared statement may behave differently for large and small tenants.</li>
+    <li><strong>Change history:</strong> relate the symptom to releases, data growth, statistics, configuration, version changes or a new workload.</li>
+    <li><strong>Side effects:</strong> estimate how a new index affects writes, memory, disk and maintenance, or how a setting affects other statements.</li>
+  </ul>
+
+  <h2>Use AI where it helps</h2>
+  <p>AI can explain plan nodes, propose diagnostic queries and help compare candidate changes. It can also miss a relevant constraint or assume the supplied sample represents production. Treat its answer as an analysis aid. Confirm each important assertion against the source plan, PostgreSQL documentation and workload evidence before acting.</p>
+  <p>A useful output states: the observation, the evidence reference, the hypothesis, competing explanations, confidence, change risk and a before-and-after test. The <a href="/sample-report">sample investigation report</a> shows that structure using a measured synthetic lab. PostgreSQL's <a href="https://www.postgresql.org/docs/current/using-explain.html">EXPLAIN guide</a> explains why row estimates, loops and actual measurements matter when reading plans.</p>
+
+  <h2>When to ask for a deeper investigation</h2>
+  <p>If the same symptom has several plausible causes, a change could harm another workload, or the team cannot name a validation metric, the decision needs more than a query suggestion. A bounded <a href="/postgresql-performance-investigation">PostgreSQL performance investigation</a> ranks the evidence and defines a safe test order.</p>
+</ArticleLayout>

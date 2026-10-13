@@ -17,7 +17,10 @@
 - [x] Verify `robots.txt` and sitemap generation locally
 - [x] Verify canonical URLs locally
 - [x] Verify PG14/AWS dates on 13 October 2026; re-check before publishing if time has passed
-- [ ] Do not enable redirects until old URL inventory is verified
+- [x] Match the eight article URLs and two listing URLs in the live Hashnode sitemap to retained pages or specific redirects
+- [x] Retain the old `/rss.xml` feed path
+- [ ] Test all old URLs and redirects on the deployment preview before switching DNS
+- [ ] Compare Search Console's indexed URL report with the sitemap inventory for any additional old paths
 - [ ] Add Search Console
 - [ ] Review Search Console queries and real inquiry sources after launch before changing page priorities or claiming conversion optimization
 - [x] Add PlanReader CTA back to `/postgresql-performance-investigation`
