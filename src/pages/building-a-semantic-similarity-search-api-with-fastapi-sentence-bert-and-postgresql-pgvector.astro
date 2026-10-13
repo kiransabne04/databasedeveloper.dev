@@ -1,10 +1,10 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 ---
-<ArticleLayout title="pgvector Semantic Search with FastAPI: Production Checklist" description="Take a FastAPI and Sentence-BERT pgvector search API beyond a demo: benchmark exact versus HNSW search, filtered recall, tenant isolation and end-to-end latency." eyebrow="pgvector architecture" published="2025-10-21" updated="2026-10-13" legacy ctaTitle="Is vector search slowing a production workload?" ctaDescription="Review recall, filters, latency and PostgreSQL resource use together before choosing an index or a larger database instance.">
+<ArticleLayout title="pgvector Semantic Search with FastAPI: Production Checklist" description="Take a FastAPI and Sentence-BERT pgvector API beyond a demo: benchmark exact vs HNSW search, filtered recall, tenant isolation and end-to-end latency." eyebrow="pgvector architecture" published="2025-10-21" updated="2026-10-13" legacy ctaTitle="Is vector search slowing a production workload?" ctaDescription="Review recall, filters, latency and PostgreSQL resource use together before choosing an index or a larger database instance.">
   <h2>The simple architecture</h2>
   <p>A FastAPI endpoint receives text, Sentence-BERT produces an embedding, and PostgreSQL stores the vector alongside document metadata. A query embeds the user's text with the same model, orders candidates by the chosen distance operator and returns the nearest documents. This is a useful proof of concept because the vector data stays close to relational filters and application records.</p>
-  <p>The <a href="https://kiransabne.dev/create-a-semantic-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector">original implementation walkthrough</a> covers the API build. This edition focuses on the checks needed when the demo becomes a service.</p>
+  <p>The original Hashnode post introduced the API build. This expanded edition covers the same architecture and the checks needed when a demo becomes a service.</p>
 
   <h2>Define the query and the quality target</h2>
   <p>Start with a fixed embedding model, its dimension, a distance metric appropriate to that model and a representative set of user queries. For example, with cosine distance and tenant-scoped documents, the database query may look like this:</p>

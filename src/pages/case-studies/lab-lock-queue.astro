@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
 import CTA from '../../components/CTA.astro';
 ---
-<BaseLayout title="PostgreSQL DDL Lock Queue: Measured Incident Lab — DatabaseDeveloper" description="A reproducible PostgreSQL 17 lab where an idle transaction and waiting ALTER TABLE stopped eight readers for 14 seconds; includes a measured lock-timeout response.">
+<BaseLayout title="PostgreSQL DDL Lock Queue: Measured Incident Lab — DatabaseDeveloper" description="Reproducible PostgreSQL 17 lab: an idle transaction and a waiting ALTER TABLE stopped eight readers for 14 seconds. Blocking chain and lock_timeout test.">
   <PageHero eyebrow="Reproduced lab · PostgreSQL 17" title="One idle transaction. A waiting migration. Then reads stop." description="A queued DDL lock stopped eight test readers for 14 seconds. Follow the captured blocking chain and the measured timeout response." secondaryLabel="Locking guide" secondaryHref="/postgresql-concurrency-and-locking-a-comprehensive-guide" />
   <section><div class="container prose">
     <p class="small muted"><strong>Lab disclosure:</strong> Synthetic workload and generated data in an isolated PostgreSQL 17 environment. This is a measured reproduction, not a client incident.</p>

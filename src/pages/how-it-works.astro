@@ -3,10 +3,31 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import InvestigationWorkflow from '../components/InvestigationWorkflow.astro';
 import CTA from '../components/CTA.astro';
+import { site } from '../config/site';
 ---
-<BaseLayout title="How the Investigation Works — DatabaseDeveloper" description="A client-run read-only evidence workflow for PostgreSQL performance investigation: scope, collect, investigate, prioritize and validate.">
+<BaseLayout title="How the Investigation Works — DatabaseDeveloper" description="How a PostgreSQL performance investigation runs: fit review, client-run read-only evidence collection, a ranked report in 3 business days and a review call.">
   <PageHero eyebrow="How it works" title="The client keeps production control." description="No credentials or production access required: your team runs read-only collection and shares the resulting evidence bundle." />
   <section><div class="container"><InvestigationWorkflow /></div></section>
+  <section><div class="container prose">
+    <h2>Step by step</h2>
+    <ol>
+      <li><strong>Fit review.</strong> You describe the symptom, platform and version through the <a href="/contact">contact form</a>. Kiran replies with whether a bounded investigation fits, what question it would answer and which evidence is needed. If it is not a fit, you get that answer instead of a proposal.</li>
+      <li><strong>Scope agreed.</strong> One cluster, one dominant workload and one decision: for example, why p95 latency doubled after a release, or whether the instance really needs to be larger. Price and delivery are confirmed before any paid work.</li>
+      <li><strong>Your team collects evidence.</strong> Run the <a href="/evidence-collection">read-only collector</a> as a <code>pg_monitor</code> role, once in a normal period and, if possible, once while the problem is happening. Add representative <code>EXPLAIN (ANALYZE, BUFFERS)</code> output from a safe environment, a short change timeline and, on RDS or Aurora, Database Insights and CloudWatch exports for the same window.</li>
+      <li><strong>Review and redact.</strong> The output is plain text. Your team reads it and removes anything it does not want to share before sending it.</li>
+      <li><strong>Investigation.</strong> The workload is ranked by total cost, the symptom is correlated with waits, plans, locks, connections and changes, and competing explanations are tested against the evidence. Gaps are raised early rather than filled with guesses.</li>
+      <li><strong>Report within {site.investigationTurnaround}</strong> of receiving the agreed evidence. Each finding states severity, confidence, evidence, observation, likely cause, recommendation, risk, rollback and validation. See the <a href="/sample-report">sample report</a>.</li>
+      <li><strong>Review call.</strong> A 60-minute walkthrough with your engineers, followed by bounded async clarification. Your team decides what to change and when.</li>
+    </ol>
+
+    <h2>Security and access</h2>
+    <ul>
+      <li>No database credentials, VPN access or production write access are requested.</li>
+      <li>The collector sets <code>default_transaction_read_only = on</code>, a 30-second <code>statement_timeout</code> and a 1-second <code>lock_timeout</code> for its own session, and reads only statistics and catalog views.</li>
+      <li><code>pg_stat_statements</code> text is normalized, so literal parameter values are replaced with <code>$1</code>, <code>$2</code>, ….</li>
+      <li>An NDA can be signed before evidence is shared.</li>
+    </ul>
+  </div></section>
   <section><div class="container grid two">
     <div class="card"><h3>Why client-run collection?</h3><p>It reduces the security hurdle, keeps credentials inside your environment and makes the evidence bundle inspectable before it leaves your control. <a href="/evidence-collection">Read the collector script.</a></p></div>
     <div class="card"><h3>Why not just paste the query into AI?</h3><p>Because the decision may depend on workload frequency, writes, locks, connections, statistics, platform limits and the cost of changing the wrong thing.</p></div>

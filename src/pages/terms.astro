@@ -1,12 +1,27 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
+import { site } from '../config/site';
 ---
-<BaseLayout title="Terms — DatabaseDeveloper" description="Website terms and disclaimers for DatabaseDeveloper.dev.">
-  <PageHero eyebrow="Terms" title="Technical content is educational, not a production change instruction." description="Engagement scope, confidentiality, deliverables and commercial terms are agreed separately for paid work." primaryLabel="Contact" primaryHref="/contact" />
+<BaseLayout title="Terms — DatabaseDeveloper" description="Terms for using the DatabaseDeveloper website, its technical articles, SQL examples and the read-only evidence collector script.">
+  <PageHero eyebrow="Terms" title="Technical content is educational, not a production change instruction." description="Engagement scope, confidentiality, deliverables and commercial terms are agreed separately in writing for paid work." primaryLabel="Contact" primaryHref="/contact" />
   <section><div class="container prose">
-    <p>Public content on this site is general technical information. Database behavior depends on workload and environment; do not treat an article as a substitute for testing, change control or professional review of your system.</p>
-    <p>Performance examples labeled as synthetic/lab are not client results.</p>
-    <p>No specific performance improvement is guaranteed.</p>
+    <h2>Articles and guides</h2>
+    <p>Public content on this site is general technical information. Database behavior depends on version, platform, configuration, data distribution and workload. Do not treat an article as a substitute for testing, change control or a review of your own system. Dates and provider timelines are marked with the date they were checked; confirm them against the provider before acting.</p>
+
+    <h2>SQL examples and the evidence collector</h2>
+    <p>SQL, shell commands and the <a href="/evidence-collection">evidence collector</a> are provided as-is, without warranty. Read them before running them, run them first outside production where practical, and run them under your own change and access policies. The collector is designed to be read-only, but you remain responsible for where and how it runs.</p>
+
+    <h2>Examples and labs</h2>
+    <p>Examples labelled as synthetic or as a lab use generated data in an isolated environment. They are not client results, and their absolute numbers are not a prediction for your system.</p>
+
+    <h2>Paid engagements</h2>
+    <p>Paid work is governed by a written scope agreed before it starts, covering the question, evidence, deliverables, price, timing and data handling. Recommendations are advice; your team decides on and carries out production changes. No specific performance improvement is guaranteed.</p>
+
+    <h2>Trademarks and links</h2>
+    <p>PostgreSQL, Amazon RDS, Aurora, SQL Server, Snowflake and other product names belong to their owners. DatabaseDeveloper is independent and not affiliated with or endorsed by them. Links to third-party sites are provided for reference; their content is their own.</p>
+
+    <h2>Changes and contact</h2>
+    <p>These terms may be updated as the site changes. Questions: <a href={`mailto:${site.email}`}>{site.email}</a>.</p>
   </div></section>
 </BaseLayout>

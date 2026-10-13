@@ -1,7 +1,7 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 ---
-<ArticleLayout title="PostgreSQL Lock Contention: Find Blocking Queries" description="Diagnose PostgreSQL lock waits with pg_blocking_pids, transaction age and wait events. Distinguish row contention, DDL queues and deadlocks before changing timeouts." eyebrow="PostgreSQL concurrency" published="2025-01-03" updated="2026-10-13" legacy>
+<ArticleLayout title="PostgreSQL Lock Contention: Find Blocking Queries" description="Diagnose PostgreSQL lock waits with pg_blocking_pids, transaction age and wait events. Separate row contention, DDL queues and deadlocks before tuning." eyebrow="PostgreSQL concurrency" published="2025-01-03" updated="2026-10-13" legacy>
   <h2>Start with the waiting session, then find the blocker</h2>
   <p>PostgreSQL's MVCC lets ordinary reads and writes overlap in many cases, but transactions still acquire row and table locks. When an application endpoint slows down, a waiting query can be the victim rather than the cause. Tuning its SQL before finding the blocker may leave the incident untouched.</p>
   <p>Take a snapshot while the wait is happening. Capture the time window, affected endpoint, session state, wait event, transaction age and the sessions returned by <code>pg_blocking_pids()</code>. A long <code>idle in transaction</code> session can hold locks after its last statement has finished.</p>

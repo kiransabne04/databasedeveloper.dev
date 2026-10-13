@@ -3,12 +3,83 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import CTA from '../components/CTA.astro';
 ---
-<BaseLayout title="SQL Server Performance Review — DatabaseDeveloper" description="SQL Server performance review covering Query Store, plan regressions, blocking, parameter sensitivity, indexing and ORM-generated workload behavior.">
+<BaseLayout title="SQL Server Performance Review — DatabaseDeveloper" description="SQL Server performance review using Query Store, wait statistics and blocking DMVs: plan regressions, parameter sensitivity, blocking and ORM-generated SQL.">
   <PageHero eyebrow="Secondary capability" title="SQL Server Performance Review" description="Evidence-led review of Query Store, plan changes, blocking, parameter sensitivity, indexing and application-generated SQL." />
   <section><div class="container grid three">
     <div class="card"><h3>Query Store</h3><p>Identify dominant statements, plan changes and regressions using historical workload evidence.</p></div>
     <div class="card"><h3>Blocking</h3><p>Review blocking chains, transaction scope and concurrency behavior before treating waits as isolated events.</p></div>
     <div class="card"><h3>EF Core / ORM</h3><p>Connect generated SQL, parameter behavior, migrations and indexes back to application patterns.</p></div>
+  </div></section>
+
+  <section><div class="container prose">
+    <h2>Start with Query Store</h2>
+    <p>Query Store keeps per-plan runtime statistics inside the database, so it answers “what changed?” after the event. It is on by default for new databases in SQL Server 2022 and in Azure SQL Database; on older versions, check <code>sys.database_query_store_options</code> first. This ranks queries by total duration over the last seven days, which is usually more useful than the slowest single execution:</p>
+<pre><code>WITH totals AS (
+  SELECT p.query_id,
+         SUM(rs.count_executions)                            AS executions,
+         SUM(rs.avg_duration * rs.count_executions) / 1000.0 AS total_duration_ms,
+         SUM(rs.avg_cpu_time * rs.count_executions) / 1000.0 AS total_cpu_ms,
+         SUM(rs.avg_logical_io_reads * rs.count_executions)  AS total_logical_reads,
+         COUNT(DISTINCT p.plan_id)                           AS plan_count
+  FROM sys.query_store_plan AS p
+  JOIN sys.query_store_runtime_stats AS rs ON rs.plan_id = p.plan_id
+  JOIN sys.query_store_runtime_stats_interval AS i
+    ON i.runtime_stats_interval_id = rs.runtime_stats_interval_id
+  WHERE i.start_time &gt;= DATEADD(day, -7, SYSUTCDATETIME())
+  GROUP BY p.query_id
+)
+SELECT TOP (20) t.*, LEFT(qt.query_sql_text, 200) AS query_text
+FROM totals AS t
+JOIN sys.query_store_query AS q       ON q.query_id = t.query_id
+JOIN sys.query_store_query_text AS qt ON qt.query_text_id = q.query_text_id
+ORDER BY t.total_duration_ms DESC;</code></pre>
+    <p>Durations and CPU in Query Store are stored in microseconds; the query converts them to milliseconds. A <code>plan_count</code> above one is the first sign of a plan change worth comparing.</p>
+
+    <h2>Compare plans for one query</h2>
+<pre><code>SELECT p.query_id, p.plan_id, p.is_forced_plan,
+       MIN(rs.first_execution_time) AS first_seen,
+       MAX(rs.last_execution_time)  AS last_seen,
+       SUM(rs.count_executions)     AS executions,
+       SUM(rs.avg_duration * rs.count_executions)
+         / NULLIF(SUM(rs.count_executions), 0) / 1000.0 AS avg_duration_ms
+FROM sys.query_store_plan AS p
+JOIN sys.query_store_runtime_stats AS rs ON rs.plan_id = p.plan_id
+WHERE p.query_id = @query_id
+GROUP BY p.query_id, p.plan_id, p.is_forced_plan
+ORDER BY last_seen DESC;</code></pre>
+    <p>If an older plan was clearly better, <code>sp_query_store_force_plan</code> can pin it while the cause is fixed. Treat forcing as a temporary, monitored change: a forced plan can fail if an index it depends on is dropped, and it hides the reason the optimizer chose differently. Check <code>force_failure_count</code> in <code>sys.query_store_plan</code> afterwards.</p>
+
+    <h2>Parameter sensitivity</h2>
+    <p>One cached plan, compiled for the first parameter value, can be poor for other values: the SQL Server form of the problem in the <a href="/case-studies/lab-generic-plan-regression">PostgreSQL generic-plan lab</a>. SQL Server 2022 at database compatibility level 160 adds Parameter Sensitive Plan optimization, which can cache more than one plan variant for a qualifying query; variants appear in <code>sys.query_store_query_variant</code>. Before reaching for <code>OPTION (RECOMPILE)</code> or <code>OPTIMIZE FOR</code>, compare the plans and row counts for a small and a large parameter value and weigh the extra compile cost against the gain.</p>
+
+    <h2>Find the head of a blocking chain</h2>
+<pre><code>SELECT r.session_id, r.blocking_session_id, r.wait_type,
+       r.wait_time AS wait_ms, r.wait_resource,
+       LEFT(t.text, 120) AS running_sql
+FROM sys.dm_exec_requests AS r
+CROSS APPLY sys.dm_exec_sql_text(r.sql_handle) AS t
+WHERE r.blocking_session_id &lt;&gt; 0;
+
+SELECT s.session_id, s.status, s.open_transaction_count,
+       s.program_name, s.host_name, s.login_name,
+       DATEDIFF(second, s.last_request_end_time, SYSDATETIME()) AS idle_s
+FROM sys.dm_exec_sessions AS s
+WHERE s.session_id IN (SELECT blocking_session_id
+                       FROM sys.dm_exec_requests
+                       WHERE blocking_session_id &lt;&gt; 0);</code></pre>
+    <p>The blocker is often a session with an open transaction and no running request, so it does not appear in <code>sys.dm_exec_requests</code> itself; <code>open_transaction_count</code>, <code>program_name</code> and idle time point at the application path. Under the default read-committed isolation, readers wait on writers (<code>LCK_M_S</code>). Read Committed Snapshot Isolation removes most reader-writer blocking at the cost of row versions in tempdb and extra write overhead, and it changes what concurrent readers see, so it needs testing rather than switching on during an incident.</p>
+
+    <h2>A common ORM cost: implicit conversion</h2>
+    <p>EF Core sends .NET strings as <code>nvarchar</code> parameters unless the property is mapped as non-Unicode. Against a <code>varchar</code> column with a SQL Server collation, the comparison converts the column instead of the parameter. In a lab on SQL Server 2022 with an index on a <code>varchar(10)</code> column, the same five-row lookup did an index seek with 3 logical reads when the parameter was <code>varchar</code>, and an index scan with 495 logical reads and <code>CONVERT_IMPLICIT</code> in the plan when it was <code>nvarchar</code>. Mapping the property with <code>IsUnicode(false)</code> or the matching column type removes the conversion. Look for <code>CONVERT_IMPLICIT</code> warnings in the plans of the top Query Store statements.</p>
+
+    <h2>What a review needs</h2>
+    <ul>
+      <li>Query Store access for the affected database, or exports of the queries above for the problem window</li>
+      <li>Actual execution plans for the dominant or regressed statements</li>
+      <li>Wait statistics and blocking snapshots captured while the problem is happening</li>
+      <li>Version, edition, compatibility level, and recent deploys, index or statistics changes</li>
+    </ul>
+    <p>SQL Server reviews are scoped individually after a short fit review. See <a href="/capabilities">capabilities</a> for how the method carries across platforms.</p>
   </div></section>
   <section><div class="container"><CTA title="Have a SQL Server performance problem?" description="Share the symptom and the evidence available. The first step is deciding whether a bounded review is a fit." /></div></section>
 </BaseLayout>

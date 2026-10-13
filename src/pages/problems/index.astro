@@ -2,8 +2,20 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
 import ProblemGrid from '../../components/ProblemGrid.astro';
+import CTA from '../../components/CTA.astro';
 ---
 <BaseLayout title="PostgreSQL Performance Problems — DatabaseDeveloper" description="Practical guides for high CPU, connection exhaustion, lock contention and PostgreSQL plan regressions.">
   <PageHero eyebrow="Problem library" title="Diagnose the production symptom before prescribing the fix." description="These pages explain what evidence to collect, common wrong assumptions and when a deeper performance investigation is justified." primaryLabel="Request an investigation" primaryHref="/contact" secondaryLabel="See sample report" secondaryHref="/sample-report" />
   <section><div class="container"><ProblemGrid /></div></section>
+  <section><div class="container prose">
+    <h2>Not sure which problem you have?</h2>
+    <p>Production symptoms overlap. High CPU can come from one expensive statement, from many cheap ones, or from a plan that changed. Connection errors can be a pool sizing problem or the visible end of a lock queue. Start from these three questions:</p>
+    <ul>
+      <li><strong>What are sessions waiting on?</strong> Group <code>pg_stat_activity</code> by <code>state</code>, <code>wait_event_type</code> and <code>wait_event</code>. Active sessions with no wait event are usually running on CPU; <code>Lock</code> waits point to <a href="/problems/postgresql-lock-contention">contention</a>; many <code>idle in transaction</code> sessions point to the application.</li>
+      <li><strong>Which statements dominate total time?</strong> Rank <code>pg_stat_statements</code> by <code>total_exec_time</code>, not by the slowest single call. See <a href="/problems/postgresql-high-cpu">high CPU</a>.</li>
+      <li><strong>What changed?</strong> Deploys, migrations, data growth, version upgrades and parameter changes. A sudden change in one statement's mean time with the same call count points to a <a href="/problems/postgresql-plan-regression">plan regression</a>.</li>
+    </ul>
+    <p>The <a href="/evidence-collection">read-only evidence collector</a> captures all three in one run.</p>
+  </div></section>
+  <section><div class="container"><CTA /></div></section>
 </BaseLayout>

@@ -3,7 +3,7 @@ import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
 import CTA from '../../components/CTA.astro';
 ---
-<BaseLayout title="PostgreSQL Lock Contention — DatabaseDeveloper" description="The slow query may be waiting on work that is already finished. Practical evidence to collect, common wrong assumptions and when a deeper investigation is justified.">
+<BaseLayout title="PostgreSQL Lock Contention — DatabaseDeveloper" description="PostgreSQL lock contention triage: find the blocking session, recognise DDL lock queues and idle transactions, and know when to investigate deeper.">
   <PageHero eyebrow="Problem guide" title="PostgreSQL Lock Contention" description="The slow query may be waiting on work that is already finished." />
   <section><div class="container grid three">
     <div class="card"><h3>Blocking chain</h3><p>Identify blockers and waiters rather than optimizing the waiting statement in isolation.</p></div>

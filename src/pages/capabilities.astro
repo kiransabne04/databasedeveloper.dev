@@ -7,5 +7,22 @@ import CTA from '../components/CTA.astro';
 <BaseLayout title="Database Performance Capabilities — DatabaseDeveloper" description="PostgreSQL-first performance investigations with specialist capability across SQL Server, pgvector, Snowflake and OLAP workloads.">
   <PageHero eyebrow="Capabilities" title="Focused where it matters. Broad enough for the real workload." description="PostgreSQL performance investigation is the core service. Specialist reviews cover SQL Server, pgvector, Snowflake and analytical/OLAP workloads." />
   <section><div class="container"><CapabilityGrid /></div></section>
+  <section><div class="container prose">
+    <h2>How specialist reviews are scoped</h2>
+    <p>The method is the same on every platform: rank the workload by total cost, correlate the symptom with waits, plans and changes, then recommend the smallest safe change with a validation step. What differs is the evidence each platform records.</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Platform</th><th>Primary evidence</th><th>Typical question</th></tr></thead>
+        <tbody>
+          <tr><td><a href="/postgresql-performance-investigation">PostgreSQL</a>, <a href="/aws-rds-aurora-postgresql">RDS/Aurora</a></td><td><code>pg_stat_statements</code>, plans, <code>pg_stat_activity</code>, Database Insights</td><td>Which statements, waits or changes explain the latency or CPU?</td></tr>
+          <tr><td><a href="/sql-server-performance">SQL Server</a></td><td>Query Store, wait statistics, blocking DMVs</td><td>Did a plan change, or is the workload blocked or waiting?</td></tr>
+          <tr><td><a href="/pgvector-performance">pgvector</a></td><td>Filtered query plans, recall against exact search, index size</td><td>Is the vector index, the filter or the data growth the bottleneck?</td></tr>
+          <tr><td><a href="/snowflake-performance">Snowflake</a></td><td><code>QUERY_HISTORY</code>, pruning, spills, queueing</td><td>Is cost driven by scans, spills or concurrency?</td></tr>
+          <tr><td><a href="/olap-analytical-performance">OLAP / analytical</a></td><td>Bytes scanned, partition and file layout, load history</td><td>Is the layout serving the main query patterns as data grows?</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>PostgreSQL work has a fixed scope and published <a href="/pricing">pricing</a>. Other platforms are scoped individually after a short fit review.</p>
+  </div></section>
   <section><div class="container"><CTA /></div></section>
 </BaseLayout>

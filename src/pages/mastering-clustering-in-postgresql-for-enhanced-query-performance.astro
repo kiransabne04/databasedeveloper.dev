@@ -1,7 +1,7 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 ---
-<ArticleLayout title="PostgreSQL CLUSTER: Locking and Performance Trade-offs" description="Test whether PostgreSQL CLUSTER improves heap locality for range scans, then account for ACCESS EXCLUSIVE locking, disk space and how quickly the benefit decays." eyebrow="PostgreSQL physical design" published="2025-01-30" updated="2026-10-13" legacy>
+<ArticleLayout title="PostgreSQL CLUSTER: Locking and Performance Trade-offs" description="Test whether PostgreSQL CLUSTER improves heap locality for range scans, then weigh ACCESS EXCLUSIVE locking, disk space and how fast the benefit decays." eyebrow="PostgreSQL physical design" published="2025-01-30" updated="2026-10-13" legacy>
   <h2>What CLUSTER changes</h2>
   <p><code>CLUSTER</code> rewrites a table so its rows follow an existing index's order. It can improve locality for queries that fetch many neighboring rows in that order. PostgreSQL does not maintain that physical ordering as later inserts and updates occur, so any gain can fade as the table changes.</p>
   <p>This is different from partitioning, which splits rows into separate tables, and from adding an index, which leaves the table's physical order unchanged. A range scan that already uses a selective covering index may gain little from a rewrite.</p>
