@@ -1,0 +1,57 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import PageHero from '../../components/PageHero.astro';
+import CTA from '../../components/CTA.astro';
+import { pg14Facts } from '../../data/facts';
+---
+<BaseLayout title="RDS PostgreSQL 14.18 and 14.19 Lose Standard Support on 31 October 2026 — DatabaseDeveloper" description="Some PostgreSQL 14 minor versions on Amazon RDS and Aurora reach end of standard support months before the major version. Dates, what RDS does next, and how to check your instances.">
+  <PageHero eyebrow="Time-sensitive · verified 13 October 2026" title="Your PostgreSQL 14 deadline may be 31 October, not February." description="The PG14 dates most teams plan around are 12 November 2026 (community) and 28 February 2027 (RDS and Aurora). Some 14.x minor versions reach end of standard support sooner." primaryLabel="See all PG14 dates" primaryHref="/postgresql-14-eol" secondaryLabel="Upgrade readiness" secondaryHref="/postgresql-upgrade-readiness" />
+
+  <section><div class="container prose">
+    <h2>The dates</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Platform</th><th>Minor version</th><th>End of standard support</th></tr></thead>
+        <tbody>
+          <tr><td>RDS for PostgreSQL</td><td>14.18, 14.19</td><td>31 October 2026</td></tr>
+          <tr><td>Aurora PostgreSQL</td><td>14.17</td><td>30 November 2026</td></tr>
+          <tr><td>Aurora PostgreSQL</td><td>14.18</td><td>31 December 2026</td></tr>
+          <tr><td>RDS and Aurora</td><td>PostgreSQL 14 (major)</td><td>{pg14Facts.rdsStandardSupportEnd}</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="small muted">From the AWS release calendars for <a href={pg14Facts.awsSource}>RDS for PostgreSQL</a> and <a href={pg14Facts.auroraSource}>Aurora PostgreSQL</a>, checked {pg14Facts.verifiedOn}. AWS updates these tables; check them again before you schedule anything.</p>
+
+    <h2>What RDS does when a minor version reaches end of support</h2>
+    <p><a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.Upgrading.html">AWS's RDS upgrade documentation</a> says that when a version reaches its end-of-support date, RDS can apply a minor version upgrade even if <strong>Auto minor version upgrade</strong> is turned off. Engine upgrades can require downtime.</p>
+    <p>Minor releases are intended to preserve compatibility, but application and extension behavior still need testing. The operational risk also includes timing: the restart may happen during a maintenance window you did not choose for this change. A before-and-after workload baseline helps distinguish an upgrade-related regression from normal variation.</p>
+    <p>For Aurora, check the Aurora upgrade documentation for your cluster rather than assuming RDS behaviour applies.</p>
+
+    <h2>Check what you are running</h2>
+<pre><code>-- From any session
+SHOW server_version;
+
+# RDS instances: version, auto minor upgrade setting, maintenance window
+aws rds describe-db-instances \
+  --query "DBInstances[?Engine=='postgres'].[DBInstanceIdentifier,EngineVersion,AutoMinorVersionUpgrade,PreferredMaintenanceWindow]" \
+  --output table
+
+# Aurora PostgreSQL clusters
+aws rds describe-db-clusters \
+  --query "DBClusters[?Engine=='aurora-postgresql'].[DBClusterIdentifier,EngineVersion,PreferredMaintenanceWindow]" \
+  --output table
+
+# Anything AWS has already scheduled
+aws rds describe-pending-maintenance-actions</code></pre>
+    <p>Run the AWS CLI commands once per region you use.</p>
+
+    <h2>If you are on an affected version</h2>
+    <ol>
+      <li><strong>Upgrade on your schedule, not AWS’s.</strong> Pick a time before the deadline, and move to a current 14.x minor version that the calendar supports until the major-version date.</li>
+      <li><strong>Take a baseline first.</strong> Save a <code>pg_stat_statements</code> snapshot (or run the <a href="/evidence-collection">evidence collector</a>) so you can compare before and after.</li>
+      <li><strong>Upgrade a non-production copy first,</strong> including read replicas and extensions, and check that the application reconnects cleanly after the restart.</li>
+      <li><strong>Don’t stop at the minor version.</strong> PostgreSQL 14 itself loses standard support on {pg14Facts.rdsStandardSupportEnd}, and Extended Support pricing starts {pg14Facts.rdsExtendedSupportYear1Start}. The minor upgrade buys about four months.</li>
+    </ol>
+  </div></section>
+  <section><div class="container"><CTA eyebrow="Upgrade readiness" title="Planning the PostgreSQL 14 move?" description="Start with your platform, versions and extension list. The first step is scoping the smallest useful readiness review." /></div></section>
+</BaseLayout>
