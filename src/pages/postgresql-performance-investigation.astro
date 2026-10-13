@@ -4,8 +4,19 @@ import PageHero from '../components/PageHero.astro';
 import InvestigationWorkflow from '../components/InvestigationWorkflow.astro';
 import CTA from '../components/CTA.astro';
 import { site } from '../config/site';
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: 'PostgreSQL Performance Investigation',
+  serviceType: 'PostgreSQL performance investigation',
+  provider: { '@type': 'ProfessionalService', name: site.brand, url: site.url },
+  areaServed: 'Worldwide',
+  url: `${site.url}/postgresql-performance-investigation`,
+  offers: { '@type': 'Offer', priceCurrency: 'USD', price: site.foundingOffer.international.replace('$', ''), description: `Founding price for the first three engagements; standard ${site.standardOffer.international}` }
+};
 ---
 <BaseLayout
+  schema={schema}
   title="PostgreSQL Performance Investigation — DatabaseDeveloper"
   description="Evidence-first PostgreSQL performance investigation for SaaS teams dealing with latency, CPU, locking, connection pressure, plan regressions or database cost."
 >

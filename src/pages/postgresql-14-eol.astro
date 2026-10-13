@@ -1,11 +1,12 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
+import CTA from '../components/CTA.astro';
 import { pg14Facts } from '../data/facts';
 ---
 <BaseLayout
   title="PostgreSQL 14 End of Life: Upgrade Planning — DatabaseDeveloper"
-  description="PostgreSQL 14 stops receiving community fixes on 12 November 2026. Review the current RDS and Aurora support timelines, early minor-version deadlines and a practical upgrade-readiness checklist."
+  description="PostgreSQL 14 community support ends 12 November 2026. RDS and Aurora dates, early minor-version deadlines and an upgrade-readiness checklist."
 >
   <PageHero
     eyebrow="Time-sensitive guide"
@@ -39,7 +40,7 @@ import { pg14Facts } from '../data/facts';
         <li><strong>RDS for PostgreSQL</strong> {pg14Facts.rdsEarlyMinorEnds}</li>
         <li><strong>Aurora PostgreSQL</strong> {pg14Facts.auroraEarlyMinorEnds}</li>
       </ul>
-      <p>If you are on one of these, you may need a minor-version upgrade before the major-version decision. Either way, test it like a change: baseline first, then compare after.</p>
+      <p>If you are on one of these, you may need a minor-version upgrade before the major-version decision. Either way, test it like a change: baseline first, then compare after. <a href="/insights/postgresql-14-minor-version-deadlines">What RDS does at a minor-version deadline, and how to check your instances.</a></p>
 
       <h2>What to do first</h2>
       <ol>
@@ -57,4 +58,5 @@ import { pg14Facts } from '../data/facts';
       <p><a href={pg14Facts.auroraSource}>Aurora PostgreSQL release calendar ↗</a></p>
     </div>
   </section>
+  <section><div class="container"><CTA eyebrow="Upgrade readiness" title="Still running PostgreSQL 14?" description="Send your platform, current version and extension list. You will get a direct answer on whether a fixed-scope readiness review fits, and what it would cover." primaryLabel="Ask about upgrade readiness" secondaryLabel="See the readiness review" secondaryHref="/postgresql-upgrade-readiness" /></div></section>
 </BaseLayout>

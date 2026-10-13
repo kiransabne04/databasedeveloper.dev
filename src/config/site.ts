@@ -18,6 +18,10 @@ export const site = {
   standardOffer: {
     international: '$750+',
     india: '₹45,000+'
+  },
+  upgradeOffer: {
+    international: '$750–900',
+    india: '₹45k–55k'
   }
 } as const;
 

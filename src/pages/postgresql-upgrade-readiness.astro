@@ -3,10 +3,22 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import PG14Notice from '../components/PG14Notice.astro';
 import CTA from '../components/CTA.astro';
+import { site } from '../config/site';
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'Service',
+  name: 'PostgreSQL Upgrade Readiness Review',
+  serviceType: 'PostgreSQL major-version upgrade readiness review',
+  provider: { '@type': 'ProfessionalService', name: site.brand, url: site.url },
+  areaServed: 'Worldwide',
+  url: `${site.url}/postgresql-upgrade-readiness`,
+  offers: { '@type': 'Offer', priceCurrency: 'USD', price: '750', description: `From ${site.upgradeOffer.international} / ${site.upgradeOffer.india}, depending on scope` }
+};
 ---
 <BaseLayout
-  title="PostgreSQL Upgrade Readiness Review — DatabaseDeveloper"
-  description="A bounded PostgreSQL major-version upgrade readiness review covering extensions, application risks, plan regressions, baselines and validation."
+  title="PostgreSQL Upgrade Readiness Review (PG14 EOL) — DatabaseDeveloper"
+  schema={schema}
+  description="Fixed-scope PostgreSQL 14 upgrade readiness review for RDS, Aurora and self-managed: extensions, plan-regression risk, baseline and validation plan."
 >
   <PageHero
     eyebrow="Upgrade track"
@@ -36,6 +48,25 @@ import CTA from '../components/CTA.astro';
         <li>Post-upgrade validation and rollback considerations</li>
         <li>RDS/Aurora-specific path where relevant</li>
       </ul>
+      <h2>What you send</h2>
+      <ul>
+        <li>Platform (RDS, Aurora or self-managed), current version and the target you are considering</li>
+        <li>Extension list with versions: <code>SELECT extname, extversion FROM pg_extension;</code></li>
+        <li>Output of the read-only <a href="/evidence-collection">evidence collector</a> as the pre-upgrade baseline</li>
+        <li>Client drivers, ORM and connection pooler versions</li>
+        <li>Any planned change window, replicas, logical replication or CDC consumers</li>
+      </ul>
+      <h2>What you receive</h2>
+      <ul>
+        <li>A written readiness report: blockers, risks ranked by likelihood and impact, and the evidence for each</li>
+        <li>A recommended upgrade path and target version for your platform, with its trade-offs</li>
+        <li>The critical queries and plans to compare before and after, plus the latency and error signals to watch</li>
+        <li>Go/no-go and rollback criteria for the change window</li>
+        <li>A review call with your team</li>
+      </ul>
+      <h2>Price</h2>
+      <p><strong>{site.upgradeOffer.international} / {site.upgradeOffer.india}</strong> for one cluster, depending on extension count, platform and how much baseline evidence already exists. Scope and delivery date are agreed before work starts. See <a href="/pricing">pricing</a> for the other engagement types.</p>
+      <p><a class="button primary" data-track="primary_cta_click" href="/contact">Ask about upgrade readiness</a></p>
       <p class="notice"><strong>Important:</strong> DatabaseDeveloper does not execute the production upgrade as part of this review unless separately scoped. Your team or managed-service provider owns the change window.</p>
     </div>
   </section>

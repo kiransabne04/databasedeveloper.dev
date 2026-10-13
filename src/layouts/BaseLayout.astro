@@ -27,6 +27,9 @@ const {
 } = Astro.props;
 
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site.url).toString();
+// Search results truncate titles around 60 characters; drop the brand suffix rather than the topic.
+const brandSuffix = ` — ${site.brand}`;
+const pageTitle = title.length > 60 && title.endsWith(brandSuffix) ? title.slice(0, -brandSuffix.length) : title;
 const schemas = [
   {
     '@context': 'https://schema.org',
@@ -34,10 +37,12 @@ const schemas = [
     name: site.brand,
     url: site.url,
     description: site.description,
+    email: site.email,
     founder: {
       '@type': 'Person',
       name: site.personName,
-      url: site.personUrl
+      url: `${site.url}/about`,
+      sameAs: site.personUrl
     },
     areaServed: 'Worldwide',
     serviceType: [
@@ -57,7 +62,7 @@ const schemas = [
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
-    <title>{title}</title>
+    <title>{pageTitle}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
     <link rel="alternate" type="application/rss+xml" title="DatabaseDeveloper insights" href={`${site.url}/rss.xml`} />
