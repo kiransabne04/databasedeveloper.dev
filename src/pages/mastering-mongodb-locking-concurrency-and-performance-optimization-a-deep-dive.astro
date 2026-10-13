@@ -18,10 +18,10 @@ import ArticleLayout from '../layouts/ArticleLayout.astro';
   </ol>
   <p>On a deployment that permits it, the <a href="https://www.mongodb.com/docs/manual/reference/operator/aggregation/currentop/"><code>$currentOp</code> aggregation stage</a> can show active operations, <code>waitingForLock</code> and per-operation lock statistics. Scope the query to the incident window and follow your deployment's privilege and observability rules. MongoDB recommends this stage over the older <code>currentOp</code> command.</p>
   <pre><code>{`db.getSiblingDB('admin').aggregate([
-  &#123; $currentOp: &#123; allUsers: true, idleConnections: false &#125; &#125;,
-  &#123; $match: &#123; waitingForLock: true &#125; &#125;,
-  &#123; $project: &#123; opid: 1, op: 1, ns: 1, secs_running: 1,
-                waitingForLock: 1, lockStats: 1 &#125; &#125;
+  { $currentOp: { allUsers: true, idleConnections: false } },
+  { $match: { waitingForLock: true } },
+  { $project: { opid: 1, op: 1, ns: 1, secs_running: 1,
+                waitingForLock: 1, lockStats: 1 } }
 ]);`}</code></pre>
   <p>For a hot-document pattern, first reduce unnecessary updates or shorten the transaction that owns the document. For a broad throughput drop, compare cache, disk and application retry rate before redesigning locking. A version field can protect an application-level update from overwriting another change, but it does not replace a diagnosis of server contention.</p>
   <p>MongoDB's <a href="https://www.mongodb.com/docs/manual/core/wiredtiger/">WiredTiger documentation</a> describes document-level concurrency and transparent retries. Its <a href="https://www.mongodb.com/docs/manual/faq/concurrency/">concurrency FAQ</a> explains lock visibility and monitoring options.</p>

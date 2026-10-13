@@ -17,6 +17,10 @@ The public Hashnode sitemap was checked as well. It contained those eight posts 
 
 The revised pages show their original publication date and the revision date. They are original rewrites, not verbatim copies of the Hashnode text. The interview URL is the only redirect because its full article already exists on the personal site.
 
+The PostgreSQL and pgvector revisions now answer distinct production questions with diagnostic SQL or query examples, decision criteria, operational risks and relevant service links. The MongoDB article remains a technical archive item. The search-intent map and measurement plan are in `docs/CONTENT_SEARCH_PLAN.md`; it does not claim search volume or rankings without Search Console data.
+
+Run `npm run build` and `npm run audit:content` before a preview deploy. The audit checks all seven retained article paths in the generated site, self-canonicals, Article and breadcrumb schema, sitemap entries, internal links and the interview redirect configuration.
+
 ## Before switching DNS
 
 1. Deploy a preview and test all eight old paths on the chosen host. Vercel applies the interview redirect from `vercel.json`; another host needs an equivalent rule.

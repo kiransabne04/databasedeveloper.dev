@@ -18,6 +18,7 @@
 - [x] Verify canonical URLs locally
 - [x] Verify PG14/AWS dates on 13 October 2026; re-check before publishing if time has passed
 - [x] Match the eight article URLs and two listing URLs in the live Hashnode sitemap to retained pages or specific redirects
+- [x] Run `npm run audit:content` against the built archive pages and redirect configuration
 - [x] Retain the old `/rss.xml` feed path
 - [ ] Test all old URLs and redirects on the deployment preview before switching DNS
 - [ ] Compare Search Console's indexed URL report with the sitemap inventory for any additional old paths
