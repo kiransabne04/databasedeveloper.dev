@@ -3,7 +3,7 @@ import sitemap from '@astrojs/sitemap';
 
 export default defineConfig({
   site: 'https://databasedeveloper.dev',
-  integrations: [sitemap()],
+  integrations: [sitemap({ xslURL: '/sitemap.xsl' })],
   trailingSlash: 'never',
   markdown: {
     syntaxHighlight: false
