@@ -11,7 +11,7 @@ import { site } from '../config/site';
   <section><div class="container prose">
     <h2>Step by step</h2>
     <ol>
-      <li><strong>Fit review.</strong> You describe the symptom, platform and version through the <a href="/contact">contact form</a>. Kiran replies with whether a bounded investigation fits, what question it would answer and which evidence is needed. If it is not a fit, you get that answer instead of a proposal.</li>
+      <li><strong>Fit review.</strong> You describe the symptom, platform and version through the <a href="/contact">contact form</a>. I reply with whether a bounded investigation fits, what question it would answer and which evidence is needed. If it is not a fit, you get that answer instead of a proposal.</li>
       <li><strong>Scope agreed.</strong> One cluster, one dominant workload and one decision: for example, why p95 latency doubled after a release, or whether the instance really needs to be larger. Price and delivery are confirmed before any paid work.</li>
       <li><strong>Your team collects evidence.</strong> Run the <a href="/evidence-collection">read-only collector</a> as a <code>pg_monitor</code> role, once in a normal period and, if possible, once while the problem is happening. Add representative <code>EXPLAIN (ANALYZE, BUFFERS)</code> output from a safe environment, a short change timeline and, on RDS or Aurora, Database Insights and CloudWatch exports for the same window.</li>
       <li><strong>Review and redact.</strong> The output is plain text. Your team reads it and removes anything it does not want to share before sending it.</li>
