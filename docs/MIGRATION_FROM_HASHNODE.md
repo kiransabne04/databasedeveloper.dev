@@ -1,6 +1,6 @@
 # Hashnode migration inventory
 
-Checked against the live `databasedeveloper.dev` Hashnode publication on 13 October 2026. It listed eight posts. The new site retains seven original paths. Each page shows the original Hashnode text word for word (extracted 14 October 2026, stored in `src/originals/`), with tested correction notes and a production-notes section and permanently redirects the short interview pointer to its full article on `kiransabne.dev`.
+Checked against the live `databasedeveloper.dev` Hashnode publication on 13 October 2026. It listed eight posts. The new site retains seven original paths. Each page uses the original Hashnode text (extracted 14 October 2026, stored in `src/originals/`) with technical errors corrected in place, plus a production-notes section and permanently redirects the short interview pointer to its full article on `kiransabne.dev`.
 
 The public Hashnode sitemap was checked as well. It contained those eight posts plus `/archive` and `/recommendations`; both listing routes redirect to `/insights`. The old `/rss.xml` feed path is retained with a new feed, and `/sitemap.xml` redirects to the new `/sitemap-index.xml`.
 
@@ -15,7 +15,7 @@ The public Hashnode sitemap was checked as well. It contained those eight posts 
 | `/how-to-scale-postgresql-databases-with-partitioning` | Standalone article | Revised article at the same path; covers pruning and constraints rather than promising universal speedups |
 | `/postgresql-concurrency-and-locking-a-comprehensive-guide` | Standalone article | Revised article at the same path; focuses on blocking-chain diagnosis |
 
-Each page keeps its original title and publication date and shows the date corrections were added. Original text is not edited; wrong or outdated statements get a marked "Correction (October 2026)" note directly below them, and the production notes follow the original. The pages do not mention Hashnode. The BRIN and semantic-search pointer posts now have complete local guides. The interview URL depends on the `kiransabne.dev` article staying online: keep that article live (on Hashnode or its replacement host, at the same path or with its own redirect) before deleting a shared Hashnode account.
+Each page keeps its original title and publication date and shows the date corrections were added. Wrong or outdated statements and SQL were corrected directly in the text (PostgreSQL examples tested on PostgreSQL 17.11; Citus calls checked against the Citus docs). The production notes follow the article. The pages do not mention Hashnode. The BRIN and semantic-search pointer posts now have complete local guides. The interview URL depends on the `kiransabne.dev` article staying online: keep that article live (on Hashnode or its replacement host, at the same path or with its own redirect) before deleting a shared Hashnode account.
 
 The PostgreSQL and pgvector revisions now answer distinct production questions with diagnostic SQL or query examples, decision criteria, operational risks and relevant service links. The MongoDB article remains a technical archive item. The search-intent map and measurement plan are in `docs/CONTENT_SEARCH_PLAN.md`; it does not claim search volume or rankings without Search Console data.
 

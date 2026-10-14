@@ -121,6 +121,8 @@ h3 { font-size:1.35rem; margin:.1rem 0 .55rem; }
 section { padding:76px 0; border-top:1px solid var(--line); }
 .section-head { display:flex; gap:2rem; justify-content:space-between; align-items:end; margin-bottom:2rem; }
 .section-head p { max-width:600px; color:var(--muted); margin:0; }
+.section-head p a, .topic-nav a { color:var(--accent); text-decoration:underline; text-underline-offset:3px; }
+.topic-nav { color:var(--muted); margin:0 0 2.5rem; }
 
 .grid { display:grid; gap:1rem; }
 .grid.two { grid-template-columns:repeat(2,minmax(0,1fr)); }
@@ -184,8 +186,6 @@ section { padding:76px 0; border-top:1px solid var(--line); }
 .prose code { background:var(--panel); padding:.12rem .35rem; border-radius:5px; }
 .prose pre code { background:none; padding:0; border-radius:0; }
 .prose pre { background:#050a09; border:1px solid var(--line); padding:1rem; border-radius:12px; overflow:auto; }
-.prose .correction { border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--panel); border-radius:10px; padding:.85rem 1rem; margin:1.25rem 0; font-size:.95rem; }
-.prose .correction pre { margin:.75rem 0 .25rem; }
 .prose blockquote { border-left:3px solid var(--accent); margin:1.5rem 0; padding:.3rem 0 .3rem 1rem; color:var(--soft); }
 .article-header { padding-top:78px; padding-bottom:54px; }
 .article-breadcrumb { margin-bottom:1.4rem; }

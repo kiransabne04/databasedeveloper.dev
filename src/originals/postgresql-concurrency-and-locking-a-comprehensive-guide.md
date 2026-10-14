@@ -33,15 +33,11 @@ Row-level locks allow fine-grained control over individual rows, ensuring minima
 
 * **FOR UPDATE:** Prevents other transactions from modifying or locking the same row until the current transaction completes.
     
-* **FOR NO KEY UPDATE:** Similar to `FOR UPDATE`, but allows non-key columns to be updated by other transactions.
+* **FOR NO KEY UPDATE:** Similar to `FOR UPDATE`, but weaker: it still blocks other transactions' `UPDATE`, `DELETE`, `FOR UPDATE` and `FOR SHARE` on the row, while allowing `FOR KEY SHARE`. Ordinary `UPDATE`s that do not change a key column take this lock, so they do not block foreign-key checks from referencing tables.
     
 * **FOR SHARE:** Prevents modifications but allows other transactions to acquire a shared lock.
     
-* **FOR KEY SHARE:** Allows transactions to modify non-key columns but prevents deletion or key updates.
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> <code>FOR NO KEY UPDATE</code> does not let other transactions update the row. It blocks their <code>UPDATE</code>, <code>DELETE</code>, <code>FOR UPDATE</code> and <code>FOR SHARE</code>, and allows only <code>FOR KEY SHARE</code>, which foreign-key checks take. That is why ordinary non-key updates use it and do not block inserts into referencing tables. Tested on PostgreSQL 17.</aside>
-
+* **FOR KEY SHARE:** The weakest row lock, taken by foreign-key checks. Other transactions can still update non-key columns, but cannot delete the row or change its key.
     
 
 #### Real-World Application:
@@ -80,25 +76,23 @@ Table-level locks apply to entire tables, preventing or allowing certain operati
     
 * **SHARE:** Allows multiple transactions to read but not write.
     
-* **EXCLUSIVE:** Blocks all other operations except `SELECT`.
+* **EXCLUSIVE:** Blocks writes and row locks; only plain `SELECT` (`ACCESS SHARE`) can run alongside it.
     
-* **ACCESS EXCLUSIVE:** Blocks all operations, including `SELECT`.
+* **ACCESS EXCLUSIVE:** Blocks all operations, including `SELECT`. Taken by most `ALTER TABLE` forms, `DROP`, `TRUNCATE`, `VACUUM FULL` and `CLUSTER`.
     
 
 #### Real-World Application:
 
-* **Schema Migrations:** When altering table structure, acquiring an `ACCESS EXCLUSIVE` lock prevents data modifications during the schema update.
+* **Schema Migrations:** Most `ALTER TABLE` operations take an `ACCESS EXCLUSIVE` lock, which blocks reads and writes during the schema change. A waiting `ACCESS EXCLUSIVE` request also queues new readers behind it, so set `lock_timeout` on migrations.
+    
+* **Bulk Corrections:** `EXCLUSIVE` mode blocks concurrent writes while still allowing plain reads.
     
 
 ```sql
 BEGIN;
 LOCK TABLE orders IN EXCLUSIVE MODE;
--- Blocks other operations until the lock is released.
+-- Blocks writes and row locks until the transaction ends; plain SELECTs still run.
 ```
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> <code>EXCLUSIVE</code> still allows plain <code>SELECT</code> (<code>ACCESS SHARE</code>); it blocks writes and row locks. Most <code>ALTER TABLE</code> forms, <code>DROP</code>, <code>TRUNCATE</code>, <code>VACUUM FULL</code> and <code>CLUSTER</code> take <code>ACCESS EXCLUSIVE</code>, which blocks reads too. A queued <code>ACCESS EXCLUSIVE</code> request also blocks new readers behind it: see the <a href="/case-studies/lab-lock-queue">lock-queue lab</a>. Set <code>lock_timeout</code> on migrations.</aside>
-
 
 #### Edge Case:
 
@@ -129,9 +123,9 @@ Page-level locks are used internally by PostgreSQL during index and table access
 
 Advisory locks provide application-level locking mechanisms that are independent of the standard SQL locks.
 
-* **Session-level:** Locks held until the session ends.
+* **Session-level:** Locks held until explicitly released with `pg_advisory_unlock()` or the session ends. They survive `COMMIT` and `ROLLBACK`, which matters with connection pools.
     
-* **Transaction-level:** Locks held until the transaction commits or rolls back.
+* **Transaction-level:** Locks taken with `pg_advisory_xact_lock()` are held until the transaction commits or rolls back.
     
 
 #### Real-World Application:
@@ -140,13 +134,13 @@ Advisory locks provide application-level locking mechanisms that are independent
     
 
 ```sql
-SELECT pg_advisory_lock(12345);
+SELECT pg_advisory_xact_lock(12345);
 -- Released when the transaction ends.
+
+SELECT pg_advisory_lock(12345);
+-- Session-level: held until pg_advisory_unlock(12345) or disconnect.
+SELECT pg_advisory_unlock(12345);
 ```
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> <code>pg_advisory_lock()</code> takes a session-level lock. It stays held after <code>COMMIT</code> or <code>ROLLBACK</code> until <code>pg_advisory_unlock()</code> or the session ends, which matters with connection pools. Use <code>pg_advisory_xact_lock()</code> for a lock released at transaction end.</aside>
-
 
 #### Performance Implication:
 
@@ -165,12 +159,11 @@ SELECT pg_advisory_lock(12345);
     
 
 ```sql
-UPDATE products SET price = 200 WHERE product_id = 1 AND updated_at = '2025-01-01 10:00:00';
+UPDATE products
+SET price = 200, updated_at = now()
+WHERE product_id = 1 AND updated_at = '2025-01-01 10:00:00';
+-- 0 rows updated means another transaction changed the row first: reload and retry.
 ```
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> The application must check the affected row count: zero rows means another writer changed the row first. The statement should also set <code>updated_at</code> (or increment a version column), otherwise the next writer cannot detect this change.</aside>
-
 
 #### Real-World Application:
 
@@ -200,13 +193,14 @@ SELECT * FROM products WHERE product_id = 1 FOR UPDATE;
 
 #### Detecting Deadlocks:
 
+PostgreSQL detects deadlocks itself: after `deadlock_timeout` (1 second by default) it cancels one of the transactions with `ERROR: deadlock detected`, so the application must retry it. Sessions that are blocked but not deadlocked show up as lock waits, together with the sessions blocking them:
+
 ```sql
-SELECT * FROM pg_stat_activity WHERE wait_event_type = 'Lock';
+SELECT pid, pg_blocking_pids(pid) AS blocked_by,
+       now() - xact_start AS xact_age, left(query, 80) AS query
+FROM pg_stat_activity
+WHERE wait_event_type = 'Lock';
 ```
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> This query finds sessions waiting on heavyweight locks, which is usually blocking, not deadlock. PostgreSQL detects deadlocks itself after <code>deadlock_timeout</code> and cancels one transaction with <code>ERROR: deadlock detected</code>. Use <code>pg_blocking_pids(pid)</code> to find the blocker; the production notes below show a query.</aside>
-
 
 #### Log Monitoring:
 
@@ -246,15 +240,11 @@ SELECT * FROM orders FOR UPDATE NOWAIT;
 | Lock Type | Scope | Blocks Read | Blocks Write | Use Case |
 | --- | --- | --- | --- | --- |
 | Row-Level (FOR UPDATE) | Row | No | Yes | Row updates and deletions |
-| Table-Level (EXCLUSIVE) | Table | Yes | Yes | Schema modifications, migrations |
-| Advisory Locks | Application | No | No | Application-level coordination |
+| Table-Level (EXCLUSIVE) | Table | No | Yes | Blocking writes while allowing reads |
+| Advisory Locks | Application | No | No (blocks only the same advisory key) | Application-level coordination |
 | Access Share | Table | No | No | `SELECT` statements |
 | Row Exclusive | Table | No | Yes | `INSERT`, `UPDATE`, `DELETE` |
-| Access Exclusive | Table | Yes | Yes | Full table modifications |
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> The table-level <code>EXCLUSIVE</code> row is wrong: it does not block plain reads. Schema migrations usually take <code>ACCESS EXCLUSIVE</code>, which does. Advisory locks block other sessions requesting the same advisory key. Tested on PostgreSQL 17.</aside>
-
+| Access Exclusive | Table | Yes | Yes | Schema changes, `DROP`, `TRUNCATE`, `VACUUM FULL`, `CLUSTER` |
 
 ---
 

@@ -22,11 +22,7 @@ With the **WiredTiger storage engine** (default since MongoDB 3.2), MongoDB uses
         
     * **Behavior:** Prevents any other operation (read or write) on the resource until released.
         
-    * **Example:** A document update acquires an exclusive lock.
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> With WiredTiger, a document update takes intent locks (<code>IX</code>) at the global, database and collection levels; documents are not locked with <code>X</code> locks in this lock manager. WiredTiger handles document concurrency itself and retries an operation internally when two writes conflict on the same document. Collection-level <code>X</code> locks come from some DDL operations.</aside>
-
+    * **Example:** Some DDL operations, such as dropping a collection, take an exclusive lock on the collection. Document updates do not: WiredTiger handles document-level concurrency itself and retries an operation internally when two writes conflict on the same document.
         
 3. **Intent Shared (IS) Lock:**
     
@@ -42,7 +38,7 @@ With the **WiredTiger storage engine** (default since MongoDB 3.2), MongoDB uses
         
     * **Behavior:** Applied at higher levels to signal a lower-level exclusive lock.
         
-    * **Example:** A document update places an IX lock on the database.
+    * **Example:** A document update places IX locks on the global, database and collection levels.
         
 
 ---
@@ -92,13 +88,14 @@ async function updateDocument(collection, docId, newData) {
 
 ### Pessimistic Locking (Simulated Lock Field):
 
-Pessimistic locking blocks other processes from accessing the resource by setting a lock.
+Pessimistic locking blocks other processes from accessing the resource by setting a lock. The lock must expire, otherwise a crashed process leaves the document locked forever.
 
 ```javascript
-async function acquireLock(collection, docId, lockId) {
+async function acquireLock(collection, docId, lockId, ttlMs = 30000) {
+  const now = new Date();
   const result = await collection.updateOne(
-    { _id: docId, lock: null },
-    { $set: { lock: lockId } }
+    { _id: docId, $or: [{ lock: null }, { lockExpiresAt: { $lt: now } }] },
+    { $set: { lock: lockId, lockExpiresAt: new Date(now.getTime() + ttlMs) } }
   );
   if (result.modifiedCount === 0) {
     throw new Error('Document is already locked');
@@ -108,14 +105,10 @@ async function acquireLock(collection, docId, lockId) {
 async function releaseLock(collection, docId, lockId) {
   await collection.updateOne(
     { _id: docId, lock: lockId },
-    { $set: { lock: null } }
+    { $set: { lock: null, lockExpiresAt: null } }
   );
 }
 ```
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> A lock field must expire. If the process holding it crashes, the document stays locked forever. Store an expiry time with the lock and allow a new owner to take a lock whose expiry has passed.</aside>
-
 
 ---
 
@@ -143,11 +136,7 @@ db.currentOp({ active: true, waitingForLock: true }) //check active lock waits
 
 * **Ordered Operations:** Update documents in a consistent order across transactions.
     
-* **Timeouts:** Limit lock duration using `$maxTimeMS`.
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> <code>maxTimeMS</code> limits how long an operation may run before the server stops it; it is not a lock-duration setting. Check that your server version and driver support it for the command you use.</aside>
-
+* **Timeouts:** Limit how long an operation may run using `maxTimeMS`; the server stops the operation when the limit is reached. It is an operation time limit, not a lock-duration setting.
     
 
 ```javascript
@@ -159,32 +148,21 @@ db.collection.updateOne(
 )
 ```
 
-* **Retry Logic for Transactions:**
+* **Retry Logic for Transactions:** The driver's `withTransaction()` already retries `TransientTransactionError` and unknown commit results for a bounded time, so use it on its own and keep the callback idempotent:
     
 
 ```javascript
-async function retryTransaction(session) {
-  let retries = 3;
-  while (retries > 0) {
-    try {
-      await session.withTransaction(async () => {
-        // Transaction logic here
-      });
-      break;
-    } catch (error) {
-      if (error.hasErrorLabel('TransientTransactionError')) {
-        retries--;
-      } else {
-        throw error;
-      }
-    }
+async function runTransaction(client) {
+  const session = client.startSession();
+  try {
+    await session.withTransaction(async () => {
+      // Transaction logic here; pass { session } to every operation
+    });
+  } finally {
+    await session.endSession();
   }
 }
 ```
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> The driver's <code>withTransaction()</code> already retries <code>TransientTransactionError</code> and unknown commit results for a bounded time, so this outer loop repeats retries the driver has already attempted. Use <code>withTransaction()</code> on its own and keep the callback idempotent.</aside>
-
 
 ---
 
@@ -216,7 +194,7 @@ async function retryTransaction(session) {
     
 * Implement versioning or lock fields to manage concurrency.
     
-* Use transactions and retries to handle deadlocks.
+* Use `withTransaction()` so transient transaction errors and write conflicts are retried.
     
 
 By mastering MongoDB’s locking and concurrency mechanisms, developers can ensure data integrity while maximizing performance in high-concurrency environments. Happy coding!

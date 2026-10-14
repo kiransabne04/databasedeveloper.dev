@@ -29,6 +29,6 @@ export const nav = [
   { label: 'Upgrade', href: '/postgresql-upgrade-readiness' },
   { label: 'Problems', href: '/problems' },
   { label: 'Capabilities', href: '/capabilities' },
-  { label: 'Insights', href: '/insights' },
+  { label: 'Guides', href: '/insights' },
   { label: 'Pricing', href: '/pricing' }
 ] as const;

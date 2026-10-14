@@ -1,4 +1,4 @@
-Clustering is a vital performance optimization technique in PostgreSQL that reorganizes tables based on an index. By aligning table data according to an index, clustering improves query speed, reduces disk I/O, and enhances sequential scan performance. This guide provides a comprehensive overview of PostgreSQL clustering, covering implementation, use cases, benefits, drawbacks, and best practices.
+Clustering is a performance optimization technique in PostgreSQL that reorganizes tables based on an index. By aligning table data according to an index, clustering can improve range-query speed and reduce disk I/O, because matching rows sit on fewer heap pages. This guide provides a comprehensive overview of PostgreSQL clustering, covering implementation, use cases, benefits, drawbacks, and best practices.
 
 ---
 
@@ -10,13 +10,9 @@ Clustering in PostgreSQL refers to the physical reordering of table data based o
 
 * **Persistent Data Reorganization** – Tables are physically reordered, but PostgreSQL does not maintain clustering automatically.
     
-* **Index Dependency** – Clustering relies on an existing B-tree index.
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> <code>CLUSTER</code> needs an index whose access method supports clustering, such as B-tree or GiST; it cannot use a partial index. Tested on PostgreSQL 17.</aside>
-
+* **Index Dependency** – Clustering relies on an existing index whose access method supports it, such as B-tree or GiST. Partial indexes cannot be used.
     
-* **Improved Query Performance** – Optimized for range queries and sequential scans.
+* **Improved Query Performance** – Optimized for range queries that use index or bitmap scans.
     
 
 ---
@@ -81,17 +77,15 @@ SELECT auto_cluster_orders();
     
 
 ```sql
-SELECT relname, relhasindex FROM pg_class WHERE relname = 'orders';
-```
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> <code>relhasindex</code> only says that the table has an index. To see which index was last used for clustering, and how well the physical order still matches it:<pre><code>SELECT indexrelid::regclass AS index, indisclustered
+-- Which index the table was last clustered on
+SELECT indexrelid::regclass AS index, indisclustered
 FROM pg_index WHERE indrelid = 'orders'::regclass;
 
+-- How closely the physical order still matches (near 1 or -1 is well ordered)
 SELECT attname, correlation
 FROM pg_stats
-WHERE tablename = 'orders' AND attname = 'order_date';</code></pre>A <code>correlation</code> near 1 or -1 means the heap is still close to index order.</aside>
-
+WHERE tablename = 'orders' AND attname = 'order_date';
+```
 
 * **Recluster After Inserts/Updates:**
     
@@ -107,16 +101,14 @@ CLUSTER VERBOSE;
 CLUSTER orders;
 ```
 
-* **Disable AutoVacuum (Optional for Performance):**
+* **Keep Autovacuum On:**
     
 
+Autovacuum does not reorder rows, so it does not undo clustering. Disabling it lets dead tuples and bloat accumulate and risks transaction ID wraparound. If the table needs more aggressive vacuuming, tune per-table settings instead:
+
 ```sql
-ALTER TABLE orders SET (autovacuum_enabled = false);
+ALTER TABLE orders SET (autovacuum_vacuum_scale_factor = 0.05);
 ```
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> Do not disable autovacuum to protect clustering. Autovacuum does not reorder rows, and disabling it lets dead tuples and bloat grow and risks transaction ID wraparound. Leave it on.</aside>
-
 
 ---
 
@@ -124,11 +116,7 @@ ALTER TABLE orders SET (autovacuum_enabled = false);
 
 * **Faster Range Queries** – Access data more efficiently by aligning rows with the index.
     
-* **Reduced Disk I/O** – Sequential scans benefit from reduced disk seek times.
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> The main benefit is for index and bitmap scans that read a range: matching rows sit on fewer heap pages. A full sequential scan reads every page regardless of order.</aside>
-
+* **Reduced Disk I/O** – Index range scans read fewer heap pages because matching rows are stored together. Full sequential scans read every page either way.
     
 * **Enhanced Analytical Performance** – Speeds up analytical workloads and reporting queries.
     
@@ -141,11 +129,9 @@ ALTER TABLE orders SET (autovacuum_enabled = false);
 
 * **Manual Maintenance** – Clustering must be periodically re-executed.
     
-* **Table Locking** – Clustering locks the table during the process, blocking writes.
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> <code>CLUSTER</code> takes an <code>ACCESS EXCLUSIVE</code> lock, so it blocks reads as well as writes for the whole rewrite, and needs free disk space for a full copy of the table and its indexes. Tested on PostgreSQL 17.</aside>
-
+* **Table Locking** – `CLUSTER` takes an `ACCESS EXCLUSIVE` lock for the whole rewrite, blocking reads as well as writes.
+    
+* **Disk Space** – The rewrite needs free space for a full copy of the table and its indexes.
     
 * **Performance Overhead** – Frequent inserts or updates may disrupt the clustered order.
     
@@ -156,11 +142,11 @@ ALTER TABLE orders SET (autovacuum_enabled = false);
 
 ### PostgreSQL Clustering Best Practices
 
-* **Cluster During Low Traffic** – Perform clustering during maintenance windows to avoid downtime.
+* **Cluster During Low Traffic** – Perform clustering during maintenance windows; the table is unavailable for the duration. Set `lock_timeout` so a waiting `CLUSTER` does not queue every other query behind it.
     
 * **Prioritize Read-Heavy Tables** – Focus clustering efforts on tables with heavy read workloads.
     
-* **Combine with Partitioning** – Use clustering alongside partitioning for large datasets.
+* **Combine with Partitioning** – Use clustering alongside partitioning for large datasets: cluster individual partitions, or the partitioned table itself on PostgreSQL 15 and later.
     
 * **Recluster Periodically** – Schedule periodic clustering to maintain performance.
     
@@ -175,7 +161,7 @@ ALTER TABLE orders SET (autovacuum_enabled = false);
     
 * **Frequent Writes** – Inserts and updates gradually degrade clustering efficiency.
     
-* **Partial Indexes** – Clustering works only with full B-tree indexes, not partial indexes.
+* **Partial Indexes** – Clustering cannot use a partial index.
     
 * **Locking Overhead** – Avoid clustering during peak traffic to prevent blocking transactions.
     

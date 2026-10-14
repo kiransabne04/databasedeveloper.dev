@@ -6,7 +6,7 @@ import { Content as Original } from '../originals/how-to-scale-postgresql-databa
   <Original />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
-  <p class="production-intro">The original article above is unchanged apart from the marked corrections. These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
+  <p class="production-intro">These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
   <h3>The reason to partition matters</h3>
   <p>Partitioning divides one logical table into child tables by range, list or hash. It can make old-data removal and bulk maintenance easier. It can also reduce query work when a predicate lets PostgreSQL skip most partitions. A large row count alone is not a reason: a well-indexed unpartitioned table may already serve the workload efficiently.</p>
   <p>For a time-based event table, monthly range partitions can align retention with physical data removal. Bounds are half-open: the lower bound is included and the upper bound is excluded.</p>

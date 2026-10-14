@@ -6,7 +6,7 @@ import { Content as Original } from '../originals/sharding-postgresql-techniques
   <Original />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
-  <p class="production-intro">The original article above is unchanged apart from the marked corrections. These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
+  <p class="production-intro">These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
   <h3>Sharding is an architecture change</h3>
   <p>Sharding places subsets of data on separate database nodes. PostgreSQL table partitioning can divide data inside one database; it does not, by itself, distribute capacity across servers. Sharding can help when a single node is a measured limit, but it adds routing, migration, cross-shard queries and failure handling to the application.</p>
   <p>Before splitting data, establish which resource is constrained. High CPU from a few inefficient statements, connection storms or missing workload isolation may follow the application to every shard. Compare query, storage, write and growth evidence with less invasive changes first.</p>

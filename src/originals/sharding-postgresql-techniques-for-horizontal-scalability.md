@@ -14,7 +14,7 @@ Sharding refers to distributing rows from a table across multiple databases or s
     
 * **Independent Nodes** – Each shard operates independently, reducing load on individual servers.
     
-* **Fault Isolation** – Failures are localized to specific shards, improving fault tolerance.
+* **Fault Isolation** – A failure affects only the data on that shard, provided each shard has its own replication and failover.
     
 
 ---
@@ -42,7 +42,7 @@ PostgreSQL offers several methods to implement sharding, including Foreign Data 
 
 #### Sharding with PostgreSQL Foreign Data Wrappers (FDW)
 
-FDW allows PostgreSQL to query tables on remote servers, enabling sharding across multiple instances.
+FDW allows PostgreSQL to query tables on remote servers. On its own it connects one server to another; combined with partitioning, where each partition is a foreign table on a different server, it can route rows to shards. Cross-shard transactions, rebalancing and backups still have to be designed separately.
 
 **Step 1: Install FDW Extension**
 
@@ -65,12 +65,24 @@ CREATE USER MAPPING FOR current_user SERVER shard1 OPTIONS (user 'shard_user', p
 **Step 4: Import Foreign Schema**
 
 ```sql
+CREATE SCHEMA foreign_schema;
 IMPORT FOREIGN SCHEMA public FROM SERVER shard1 INTO foreign_schema;
 ```
 
+In practice, keep the password out of scripts, for example in a password file on the server or a secrets manager.
 
-<aside class="correction"><strong>Correction (October 2026):</strong> These steps connect to one remote server; they are not sharding by themselves. You still need a routing rule, for example a partitioned table whose partitions are foreign tables on different servers, plus plans for cross-shard queries, transactions, rebalancing and backups. Create <code>foreign_schema</code> first, and keep passwords out of scripts.</aside>
+**Step 5: Route Rows to Shards**
 
+```sql
+CREATE TABLE orders (
+    order_id BIGINT NOT NULL,
+    customer_id INT NOT NULL
+) PARTITION BY HASH (customer_id);
+
+CREATE FOREIGN TABLE orders_shard1 PARTITION OF orders
+    FOR VALUES WITH (MODULUS 2, REMAINDER 0)
+    SERVER shard1 OPTIONS (table_name 'orders');
+```
 
 ---
 
@@ -80,13 +92,17 @@ Citus is a PostgreSQL extension that transforms PostgreSQL into a distributed da
 
 **Install and Configure Citus:**
 
+Citus packages come from the Citus repository, not the default Debian or Ubuntu repositories. On every node:
+
 ```bash
-sudo apt install postgresql-14-citus
+curl https://install.citusdata.com/community/deb.sh | sudo bash
+sudo apt-get -y install postgresql-17-citus-13.0
+sudo pg_conftool 17 main set shared_preload_libraries citus
+sudo service postgresql restart
+sudo -i -u postgres psql -c "CREATE EXTENSION citus;"
 ```
 
-
-<aside class="correction"><strong>Correction (October 2026):</strong> Citus packages come from the Citus repository, not the default Ubuntu or Debian repositories, and every node also needs <code>citus</code> in <code>shared_preload_libraries</code> and <code>CREATE EXTENSION citus</code>. Package names follow <code>postgresql-&lt;major&gt;-citus-&lt;version&gt;</code>. PostgreSQL 14 reaches end of life in November 2026, so choose a newer major version. Follow the <a href="https://docs.citusdata.com/en/latest/installation/multi_node.html">current Citus installation guide</a>.</aside>
-
+Package names follow `postgresql-<major>-citus-<version>`; check the [Citus installation guide](https://docs.citusdata.com/en/latest/installation/multi_node.html) for the current release.
 
 **Distribute Table Across Nodes:**
 
@@ -98,34 +114,32 @@ SELECT create_distributed_table('orders', 'customer_id');
 
 ### Managing Sharded Tables
 
-* **Adding New Shards:**
+* **Adding New Nodes:**
     
 
 ```sql
+-- With FDW: register the new server, then attach a partition on it
 CREATE SERVER shard2 FOREIGN DATA WRAPPER postgres_fdw OPTIONS (host 'shard2_host', dbname 'db2');
+
+-- With Citus: add a worker node, then rebalance
+SELECT citus_add_node('worker3_host', 5432);
 ```
 
-* **Rebalancing Data:**
+* **Rebalancing Data (Citus):**
     
 
 ```sql
-SELECT rebalance_table_shards('orders');
+SELECT citus_rebalance_start();
+SELECT * FROM citus_rebalance_status();
 ```
 
-
-<aside class="correction"><strong>Correction (October 2026):</strong> Adding a foreign server does not add a Citus shard; in Citus, you add a worker node and then rebalance. <code>rebalance_table_shards()</code> has been deprecated since Citus 11.2; use <code>citus_rebalance_start()</code>.</aside>
-
-
-* **Monitoring Shard Health:**
+* **Monitoring Shard Health (Citus):**
     
 
 ```sql
-SELECT * FROM citus_shard_health;
+SELECT * FROM citus_check_cluster_node_health();
+SELECT table_name, shardid, nodename, shard_size FROM citus_shards;
 ```
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> Citus has no <code>citus_shard_health</code> object. Use <code>citus_check_cluster_node_health()</code> for node connectivity and the <code>citus_shards</code> view for shard placement and size.</aside>
-
 
 ---
 
@@ -133,11 +147,7 @@ SELECT * FROM citus_shard_health;
 
 * **Horizontal Scalability** – Scale out by adding more servers.
     
-* **Fault Tolerance** – Failures affect only specific shards.
-
-
-<aside class="correction"><strong>Correction (October 2026):</strong> Without replication and failover for each shard, a shard failure makes that subset of data unavailable, and requests that touch it fail. Sharding narrows the blast radius but adds more nodes that can fail.</aside>
-
+* **Fault Tolerance** – Failures affect only specific shards, as long as each shard is replicated; without replicas, data on a failed shard is unavailable.
     
 * **Improved Performance** – Distributes workload across multiple servers.
     

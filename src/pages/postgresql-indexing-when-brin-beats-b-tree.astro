@@ -6,7 +6,7 @@ import { Content as Original } from '../originals/postgresql-indexing-when-brin-
   <Original />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
-  <p class="production-intro">The original article above is unchanged apart from the marked corrections. These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
+  <p class="production-intro">These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
   <h3>A large table does not automatically need BRIN</h3>
   <p>BRIN stores summaries for ranges of heap pages. It is compact when the indexed value follows the table's physical order, as an append-only event timestamp often does. A B-tree stores much more precise lookup information. BRIN may use less space and cost less to maintain, but it can return many candidate pages that PostgreSQL must recheck.</p>
   <p>For a time-window query on a large event table, ask how rows arrived. If events were appended roughly in timestamp order, a narrow range may map to a small part of the heap. Backfills, updates or mixed ingestion can weaken that correlation and increase rechecks.</p>

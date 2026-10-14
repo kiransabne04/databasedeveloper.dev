@@ -6,7 +6,7 @@ import { Content as Original } from '../originals/postgresql-concurrency-and-loc
   <Original />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
-  <p class="production-intro">The original article above is unchanged apart from the marked corrections. These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
+  <p class="production-intro">These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
   <h3>Start with the waiting session, then find the blocker</h3>
   <p>PostgreSQL's MVCC lets ordinary reads and writes overlap in many cases, but transactions still acquire row and table locks. When an application endpoint slows down, a waiting query can be the victim rather than the cause. Tuning its SQL before finding the blocker may leave the incident untouched.</p>
   <p>Take a snapshot while the wait is happening. Capture the time window, affected endpoint, session state, wait event, transaction age and the sessions returned by <code>pg_blocking_pids()</code>. A long <code>idle in transaction</code> session can hold locks after its last statement has finished.</p>

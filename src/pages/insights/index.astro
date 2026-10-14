@@ -1,25 +1,75 @@
 ---
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
+import { site } from '../../config/site';
+
+const groups = [
+  {
+    id: 'postgresql-performance',
+    title: 'PostgreSQL performance and locking',
+    intro: 'Diagnose blocking, indexing and physical-design problems from production evidence before changing the schema.',
+    related: { label: 'PostgreSQL performance investigation', href: '/postgresql-performance-investigation' },
+    items: [
+      { href: '/postgresql-concurrency-and-locking-a-comprehensive-guide', kicker: 'Locking', title: 'PostgreSQL concurrency and locking', text: 'Lock modes, advisory locks and deadlocks, plus how to find the session at the head of a blocking chain.' },
+      { href: '/postgresql-indexing-when-brin-beats-b-tree', kicker: 'Indexing', title: 'When BRIN beats B-tree', text: 'Compare physical correlation, lossy rechecks and ordered access on the real query.' },
+      { href: '/how-to-scale-postgresql-databases-with-partitioning', kicker: 'Partitioning', title: 'Scaling with partitioning', text: 'Range, list and hash partitioning; pruning, retention and key constraints before migrating a table.' },
+      { href: '/mastering-clustering-in-postgresql-for-enhanced-query-performance', kicker: 'Physical design', title: 'CLUSTER and query performance', text: 'Measure heap locality against rewrite time, disk space and the ACCESS EXCLUSIVE lock.' },
+      { href: '/sharding-postgresql-techniques-for-horizontal-scalability', kicker: 'Architecture', title: 'Sharding PostgreSQL', text: 'FDW and Citus approaches, shard keys, rebalancing and cross-shard work.' },
+      { href: '/insights/what-ai-misses-postgresql', kicker: 'Diagnosis', title: 'What AI misses in production diagnosis', text: 'Why a plausible query recommendation can still be unsafe without workload context.' }
+    ]
+  },
+  {
+    id: 'upgrades',
+    title: 'PostgreSQL upgrades and support dates',
+    intro: 'Version deadlines on RDS, Aurora and community PostgreSQL, and how to plan an upgrade that does not regress performance.',
+    related: { label: 'PostgreSQL upgrade readiness', href: '/postgresql-upgrade-readiness' },
+    items: [
+      { href: '/insights/postgresql-14-minor-version-deadlines', kicker: 'RDS · Oct 2026', title: 'RDS PostgreSQL 14.18/14.19 lose standard support on 31 October', text: 'Minor-version deadlines that arrive before the PG14 major-version dates, and how to check your instances.' },
+      { href: '/postgresql-14-eol', kicker: 'End of life', title: 'PostgreSQL 14 EOL planning', text: 'Current dates and the upgrade-readiness sequence.' }
+    ]
+  },
+  {
+    id: 'pgvector',
+    title: 'pgvector and vector search',
+    intro: 'Recall, latency, filtering and memory trade-offs when vector search runs inside PostgreSQL.',
+    related: { label: 'pgvector performance review', href: '/pgvector-performance' },
+    items: [
+      { href: '/insights/pgvector-hnsw-vs-ivfflat', kicker: 'Indexing', title: 'HNSW vs IVFFlat is a workload decision', text: 'Recall, latency, memory, build cost and filtering trade-offs.' },
+      { href: '/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector', kicker: 'Architecture', title: 'Semantic search API with FastAPI and pgvector', text: 'From a FastAPI demo to measured recall, tenant filtering and latency.' }
+    ]
+  },
+  {
+    id: 'other-databases',
+    title: 'Other databases',
+    intro: 'Concurrency and performance guides beyond PostgreSQL. SQL Server, Snowflake and analytical workloads are covered on their capability pages.',
+    related: { label: 'All capabilities', href: '/capabilities' },
+    items: [
+      { href: '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive', kicker: 'MongoDB', title: 'MongoDB locking and concurrency', text: 'WiredTiger lock modes, versioning, expiring lock fields and transaction retries.' },
+      { href: '/sql-server-performance', kicker: 'SQL Server', title: 'SQL Server performance review', text: 'Query Store, plan regressions, blocking chains and ORM implicit conversions.' },
+      { href: '/snowflake-performance', kicker: 'Snowflake', title: 'Snowflake performance and cost', text: 'Query history, warehouse sizing, pruning, spills and workload isolation.' }
+    ]
+  }
+];
+
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'CollectionPage',
+  name: 'PostgreSQL and database performance guides',
+  url: `${site.url}/insights`,
+  hasPart: groups.flatMap((group) => group.items.map((item) => ({ '@type': 'WebPage', name: item.title, url: `${site.url}${item.href}` })))
+};
 ---
-<BaseLayout title="PostgreSQL Performance Guides and Database Insights — DatabaseDeveloper" description="Practical guides to PostgreSQL locking, indexing, partitioning, pgvector and evidence-led production performance diagnosis.">
-  <PageHero eyebrow="Insights" title="Database performance guides grounded in workload decisions." description="Use these guides to frame the evidence and trade-offs behind a production change." />
-  <section><div class="container grid three">
-    <a class="card card-link" href="/insights/postgresql-14-minor-version-deadlines"><span class="kicker">Upgrade · Oct 2026</span><h3>RDS PostgreSQL 14.18/14.19 lose standard support on 31 October</h3><p>Minor-version deadlines that arrive before the PG14 major-version dates, and how to check your instances.</p></a>
-    <a class="card card-link" href="/insights/what-ai-misses-postgresql"><span class="kicker">PostgreSQL</span><h3>What AI misses in production PostgreSQL diagnosis</h3><p>Why a plausible query recommendation can still be unsafe without workload context.</p></a>
-    <a class="card card-link" href="/postgresql-14-eol"><span class="kicker">Upgrade</span><h3>PostgreSQL 14 EOL planning</h3><p>Current dates and the upgrade-readiness sequence.</p></a>
-    <a class="card card-link" href="/insights/pgvector-hnsw-vs-ivfflat"><span class="kicker">pgvector</span><h3>HNSW vs IVFFlat is a workload decision</h3><p>Recall, latency, memory, build cost and filtering trade-offs.</p></a>
-  </div></section>
-  <section><div class="container">
-    <div class="section-head"><div><span class="eyebrow">Guides</span><h2>PostgreSQL and database guides</h2></div><p>Each guide keeps its original text, with correction notes where advice was wrong or outdated and production notes for diagnosing the problem on a live system.</p></div>
-    <div class="grid three">
-      <a class="card card-link" href="/postgresql-concurrency-and-locking-a-comprehensive-guide"><span class="kicker">PostgreSQL</span><h3>Find blocking queries</h3><p>Use pg_blocking_pids and transaction age to separate row contention, DDL queues and deadlocks.</p></a>
-      <a class="card card-link" href="/postgresql-indexing-when-brin-beats-b-tree"><span class="kicker">PostgreSQL</span><h3>BRIN vs B-tree indexes</h3><p>Compare physical correlation, lossy rechecks and ordered access on the real query.</p></a>
-      <a class="card card-link" href="/how-to-scale-postgresql-databases-with-partitioning"><span class="kicker">PostgreSQL</span><h3>Partitioning and pruning</h3><p>Check query pruning, retention operations and key constraints before migrating a table.</p></a>
-      <a class="card card-link" href="/mastering-clustering-in-postgresql-for-enhanced-query-performance"><span class="kicker">PostgreSQL</span><h3>CLUSTER trade-offs</h3><p>Measure heap locality against rewrite time, disk space and exclusive locking.</p></a>
-      <a class="card card-link" href="/sharding-postgresql-techniques-for-horizontal-scalability"><span class="kicker">PostgreSQL</span><h3>When to shard PostgreSQL</h3><p>Prove a single-node limit and plan routing, rebalancing and cross-shard work.</p></a>
-      <a class="card card-link" href="/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector"><span class="kicker">pgvector</span><h3>Semantic search in production</h3><p>Move from a FastAPI demo to measured recall, tenant filtering and latency.</p></a>
-    </div>
-    <p class="small muted">Also available: the <a href="/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive">MongoDB concurrency guide</a>.</p>
-  </div></section>
+<BaseLayout title="PostgreSQL Performance Guides — DatabaseDeveloper" description="Practical guides to PostgreSQL locking, indexing, partitioning, upgrades and pgvector, grounded in production evidence and safe-change judgment." schema={schema}>
+  <PageHero eyebrow="Guides" title="Database performance guides grounded in workload decisions." description="Use these guides to frame the evidence and trade-offs behind a production change. Each one ends with the checks to run on your own system." />
+  {groups.map((group, groupIndex) => (
+    <section id={group.id}><div class="container">
+      {groupIndex === 0 && <nav class="topic-nav small" aria-label="Guide topics">Topics: {groups.map((item, index) => (<>{index > 0 && ' · '}<a href={`#${item.id}`}>{item.title}</a></>))}</nav>}
+      <div class="section-head"><div><h2>{group.title}</h2></div><p>{group.intro} Related: <a href={group.related.href}>{group.related.label}</a>.</p></div>
+      <div class="grid three">
+        {group.items.map((item) => (
+          <a class="card card-link" href={item.href}><span class="kicker">{item.kicker}</span><h3>{item.title}</h3><p>{item.text}</p></a>
+        ))}
+      </div>
+    </div></section>
+  ))}
 </BaseLayout>

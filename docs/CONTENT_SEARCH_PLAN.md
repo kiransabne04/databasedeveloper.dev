@@ -16,7 +16,7 @@ Updated 13 October 2026. This is a search-intent map, not a claim of keyword vol
 
 ## Editorial rules
 
-- Preserve the seven original article URLs and the permanent redirect for the SQL interview pointer to its full article on `kiransabne.dev`. Each page keeps the original text verbatim, adds tested correction notes and production notes, and keeps its original publication date and a truthful revision date.
+- Preserve the seven original article URLs and the permanent redirect for the SQL interview pointer to its full article on `kiransabne.dev`. Each page keeps the original text with errors corrected in place, adds production notes, and keeps its original publication date and a truthful revision date.
 - Give each article one primary question in its title and opening. Explain the decisive evidence, operational trade-off and validation step. Use SQL or code where it helps a reader act; label examples and avoid invented production results.
 - Link informational articles to a relevant problem or service page when a real production investigation could help. The shared article CTA is secondary to the technical answer.
 - Keep the DatabaseDeveloper archive self-contained. The BRIN and semantic-search pointer posts now have complete local guides; the interview pointer redirects to its full article on `kiransabne.dev`, which is not duplicated here. Inventory any separate `kiransabne.dev` publication before deleting a shared Hashnode account.
