@@ -12,7 +12,13 @@ const plausibleEnabled = Boolean(import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN);
     <p>If you contact DatabaseDeveloper, we receive the contact details and technical context you choose to send. We use that information to respond to your inquiry and discuss a possible engagement.</p>
     {formEndpointEnabled ? <p>The contact form sends your inquiry through the configured form service.</p> : <p>The contact form opens an email draft in your email app. Your message is sent only when you send that draft.</p>}
     <p>Do not submit passwords, credentials, database dumps or sensitive personal/customer data through the public website.</p>
-    {(gaEnabled || plausibleEnabled) && <p>Site analytics are enabled through {gaEnabled && plausibleEnabled ? 'Google Analytics and Plausible' : gaEnabled ? 'Google Analytics' : 'Plausible'}. They help us understand page use and inquiry paths. The configured provider handles usage data under its own policy.</p>}
+    {gaEnabled && <>
+      <h2>Analytics cookies</h2>
+      <p>This site uses Google Analytics 4 to understand which pages are read and which lead to an inquiry. It loads only after you choose <strong>Accept analytics</strong> in the cookie banner. If you decline or ignore the banner, no analytics script runs and no analytics cookies are set.</p>
+      <p>When accepted, Google Analytics sets first-party cookies named <code>_ga</code> and <code>_ga_&lt;container-id&gt;</code> to distinguish visits. Google signals and ad personalization are turned off, and the data is not used for advertising. Google processes the data under its own <a href="https://policies.google.com/privacy">privacy policy</a>.</p>
+      <p>You can change your choice at any time with <strong>Cookie settings</strong> in the site footer. Withdrawing consent removes the analytics cookies this site set.</p>
+    </>}
+    {plausibleEnabled && <p>Site analytics are also measured with Plausible, which does not use cookies.</p>}
     <p>Production evidence and client engagement data are handled under the specific engagement terms, not through this public contact page.</p>
     <p>For questions about information you sent, email <a href={`mailto:${site.email}`}>{site.email}</a>.</p>
   </div></section>

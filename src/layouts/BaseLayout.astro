@@ -27,6 +27,8 @@ const {
 } = Astro.props;
 
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site.url).toString();
+const gaEnabled = Boolean(import.meta.env.PUBLIC_GA_ID);
+const isNotFound = Astro.url.pathname.replace(/\/$/, '') === '/404';
 // Search results truncate titles around 60 characters; drop the brand suffix rather than the topic.
 const brandSuffix = ` — ${site.brand}`;
 const pageTitle = title.length > 60 && title.endsWith(brandSuffix) ? title.slice(0, -brandSuffix.length) : title;
@@ -81,7 +83,7 @@ const schemas = [
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     {schemas.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item)} />)}
   </head>
-  <body>
+  <body data-not-found={isNotFound ? 'true' : undefined}>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="container nav-shell">
@@ -140,10 +142,21 @@ const schemas = [
             <a href="/contact">Contact</a>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
+            {gaEnabled && <button type="button" class="link-button" data-consent-reset>Cookie settings</button>}
           </div>
         </div>
       </div>
     </footer>
+
+    {gaEnabled && (
+      <div id="consent-banner" class="consent-banner" role="region" aria-label="Analytics cookies" hidden>
+        <p>This site uses Google Analytics cookies to understand which pages are useful, only if you accept. No advertising. <a href="/privacy">Privacy</a></p>
+        <div class="actions">
+          <button type="button" class="button" data-consent="denied">Decline</button>
+          <button type="button" class="button primary" data-consent="granted">Accept analytics</button>
+        </div>
+      </div>
+    )}
 
     <script is:inline define:vars={{ gaId: import.meta.env.PUBLIC_GA_ID, plausibleDomain: import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN }}>
       if (plausibleDomain) {
@@ -154,15 +167,56 @@ const schemas = [
         document.head.appendChild(s);
       }
 
-      if (gaId) {
+      // Google Analytics loads only after the visitor accepts analytics cookies.
+      const consentKey = 'dd-analytics-consent';
+      function loadGoogleAnalytics() {
+        if (window.gtag) return;
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function(){ dataLayer.push(arguments); };
+        gtag('consent', 'default', {
+          analytics_storage: 'granted',
+          ad_storage: 'denied',
+          ad_user_data: 'denied',
+          ad_personalization: 'denied'
+        });
+        gtag('js', new Date());
+        gtag('config', gaId, { allow_google_signals: false, allow_ad_personalization_signals: false });
         const s = document.createElement('script');
         s.async = true;
         s.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
         document.head.appendChild(s);
-        window.dataLayer = window.dataLayer || [];
-        window.gtag = function(){ dataLayer.push(arguments); };
-        gtag('js', new Date());
-        gtag('config', gaId);
+      }
+      function clearAnalyticsCookies() {
+        document.cookie.split(';').map((c) => c.split('=')[0].trim()).filter((name) => name.startsWith('_ga')).forEach((name) => {
+          const host = location.hostname.replace(/^www\./, '');
+          document.cookie = `${name}=; Max-Age=0; path=/`;
+          document.cookie = `${name}=; Max-Age=0; path=/; domain=.${host}`;
+        });
+      }
+      if (gaId) {
+        const banner = document.getElementById('consent-banner');
+        const choice = localStorage.getItem(consentKey);
+        if (choice === 'granted') loadGoogleAnalytics();
+        else if (choice !== 'denied' && banner) banner.hidden = false;
+        banner?.addEventListener('click', (event) => {
+          const button = event.target instanceof Element ? event.target.closest('[data-consent]') : null;
+          if (!button) return;
+          const granted = button.getAttribute('data-consent') === 'granted';
+          localStorage.setItem(consentKey, granted ? 'granted' : 'denied');
+          banner.hidden = true;
+          if (granted) loadGoogleAnalytics();
+          else clearAnalyticsCookies();
+        });
+        document.querySelector('[data-consent-reset]')?.addEventListener('click', () => {
+          if (localStorage.getItem(consentKey) === 'granted') {
+            localStorage.removeItem(consentKey);
+            clearAnalyticsCookies();
+            location.reload();
+            return;
+          }
+          localStorage.removeItem(consentKey);
+          if (banner) banner.hidden = false;
+        });
       }
 
       const campaign = new URLSearchParams(location.search).get('utm_campaign') || undefined;
@@ -174,8 +228,10 @@ const schemas = [
       }
 
       document.addEventListener('click', (event) => {
-        const target = event.target instanceof Element ? event.target.closest('[data-track]') : null;
+        const element = event.target instanceof Element ? event.target : null;
+        const target = element?.closest('[data-track]');
         if (target?.dataset.track) track(target.dataset.track);
+        if (element?.closest('a[href^="mailto:"]')) track('email_click');
       });
       window.addEventListener('dd:track', (event) => {
         if (typeof event.detail === 'string') track(event.detail);
@@ -184,6 +240,7 @@ const schemas = [
       if (path === '/postgresql-performance-investigation') track('investigation_page_view');
       if (path === '/postgresql-upgrade-readiness') track('upgrade_page_view');
       if (['/sql-server-performance', '/pgvector-performance', '/snowflake-performance', '/olap-analytical-performance'].includes(path)) track('capability_page_view');
+      if (document.body.dataset.notFound === 'true') track('page_not_found');
     </script>
   </body>
 </html>

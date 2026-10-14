@@ -13,7 +13,10 @@
 - [x] Provide a functional email-draft fallback for the contact form
 - [ ] Decide whether email-draft inquiries are sufficient for launch; a hosted form is needed to measure completed form submissions
 - [ ] Configure `PUBLIC_CONTACT_ENDPOINT` only after choosing a form provider
-- [ ] Configure analytics only after choosing the provider and reviewing privacy copy
+- [x] Analytics provider chosen: Google Analytics 4 (free). Loads only after consent via the built-in banner; ad features off; privacy page updated
+- [ ] Create a GA4 property and web data stream for `https://databasedeveloper.dev`; set data retention to 14 months; leave Google signals off
+- [ ] Set `PUBLIC_GA_ID=G-...` in Vercel for the **Production** environment only, then redeploy
+- [ ] In GA4, mark `contact_submit`, `contact_draft_open` and `email_click` as key events; `page_not_found` lists broken old URLs after the domain switch
 - [x] Verify `robots.txt` and sitemap generation locally
 - [x] Verify canonical URLs locally
 - [x] Verify PG14/AWS dates on 13 October 2026; re-check before publishing if time has passed
@@ -23,6 +26,6 @@
 - [ ] Test all old URLs and redirects on the deployment preview before switching DNS
 - [ ] Export both Hashnode publications as JSON; migrate and verify the 15 `kiransabne.dev` posts separately before deleting the account
 - [ ] Compare Search Console's indexed URL report with the sitemap inventory for any additional old paths
-- [ ] Add Search Console
+- [ ] Add Search Console as a Domain property (DNS TXT record at the registrar), submit `/sitemap-index.xml`, and link it to GA4
 - [ ] Review Search Console queries and real inquiry sources after launch before changing page priorities or claiming conversion optimization
 - [x] Add PlanReader CTA back to `/postgresql-performance-investigation`
