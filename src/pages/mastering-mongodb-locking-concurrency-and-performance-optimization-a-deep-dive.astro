@@ -1,15 +1,20 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
+import { Content as Original } from '../originals/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive.md';
 ---
-<ArticleLayout title="MongoDB Locking and Concurrency: Diagnose the Contended Operation" description="An updated guide to MongoDB WiredTiger concurrency, write conflicts, lock waits and the evidence needed to investigate throughput drops." eyebrow="Database archive · MongoDB" published="2025-07-19" updated="2026-10-13" legacy ctaTitle="Need an independent database performance review?" ctaDescription="Describe the workload and the symptom. The first step is confirming whether a bounded investigation fits the platform and evidence available.">
-  <h2>Do not treat every slow write as a collection lock</h2>
+<ArticleLayout title="Mastering MongoDB Locking, Concurrency, and Performance Optimization: A Deep Dive" description="An updated guide to MongoDB WiredTiger concurrency, write conflicts, lock waits and the evidence needed to investigate throughput drops." eyebrow="MongoDB concurrency" published="2025-07-19" updated="2026-10-14" original ctaTitle="Need an independent database performance review?" ctaDescription="Describe the workload and the symptom. The first step is confirming whether a bounded investigation fits the platform and evidence available.">
+  <Original />
+
+  <h2 id="production-notes">Production notes (October 2026)</h2>
+  <p class="production-intro">The original article above is unchanged apart from the marked corrections. These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
+  <h3>Do not treat every slow write as a collection lock</h3>
   <p>MongoDB's WiredTiger engine uses document-level concurrency control for writes and intent locks at broader levels. Many operations on different documents can run concurrently. A slow or retried write may come from a hot document, a long transaction, resource pressure or an application retry pattern; a simplistic lock-mode table will not identify which one.</p>
   <p>Write conflicts and lock waits are different signals. WiredTiger can detect a conflict between operations and retry one; application-level transactions may need explicit retry handling. An operation waiting for a lock should be investigated alongside its command, duration and competing activity.</p>
 
-  <h2>Separate lock waits from write conflicts</h2>
+  <h3>Separate lock waits from write conflicts</h3>
   <p>A lock wait means an operation is waiting for a lock mode to become available. A write conflict means concurrent work touched the same document or snapshot and one operation must retry. Neither signal alone proves that a collection is globally serialized. Correlate the event with the affected command, document access pattern, transaction duration and CPU or storage pressure.</p>
 
-  <h2>Evidence to collect during the event</h2>
+  <h3>Evidence to collect during the event</h3>
   <ol>
     <li>Identify the slow endpoint or job, affected collection, time window and whether latency is in reads, writes or transaction commits.</li>
     <li>Inspect current operations and lock statistics, using the deployment's supported tooling and permissions. Compare with CPU, cache pressure, disk activity and transaction metrics.</li>
@@ -25,5 +30,5 @@ import ArticleLayout from '../layouts/ArticleLayout.astro';
 ]);`}</code></pre>
   <p>For a hot-document pattern, first reduce unnecessary updates or shorten the transaction that owns the document. For a broad throughput drop, compare cache, disk and application retry rate before redesigning locking. A version field can protect an application-level update from overwriting another change, but it does not replace a diagnosis of server contention.</p>
   <p>MongoDB's <a href="https://www.mongodb.com/docs/manual/core/wiredtiger/">WiredTiger documentation</a> describes document-level concurrency and transparent retries. Its <a href="https://www.mongodb.com/docs/manual/faq/concurrency/">concurrency FAQ</a> explains lock visibility and monitoring options.</p>
-  <p>This article is retained for readers of the original DatabaseDeveloper publication. The current consulting practice is <a href="/postgresql-performance-investigation">PostgreSQL-first</a>; other database work is scoped individually.</p>
+  <p>The current consulting practice is <a href="/postgresql-performance-investigation">PostgreSQL-first</a>; other database work is scoped individually.</p>
 </ArticleLayout>

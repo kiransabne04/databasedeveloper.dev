@@ -9,12 +9,12 @@ interface Props {
   eyebrow: string;
   published: string;
   updated: string;
-  legacy?: boolean;
+  original?: boolean;
   ctaTitle?: string;
   ctaDescription?: string;
 }
 
-const { title, description, eyebrow, published, updated, legacy = false, ctaTitle, ctaDescription } = Astro.props;
+const { title, description, eyebrow, published, updated, original = false, ctaTitle, ctaDescription } = Astro.props;
 const pageUrl = new URL(Astro.url.pathname, site.url).toString();
 const articleSchema = {
   '@context': 'https://schema.org',
@@ -44,7 +44,7 @@ const breadcrumbSchema = {
       <h1 class="article-title">{title}</h1>
       <p class="lede">{description}</p>
       <p class="small muted">By <a href="/about">{site.personName}</a> · Published <time datetime={published}>{published}</time> · Updated <time datetime={updated}>{updated}</time></p>
-      {legacy && <p class="small muted">Revised from the original DatabaseDeveloper Hashnode article at this URL. Technical guidance has been reviewed for this edition.</p>}
+      {original && <p class="small muted">The original text is kept unchanged. Correction notes and <a href="#production-notes">production notes</a> were added on <time datetime={updated}>{updated}</time>.</p>}
     </header>
     <section><div class="container prose article-body"><slot /></div></section>
   </article>

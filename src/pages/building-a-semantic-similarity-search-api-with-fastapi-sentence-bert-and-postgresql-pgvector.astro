@@ -1,12 +1,16 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
+import { Content as Original } from '../originals/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector.md';
 ---
-<ArticleLayout title="pgvector Semantic Search with FastAPI: Production Checklist" description="Take a FastAPI and Sentence-BERT pgvector API beyond a demo: benchmark exact vs HNSW search, filtered recall, tenant isolation and end-to-end latency." eyebrow="pgvector architecture" published="2025-10-21" updated="2026-10-13" legacy ctaTitle="Is vector search slowing a production workload?" ctaDescription="Review recall, filters, latency and PostgreSQL resource use together before choosing an index or a larger database instance.">
-  <h2>The simple architecture</h2>
-  <p>A FastAPI endpoint receives text, Sentence-BERT produces an embedding, and PostgreSQL stores the vector alongside document metadata. A query embeds the user's text with the same model, orders candidates by the chosen distance operator and returns the nearest documents. This is a useful proof of concept because the vector data stays close to relational filters and application records.</p>
-  <p>The original Hashnode post introduced the API build. This expanded edition covers the same architecture and the checks needed when a demo becomes a service.</p>
+<ArticleLayout title="Building a Semantic Similarity Search API with FastAPI, Sentence-BERT, and PostgreSQL pgvector" description="Take a FastAPI and Sentence-BERT pgvector API beyond a demo: benchmark exact vs HNSW search, filtered recall, tenant isolation and end-to-end latency." eyebrow="pgvector architecture" published="2025-10-21" updated="2026-10-14" original ctaTitle="Is vector search slowing a production workload?" ctaDescription="Review recall, filters, latency and PostgreSQL resource use together before choosing an index or a larger database instance.">
+  <Original />
 
-  <h2>Define the query and the quality target</h2>
+  <h2 id="production-notes">Production notes (October 2026)</h2>
+  <p class="production-intro">The original article above is unchanged apart from the marked corrections. These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
+  <h3>The simple architecture</h3>
+  <p>A FastAPI endpoint receives text, Sentence-BERT produces an embedding, and PostgreSQL stores the vector alongside document metadata. A query embeds the user's text with the same model, orders candidates by the chosen distance operator and returns the nearest documents. This is a useful proof of concept because the vector data stays close to relational filters and application records.</p>
+
+  <h3>Define the query and the quality target</h3>
   <p>Start with a fixed embedding model, its dimension, a distance metric appropriate to that model and a representative set of user queries. For example, with cosine distance and tenant-scoped documents, the database query may look like this:</p>
   <pre><code>SELECT id, title, embedding &lt;=&gt; $2::vector AS distance
 FROM documents
@@ -15,18 +19,18 @@ ORDER BY embedding &lt;=&gt; $2::vector
 LIMIT 10;</code></pre>
   <p>Measure an exact-search baseline for each query cohort, then score an approximate index against it using recall at 10 and returned-result count. The target should reflect the product: a fast result set missing relevant documents is not a success. Keep the model version with the stored vector so re-embedding and rollback can be planned.</p>
 
-  <h2>Production decisions beyond the API code</h2>
+  <h3>Production decisions beyond the API code</h3>
   <ul>
     <li><strong>Embedding consistency:</strong> store the model name and version used for each vector. A model change may require re-embedding and index rebuilding; vectors from different models are not automatically comparable.</li>
     <li><strong>Distance and index:</strong> choose a distance metric that matches the model and benchmark exact search before adding approximate nearest-neighbor indexing. Compare HNSW and IVFFlat at a fixed recall target, not just peak query speed.</li>
     <li><strong>Filters:</strong> test the real tenant and metadata predicates. Approximate index scans may return too few results after filtering unless scan settings or index design are adjusted.</li>
     <li><strong>End-to-end latency:</strong> measure embedding generation, network time, SQL execution and result hydration separately. Optimizing only the database query can miss the largest cost.</li>
   </ul>
-  <h2>Filtered search is the production trap</h2>
+  <h3>Filtered search is the production trap</h3>
   <p>An HNSW or IVFFlat scan can find approximate neighbors across the index before the SQL filter removes other tenants or categories. With a selective filter, <code>LIMIT 10</code> can return fewer than ten rows or lower recall even when the database is fast. A B-tree on <code>tenant_id</code> helps some exact paths, but it does not automatically prefilter every approximate vector scan.</p>
   <p>Benchmark common, rare and largest-tenant filters separately. In pgvector 0.8.0 and later, iterative scans can search farther for qualifying rows, subject to work limits. Partial indexes for a small set of filter values or partitioning for suitable tenant groups are other options; each adds build, memory and maintenance cost. The <a href="https://github.com/pgvector/pgvector#filtering">pgvector filtering documentation</a> describes these choices.</p>
 
-  <h2>Measure the API, not only the SQL</h2>
+  <h3>Measure the API, not only the SQL</h3>
   <p>Record p50 and p95 time for embedding generation, database execution, network transfer and result hydration under realistic concurrency. Then track recall, result count, index size, build time, insert latency and memory as the collection grows. Keep exact search as a baseline for small filtered cohorts; an approximate index is not mandatory for every query.</p>
   <p>For each important query cohort, maintain an exact-search result set as a recall baseline. Track latency, recall, returned-result count, memory and write/index-maintenance cost as data grows. The <a href="https://github.com/pgvector/pgvector#readme">pgvector documentation</a> describes the index types and filtering behavior; our <a href="/insights/pgvector-hnsw-vs-ivfflat">HNSW versus IVFFlat guide</a> turns those details into a benchmark plan.</p>
 </ArticleLayout>

@@ -1,5 +1,5 @@
 /**
- * Verified legacy Hashnode mapping. Keep in sync with vercel.json.
+ * Verified mapping of the original article URLs. Keep in sync with vercel.json.
  * Seven old article URLs are retained as pages; the interview pointer redirects
  * to its full article on kiransabne.dev. RSS remains at /rss.xml.
  */

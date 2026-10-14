@@ -32,7 +32,8 @@ for (const route of legacyArticles) {
   assert(html.includes('<meta property="og:type" content="article"'), `Missing article Open Graph type: ${route}`);
   assert(/<h1\b[^>]*>.+?<\/h1>/s.test(html), `Missing H1: ${route}`);
   assert(/<meta name="description" content="[^"]+"/.test(html), `Missing description: ${route}`);
-  assert(!html.includes('kiransabne.dev'), `Article still depends on personal Hashnode site: ${route}`);
+  assert(html.includes('id="production-notes"'), `Missing production notes: ${route}`);
+  assert(!/hashnode/i.test(html), `Article mentions Hashnode: ${route}`);
   const title = html.match(/<title>(.*?)<\/title>/s)?.[1];
   assert(title && !seenTitles.has(title), `Missing or duplicate title: ${route}`);
   seenTitles.add(title);
