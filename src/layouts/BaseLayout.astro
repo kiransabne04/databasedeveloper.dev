@@ -27,7 +27,7 @@ const {
 } = Astro.props;
 
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site.url).toString();
-const gaEnabled = Boolean(import.meta.env.PUBLIC_GA_ID);
+const gaEnabled = Boolean(site.gaId);
 const isNotFound = Astro.url.pathname.replace(/\/$/, '') === '/404';
 // Search results truncate titles around 60 characters; drop the brand suffix rather than the topic.
 const brandSuffix = ` — ${site.brand}`;
@@ -158,7 +158,7 @@ const schemas = [
       </div>
     )}
 
-    <script is:inline define:vars={{ gaId: import.meta.env.PUBLIC_GA_ID, plausibleDomain: import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN }}>
+    <script is:inline define:vars={{ gaId: site.gaId, analyticsHosts: site.analyticsHosts, plausibleDomain: import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN }}>
       if (plausibleDomain) {
         const s = document.createElement('script');
         s.defer = true;
@@ -193,7 +193,7 @@ const schemas = [
           document.cookie = `${name}=; Max-Age=0; path=/; domain=.${host}`;
         });
       }
-      if (gaId) {
+      if (gaId && analyticsHosts.includes(location.hostname)) {
         const banner = document.getElementById('consent-banner');
         const choice = localStorage.getItem(consentKey);
         if (choice === 'granted') loadGoogleAnalytics();

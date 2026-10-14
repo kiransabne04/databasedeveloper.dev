@@ -15,7 +15,7 @@
 - [ ] Configure `PUBLIC_CONTACT_ENDPOINT` only after choosing a form provider
 - [x] Analytics provider chosen: Google Analytics 4 (free). Loads only after consent via the built-in banner; ad features off; privacy page updated
 - [ ] Create a GA4 property and web data stream for `https://databasedeveloper.dev`; set data retention to 14 months; leave Google signals off
-- [ ] Set `PUBLIC_GA_ID=G-...` in Vercel for the **Production** environment only, then redeploy
+- [x] GA4 measurement ID `G-4YXPCMHXYD` set in `src/config/site.ts`; it loads only on databasedeveloper.dev and www, after consent (`PUBLIC_GA_ID` overrides it)
 - [ ] In GA4, mark `contact_submit`, `contact_draft_open` and `email_click` as key events; `page_not_found` lists broken old URLs after the domain switch
 - [x] Verify `robots.txt` and sitemap generation locally
 - [x] Verify canonical URLs locally
