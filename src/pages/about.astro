@@ -1,17 +1,52 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
+import { site } from '../config/site';
 ---
-<BaseLayout title="About DatabaseDeveloper — Kiran Sabne" description="DatabaseDeveloper is the database-performance practice of Kiran Sabne, focused on PostgreSQL performance investigation and specialist database workloads.">
-  <PageHero eyebrow="About" title="Work directly with Kiran Sabne." description="DatabaseDeveloper is Kiran's specialist practice for investigating production database performance and planning changes your engineering team can validate." primaryLabel="Request an investigation" primaryHref="/contact" secondaryLabel="Read the technical guides" secondaryHref="/insights" />
+<BaseLayout title="About DatabaseDeveloper — Kiran Sabne" description="DatabaseDeveloper is the practice of Kiran Sabne, a database and backend engineer with about 8 years of production experience on PostgreSQL, Aurora/RDS, SQL Server and Snowflake.">
+  <PageHero eyebrow="About" title="Work directly with Kiran Sabne." description="Database and backend engineer with about 8 years of experience running production data systems: PostgreSQL, Aurora and RDS, SQL Server, Snowflake and the pipelines between them. No account manager or junior analyst sits between you and the person reading your evidence." primaryLabel="Request an investigation" primaryHref="/contact" secondaryLabel="Read the technical guides" secondaryHref="/insights" />
   <section><div class="container prose">
-    <h2>Focus</h2>
-    <p>Production database performance, execution plans, indexing, concurrency, workload analysis and safe validation of changes.</p>
+    <h2>Background</h2>
+    <p>Most of Kiran's work starts with two questions: why is this slow, and why did it break? That has meant reading execution plans to explain why the same query chooses an Index Scan in development and a Bitmap Heap Scan in production, tracing a production RDS failover back to <code>shared_buffers</code> set larger than the instance's memory, and choosing between BRIN and B-tree indexes based on how a table is actually written.</p>
+
+    <h2>Production work</h2>
+    <ul>
+      <li><strong>Query and plan performance</strong> across PostgreSQL, SQL Server and Snowflake: index strategy, planner behaviour, and plans that differ between environments.</li>
+      <li><strong>Change data capture and replication:</strong> logical replication with <code>pgoutput</code>, Debezium Server to S3, Snowpipe ingestion, and managing replication-slot and WAL-retention risk with <code>max_slot_wal_keep_size</code> and per-slot lag alerting. This includes a multi-instance Aurora PostgreSQL to Snowflake CDC migration.</li>
+      <li><strong>Large migrations:</strong> a live application moved from DynamoDB to Aurora PostgreSQL, with bulk load from a point-in-time export, a streamed delta sync, and idempotent, rollback-safe loads finished inside a fixed maintenance window.</li>
+      <li><strong>Partitioning and archival</strong> of tables with 100M+ rows: hash-partitioned archive designs with foreign-key-safe cutover and support for reopening archived records.</li>
+      <li><strong>Release and upgrade confidence:</strong> per-release load testing and query replay (pgreplay, JMeter), and major-version upgrade planning with a real rollback path.</li>
+      <li><strong>PostgreSQL internals:</strong> MVCC, vacuum and bloat, XID wraparound, replication slots, and C extensions.</li>
+      <li><strong>Backend engineering</strong> in Go, C#/.NET with EF Core, and Python, including multi-tenant PostgreSQL schema design.</li>
+    </ul>
+
+    <h2>Public work you can inspect</h2>
+    <ul>
+      <li><a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>: a free execution-plan analyzer for PostgreSQL, SQL Server and Snowflake. Plans are analyzed in the browser and not uploaded.</li>
+      <li><a href="/evidence-collection">The evidence collector</a>: the read-only SQL script used in investigations, published in full so your team can review every query before running it.</li>
+      <li><a href="/case-studies">Lab case studies</a>: measured PostgreSQL runs (plan regression, DDL lock queue) with the scripts and outputs behind each finding.</li>
+      <li><strong>pgsuite</strong> (in development): a read-only Go tool for PostgreSQL replication/CDC risk, MVCC and vacuum health, and connection and lock problems, built around catalog-only reads, a <code>pg_monitor</code> role and strict timeouts.</li>
+      <li><a href={site.sqlServerBlogUrl}>MSSQLServer.dev ↗</a>: SQL Server tutorials.</li>
+      <li><a href={site.personalSiteUrl}>kiransabne.dev ↗</a>: broader backend and database writing.</li>
+      <li><a href={site.githubUrl}>GitHub ↗</a> and <a href={site.linkedinUrl}>LinkedIn ↗</a>.</li>
+    </ul>
+
     <h2>Capability</h2>
-    <p>PostgreSQL is the primary focus. SQL Server, pgvector, Snowflake and OLAP/analytical work is offered where the problem matches real experience. Kiran's SQL Server tutorials are published on <a href="https://mssqlserver.dev">MSSQLServer.dev</a>.</p>
-    <h2>What collaboration looks like</h2>
-    <p>Your team describes the symptom and runs agreed read-only evidence collection. Kiran reviews the workload, writes ranked findings with risks and validation steps, then walks through the recommendations with your team. Scope and timing are agreed before work starts.</p>
+    <p>PostgreSQL is the primary focus, especially on AWS RDS and Aurora. SQL Server, pgvector, Snowflake and OLAP/analytical work is offered where the problem matches real experience. If it does not, the reply says so.</p>
+
+    <h2>How the work runs</h2>
+    <p>Your team describes the symptom and runs agreed read-only evidence collection. Kiran reviews the workload, writes ranked findings with risks and validation steps, then walks through the recommendations with your team. The work is async-first, with scheduled review calls. Scope, price and delivery date are agreed in writing before work starts.</p>
+
+    <h2>What is not taken on</h2>
+    <ul>
+      <li>24×7 on-call or emergency incident response</li>
+      <li>Production write access or executing changes on your systems</li>
+      <li>Open-ended hourly work without a defined scope</li>
+      <li>Full application rebuilds presented as a database review</li>
+      <li>Work that would conflict with existing professional commitments</li>
+    </ul>
+
     <h2>Confidentiality</h2>
-    <p>Employer/client proprietary data is not used as public proof. The examples use generated data and measured PostgreSQL lab runs. Client work is shared only with explicit permission.</p>
+    <p>The experience above is described without employer or client names, figures or data. Proprietary data is never used as public proof. Public examples use generated data and measured lab runs. Client work is shared only with explicit, written permission.</p>
   </div></section>
 </BaseLayout>

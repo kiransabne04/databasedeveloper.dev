@@ -43,7 +43,8 @@ const schemas = [
     founder: {
       '@type': 'Person',
       name: site.personName,
-      url: `${site.url}/about`
+      url: `${site.url}/about`,
+      sameAs: [site.linkedinUrl, site.githubUrl, site.personalSiteUrl]
     },
     areaServed: 'Worldwide',
     serviceType: [

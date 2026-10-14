@@ -5,7 +5,7 @@ import InvestigationWorkflow from '../components/InvestigationWorkflow.astro';
 import CTA from '../components/CTA.astro';
 import { site } from '../config/site';
 ---
-<BaseLayout title="How the Investigation Works — DatabaseDeveloper" description="How a PostgreSQL performance investigation runs: fit review, client-run read-only evidence collection, a ranked report in 3 business days and a review call.">
+<BaseLayout title="How the Investigation Works — DatabaseDeveloper" description={`How a PostgreSQL performance investigation runs: fit review, client-run read-only evidence collection, a ranked report in ${site.investigationTurnaround} and a review call.`}>
   <PageHero eyebrow="How it works" title="The client keeps production control." description="No credentials or production access required: your team runs read-only collection and shares the resulting evidence bundle." />
   <section><div class="container"><InvestigationWorkflow /></div></section>
   <section><div class="container prose">

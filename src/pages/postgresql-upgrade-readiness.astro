@@ -18,14 +18,21 @@ const schema = {
 <BaseLayout
   title="PostgreSQL Upgrade Readiness Review (PG14 EOL) — DatabaseDeveloper"
   schema={schema}
-  description="Fixed-scope PostgreSQL 14 upgrade readiness review for RDS, Aurora and self-managed: extensions, plan-regression risk, baseline and validation plan."
+  description="Fixed-scope PostgreSQL 14 upgrade readiness review for RDS, Aurora and self-managed: upgrade without a performance regression. Extensions, plan-regression risk, baseline and validation plan."
 >
   <PageHero
     eyebrow="Upgrade track"
     title="PostgreSQL Upgrade Readiness Review"
-    description="Reduce upgrade uncertainty before the maintenance window: inventory dependencies, establish a performance baseline, identify compatibility and plan-regression risks, and define post-upgrade validation."
+    description="Upgrade without a performance regression. The upgrade itself is usually the easy part; the risk is the week after, when plans change and statistics are missing. Baseline before, know what to compare after, and have a rollback rule."
   />
   <section><div class="container"><PG14Notice /></div></section>
+  <section>
+    <div class="container prose">
+      <h2>Why the mechanics are not the hard part</h2>
+      <p>On RDS and Aurora, a major-version upgrade or a blue/green switchover is a documented, mostly managed operation, and <code>pg_upgrade --check</code> catches many blockers on self-managed servers. What those tools do not tell you is how your own workload will behave on the new version: which plans change, which queries slow down until statistics are rebuilt, which extension or driver behaves differently, and how you would know within the first hour.</p>
+      <p>This review is about that part: evidence from your workload before the change, a short list of what to compare after it, and clear go/no-go and rollback criteria.</p>
+    </div>
+  </section>
   <section>
     <div class="container">
       <div class="grid three">

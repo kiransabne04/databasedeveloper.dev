@@ -9,7 +9,7 @@ import { site } from '../config/site';
 ---
 <BaseLayout
   title="PostgreSQL Performance Consultant — DatabaseDeveloper"
-  description="Fixed-scope PostgreSQL performance investigation for SaaS teams on RDS, Aurora or self-managed. Read-only evidence, ranked findings, report in 3 business days."
+  description={`Fixed-scope PostgreSQL performance investigation for SaaS teams on RDS, Aurora or self-managed. Read-only evidence, ranked findings, report in ${site.investigationTurnaround}.`}
 >
   <div class="container hero">
     <div class="hero-grid">
@@ -25,7 +25,7 @@ import { site } from '../config/site';
           <a class="button ghost" data-track="sample_report_click" href="/sample-report">See sample report</a>
         </div>
         {site.foundingOffer.enabled && (
-          <p class="small muted">Founding investigation: {site.foundingOffer.international} / {site.foundingOffer.india} for the first three suitable engagements.</p>
+          <p class="small muted">Founding investigation: {site.foundingOffer.international} / {site.foundingOffer.india} for the first three suitable engagements, covering {site.foundingOffer.scope}.</p>
         )}
         <p class="small muted">One cluster and its dominant workload · client-run, read-only evidence · written findings and review call</p>
       </div>

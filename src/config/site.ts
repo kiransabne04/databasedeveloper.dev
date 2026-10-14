@@ -6,6 +6,9 @@ export const site = {
     'Evidence-first PostgreSQL performance investigations for SaaS engineering teams, with specialist capability across SQL Server, pgvector, Snowflake and OLAP workloads.',
   email: 'kiran@databasedeveloper.dev',
   personName: 'Kiran Sabne',
+  linkedinUrl: 'https://www.linkedin.com/in/kiransabne/',
+  githubUrl: 'https://github.com/kiransabne04',
+  personalSiteUrl: 'https://kiransabne.dev',
   planReaderUrl: 'https://planreader.dev',
   sqlServerBlogUrl: 'https://mssqlserver.dev',
   // GA4 measurement ID (public). Loads only on the production hostnames below, after consent.
@@ -19,10 +22,12 @@ export const site = {
     enabled: true,
     international: '$450',
     india: '₹29,000',
-    label: 'Founding investigation'
+    label: 'Founding investigation',
+    scope: 'up to 5 dominant statements or problem areas and 7 days of follow-up questions'
   },
-  investigationTurnaround: '3 business days',
+  investigationTurnaround: '5 business days',
   standardOffer: {
+    scope: 'up to 10 dominant statements or problem areas and 14 days of follow-up questions',
     international: '$750+',
     india: '₹45,000+'
   },
