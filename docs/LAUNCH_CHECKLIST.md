@@ -13,6 +13,8 @@
 - [x] Provide a functional email-draft fallback for the contact form
 - [ ] Decide whether email-draft inquiries are sufficient for launch; a hosted form is needed to measure completed form submissions
 - [ ] Configure `PUBLIC_CONTACT_ENDPOINT` only after choosing a form provider
+- [x] 20-minute triage event live at https://cal.com/kiransabne13/triage-call (default in `src/config/site.ts`; `PUBLIC_BOOKING_URL` overrides it)
+- [ ] In GA4, mark `booking_click` as a key event
 - [x] Analytics provider chosen: Google Analytics 4 (free). Loads only after consent via the built-in banner; ad features off; privacy page updated
 - [ ] Create a GA4 property and web data stream for `https://databasedeveloper.dev`; set data retention to 14 months; leave Google signals off
 - [x] GA4 measurement ID `G-4YXPCMHXYD` set in `src/config/site.ts`; it loads only on databasedeveloper.dev and www, after consent (`PUBLIC_GA_ID` overrides it)

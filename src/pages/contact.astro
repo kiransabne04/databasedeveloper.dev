@@ -30,6 +30,15 @@ const action = endpoint || `mailto:${site.email}`;
       </form>
 
       <aside class="card">
+        {site.bookingUrl && (
+          <>
+            <span class="kicker">Prefer a call?</span>
+            <h3>Book a {site.triageCallMinutes}-minute triage call</h3>
+            <p class="muted">Pick a time that suits you. The call covers what is happening, what evidence exists and whether a fixed-scope review fits. It is not a free diagnosis.</p>
+            <div class="actions"><a class="button primary" href={site.bookingUrl} target="_blank" rel="noopener" data-track="booking_click">Choose a time</a></div>
+            <hr />
+          </>
+        )}
         <span class="kicker">Before sending</span>
         <h3>Useful context if you have it</h3>
         <ul class="muted">

@@ -95,6 +95,7 @@ h3 { font-size:1.35rem; margin:.1rem 0 .55rem; }
 .lede { color:var(--soft); font-size:clamp(1.08rem,2vw,1.3rem); max-width:790px; }
 .muted { color:var(--muted); }
 .small { font-size:.88rem; }
+hr { border:0; border-top:1px solid var(--line); margin:1.8rem 0; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
 
 .actions { display:flex; flex-wrap:wrap; gap:.75rem; margin-top:1.8rem; }

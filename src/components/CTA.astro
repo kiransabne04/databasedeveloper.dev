@@ -1,4 +1,5 @@
 ---
+import { site } from '../config/site';
 const {
   eyebrow = 'Production evidence',
   title = 'Need an independent PostgreSQL investigation?',
@@ -14,6 +15,9 @@ const {
     <span class="eyebrow">{eyebrow}</span>
     <h2>{title}</h2>
     <p class="muted">{description}</p>
+    {site.bookingUrl && (
+      <p class="small muted">Prefer to talk first? <a href={site.bookingUrl} target="_blank" rel="noopener" data-track="booking_click">Book a {site.triageCallMinutes}-minute triage call</a>.</p>
+    )}
   </div>
   <div class="actions">
     <a class="button primary" data-track="primary_cta_click" href={primaryHref}>{primaryLabel}</a>

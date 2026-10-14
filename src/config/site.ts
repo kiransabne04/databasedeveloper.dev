@@ -11,6 +11,10 @@ export const site = {
   // GA4 measurement ID (public). Loads only on the production hostnames below, after consent.
   gaId: import.meta.env.PUBLIC_GA_ID || 'G-4YXPCMHXYD',
   analyticsHosts: ['databasedeveloper.dev', 'www.databasedeveloper.dev'],
+  // Public scheduling page (Cal.com, Calendly, Google Calendar booking page…).
+  // Empty hides every "book a call" link, so no page points at a dead booking URL.
+  bookingUrl: import.meta.env.PUBLIC_BOOKING_URL || 'https://cal.com/kiransabne13/triage-call',
+  triageCallMinutes: 20,
   foundingOffer: {
     enabled: true,
     international: '$450',
