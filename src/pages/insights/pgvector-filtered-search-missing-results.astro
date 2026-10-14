@@ -1,0 +1,85 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="pgvector Filtered Search Returns Too Few Results: Fixes" description="Why a pgvector HNSW query with a WHERE filter returns 0 of 10 rows, and tested fixes: iterative index scans, exact search, partial indexes and partitioning." eyebrow="pgvector · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Is filtered vector search returning the wrong results?" ctaDescription="A pgvector review measures recall per tenant or filter, the plans PostgreSQL chooses and the cost of each fix before anything changes in production.">
+  <p>A pgvector query asks for the 10 nearest documents for one tenant, and gets back three, or none, even though the tenant has thousands of documents. Nothing errors. The cause is how approximate indexes and SQL filters interact: the HNSW index finds a fixed number of nearest candidates first, and PostgreSQL applies the <code>WHERE</code> clause afterwards. This guide reproduces the problem and measures each fix.</p>
+  <p>The lab used pgvector 0.8.7 on PostgreSQL 17 with 300,000 generated 64-dimension vectors in 500 clusters. 50 tenants each own about 6,000 rows (2% of the table). Results were compared with exact search. These are lab numbers from synthetic data, not a client system; real embeddings will give different recall values.</p>
+
+  <h2>Reproduce it</h2>
+<pre><code>{`CREATE INDEX docs_embedding_hnsw ON docs USING hnsw (embedding vector_l2_ops);
+CREATE INDEX docs_tenant_idx ON docs (tenant_id);
+
+SELECT id
+FROM docs
+WHERE tenant_id = 123
+ORDER BY embedding <-> $1
+LIMIT 10;`}</code></pre>
+  <p>Without the filter, the same query vector returned 10 of the 10 true nearest neighbours. With the filter, it returned <strong>0 rows</strong>. The plan shows why:</p>
+<pre><code>{`Limit (actual rows=0 loops=1)
+  ->  Index Scan using docs_embedding_hnsw on docs (actual rows=0 loops=1)
+        Order By: (embedding <-> $1)
+        Filter: (tenant_id = 123)
+        Rows Removed by Filter: 40`}</code></pre>
+  <p>HNSW returned its default 40 candidates (<code>hnsw.ef_search = 40</code>). All 40 belonged to other tenants, because tenant 123 had no documents near this query vector. That is common in multi-tenant search: the globally nearest documents belong to whichever tenants write about the same topic. Raising <code>hnsw.ef_search</code> to 400 still returned 0 rows here; a bigger candidate pool does not help when none of the near candidates match.</p>
+  <p>The planner does not always pick HNSW. For a tenant with 300 rows, an earlier run of the lab on uniformly random vectors chose the B-tree on <code>tenant_id</code> and an exact top-N sort, which is correct. The failure appears for mid-sized filters, where the planner expects the vector index to find enough matches.</p>
+
+  <h2>Measured fixes</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Approach</th><th>Rows returned</th><th>True top 10 found</th><th>Execution time</th></tr></thead>
+    <tbody>
+      <tr><td>Default HNSW scan</td><td>0</td><td>0</td><td>0.11 ms</td></tr>
+      <tr><td><code>hnsw.ef_search = 400</code></td><td>0</td><td>0</td><td>—</td></tr>
+      <tr><td><code>hnsw.iterative_scan = strict_order</code></td><td>10</td><td>3</td><td>—</td></tr>
+      <tr><td><code>hnsw.iterative_scan = relaxed_order</code></td><td>10</td><td>8</td><td>0.82 ms</td></tr>
+      <tr><td>Either iterative mode with <code>ef_search = 200</code></td><td>10</td><td>8</td><td>—</td></tr>
+      <tr><td>Exact search through the <code>tenant_id</code> B-tree</td><td>10</td><td>10</td><td>1.22 ms</td></tr>
+      <tr><td>Partial HNSW index for tenant 123 (3.3 MB)</td><td>10</td><td>10</td><td>0.09 ms</td></tr>
+    </tbody>
+  </table></div>
+  <p>Timings are single executions on a warm cache and are only comparable within this table. "True top 10 found" is recall@10 against exact search for the same tenant.</p>
+
+  <h2>Fix 1: iterative index scans (pgvector 0.8.0+)</h2>
+  <p>Iterative scans let the index keep searching when the filter removes too many candidates, until it has enough rows or reaches a limit:</p>
+<pre><code>{`SET hnsw.iterative_scan = relaxed_order;   -- or strict_order
+SET hnsw.max_scan_tuples = 20000;          -- default: stop after this many tuples
+SET hnsw.scan_mem_multiplier = 1;          -- default: memory limit as a multiple of work_mem`}</code></pre>
+  <p><code>strict_order</code> keeps results in exact distance order; <code>relaxed_order</code> allows slight disorder and, per the pgvector documentation, gives better recall. In the lab, relaxed order with default settings found 8 of the true 10. In an earlier run on uniformly random vectors, lowering <code>hnsw.max_scan_tuples</code> to 1,000 cut recall from 7 to 2, so the limit is a recall and latency trade-off to measure, not a value to copy.</p>
+  <p>With relaxed order, re-sort the final rows. On PostgreSQL 17 and later, the outer <code>ORDER BY</code> needs <code>+ 0</code>; without it, the lab plan showed no Sort node at all, so results could stay out of order:</p>
+<pre><code>{`WITH relaxed AS MATERIALIZED (
+  SELECT id, embedding <-> $1 AS distance
+  FROM docs
+  WHERE tenant_id = 123
+  ORDER BY distance
+  LIMIT 10
+)
+SELECT id, distance
+FROM relaxed
+ORDER BY distance + 0;`}</code></pre>
+  <p>Set these per transaction with <code>SET LOCAL</code> in the query path that needs them, so other vector queries keep their tested behavior. IVFFlat has the equivalent <code>ivfflat.iterative_scan</code> and <code>ivfflat.max_probes</code>.</p>
+
+  <h2>Fix 2: exact search when the filter is selective</h2>
+  <p>For tenant 123, exact search over its 6,000 rows through the B-tree took 1.22 ms and returned the true top 10. Approximate search is only worth its recall loss when the filtered set is too large to scan. If most tenants are small, exact search for them is simpler and correct. The planner usually chooses it for very small filters; for mid-sized ones, test both, and if the exact path is consistently better, steer the query, for example with a separate code path for tenant-scoped search.</p>
+
+  <h2>Fix 3: partial indexes or partitions for large filter values</h2>
+  <p>A partial HNSW index for one large tenant returned the exact top 10 in 0.09 ms from a 3.3 MB index:</p>
+<pre><code>{`CREATE INDEX CONCURRENTLY docs_t123_hnsw
+  ON docs USING hnsw (embedding vector_l2_ops)
+  WHERE tenant_id = 123;`}</code></pre>
+  <p>pgvector's guidance is to use partial indexes when filtering by a few distinct values, and partitioning when filtering by many. Partial indexes suit a handful of very large tenants or categories; hundreds of them become an operational burden. List or hash partitioning by tenant gives each partition its own smaller index, at the cost of partition management and cross-tenant queries.</p>
+
+  <h2>How to detect it in production</h2>
+  <ul>
+    <li><strong>Count results.</strong> Log how often a vector query returns fewer rows than its <code>LIMIT</code> when the filter should have enough matches. That rate is the cheapest early signal.</li>
+    <li><strong>Measure recall per filter.</strong> On a replica, compare the approximate result with an exact one for a sample of queries and filter values. Run the exact version with <code>SET enable_indexscan = off</code> in a session, and report recall for small, medium and large tenants separately.</li>
+    <li><strong>Read the plan.</strong> <code>Rows Removed by Filter</code> close to <code>hnsw.ef_search</code>, with fewer output rows than the limit, is the signature of this problem.</li>
+    <li><strong>Check the extension version</strong> with <code>SELECT extversion FROM pg_extension WHERE extname = 'vector';</code>. Iterative scans need 0.8.0 or later; managed services offer specific versions per engine release.</li>
+  </ul>
+
+  <h2>Choosing a fix</h2>
+  <ul>
+    <li><strong>Risk:</strong> iterative scans increase latency for filters that match little; partial indexes add build time, memory and write cost per index; exact search grows linearly with tenant size.</li>
+    <li><strong>Rollback:</strong> iterative settings are per session or transaction; partial indexes drop with <code>DROP INDEX CONCURRENTLY</code>.</li>
+    <li><strong>Validation:</strong> re-measure recall and latency for each tenant size band, and the rate of short result sets, before and after.</li>
+  </ul>
+  <p>For index choice beyond filtering, see <a href="/insights/pgvector-hnsw-vs-ivfflat">HNSW vs IVFFlat</a> and the <a href="/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector">semantic search API guide</a>. The <a href="/pgvector-performance">pgvector performance review</a> covers recall, plans and resource use on your own data.</p>
+</ArticleLayout>

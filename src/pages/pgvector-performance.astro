@@ -33,7 +33,7 @@ import CTA from '../components/CTA.astro';
         <li><strong>Iterative scans change the trade-off.</strong> Since pgvector 0.8.0, <code>hnsw.iterative_scan</code> and <code>ivfflat.iterative_scan</code> let a filtered query keep scanning until enough rows match, bounded by settings such as <code>hnsw.max_scan_tuples</code>. That improves result count at a latency cost that needs measuring.</li>
         <li><strong>Few distinct filter values</strong> suit a partial index per value; many values (such as tenants) usually point to partitioning or a different design.</li>
       </ul>
-      <p>The evidence is <code>EXPLAIN (ANALYZE, BUFFERS)</code> for representative filtered queries, the returned row count against the requested <code>k</code>, and recall against an exact-search baseline.</p>
+      <p>The evidence is <code>EXPLAIN (ANALYZE, BUFFERS)</code> for representative filtered queries, the returned row count against the requested <code>k</code>, and recall against an exact-search baseline. The <a href="/insights/pgvector-filtered-search-missing-results">filtered-search lab</a> measures each fix on one dataset.</p>
 
       <h2>What changes as vector count grows</h2>
       <ul>

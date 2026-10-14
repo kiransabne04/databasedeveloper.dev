@@ -1,0 +1,94 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="PostgreSQL Slow After an Upgrade? Check Statistics First" description="A tested PG14 to PG17 pg_upgrade lost optimizer statistics and a join went from 222 ms to 904 ms. Detect it, fix it and plan upgrades on RDS and Aurora." eyebrow="PostgreSQL upgrades · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Planning a PostgreSQL major upgrade?" ctaDescription="An upgrade-readiness review captures a performance baseline, checks extensions and risky queries, and gives you a validation plan for the hours after the cutover.">
+  <p>A major PostgreSQL upgrade can finish cleanly and still leave the application slower the next morning. The most common cause is not the new version's planner. It is that the upgraded cluster starts with no optimizer statistics, so the planner guesses row counts until <code>ANALYZE</code> runs. This guide reproduces that on a real <code>pg_upgrade</code> from PostgreSQL 14 to 17, shows how to detect it, and lists the checks to run before and after an upgrade.</p>
+  <p>The lab used generated data in Docker: PostgreSQL 14.24 upgraded to 17.11 with <code>pg_upgrade --link</code>. It is not a client system, and the timings are for illustration.</p>
+
+  <h2>What pg_upgrade tells you, and what it does not do</h2>
+  <p><code>pg_upgrade</code> copies or links the data files and recreates the catalog. Before PostgreSQL 18, it does not carry over optimizer statistics. It ends with this reminder, which is easy to miss in an automated run:</p>
+<pre><code>{`Upgrade Complete
+----------------
+Optimizer statistics are not transferred by pg_upgrade.
+Once you start the new server, consider running:
+    /usr/lib/postgresql/17/bin/vacuumdb -U postgres --all --analyze-in-stages`}</code></pre>
+  <p>Amazon RDS and Aurora use <code>pg_upgrade</code> for in-place major version upgrades. The <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.PostgreSQL.MajorVersion.Process.html">RDS major upgrade guide</a> tells you to run <code>ANALYZE</code> on every database afterwards, because optimizer statistics are not transferred.</p>
+
+  <h2>The lab: same query, same data, different plan</h2>
+  <p>The lab database had 3 million orders and 200,000 customers, with indexes on <code>orders(status)</code> and <code>orders(customer_id)</code>. 90% of orders have status <code>paid</code>. The query reports paid revenue by customer region:</p>
+<pre><code>{`SELECT c.region, count(*), sum(o.total)
+FROM orders AS o
+JOIN customers AS c ON c.id = o.customer_id
+WHERE o.status = 'paid'
+GROUP BY c.region;`}</code></pre>
+  <div class="table-wrap"><table>
+    <thead><tr><th>State</th><th>Plan</th><th>Row estimate</th><th>Execution time</th></tr></thead>
+    <tbody>
+      <tr><td>PostgreSQL 14, analyzed</td><td>Parallel hash join, sequential scans</td><td>Close</td><td>222 ms</td></tr>
+      <tr><td>PostgreSQL 17 straight after <code>pg_upgrade</code></td><td>Nested loop: bitmap scan on <code>status</code>, then one primary-key lookup per order</td><td>Status filter: 8,060 estimated, 2,700,000 actual</td><td>904 ms</td></tr>
+      <tr><td>PostgreSQL 17 after <code>vacuumdb --analyze-in-stages</code></td><td>Parallel hash join, sequential scans</td><td>Close</td><td>252 ms</td></tr>
+    </tbody>
+  </table></div>
+  <p>Without statistics, the planner assumed <code>status = 'paid'</code> was selective, chose a nested loop, and then performed 2.7 million index lookups on <code>customers</code>. On a larger table or a busier server, the same mistake turns a sub-second report into a timeout, and many such plans at once look like a CPU or I/O incident.</p>
+
+  <h2>Do not wait for autovacuum to fix it</h2>
+  <p>Autovacuum analyzes a table after enough rows change since the last analyze. After <code>pg_upgrade</code>, the activity counters start at zero. In the lab, with <code>autovacuum_naptime</code> lowered to 10 seconds, neither table had been analyzed two minutes after start-up and <code>n_mod_since_analyze</code> was still 0. A large, mostly-read table can stay without statistics for a long time. Check directly:</p>
+<pre><code>{`-- Tables with no column statistics at all
+SELECT t.schemaname, t.relname, t.n_live_tup, t.last_analyze, t.last_autoanalyze
+FROM pg_stat_user_tables AS t
+WHERE NOT EXISTS (
+  SELECT 1 FROM pg_stats AS s
+  WHERE s.schemaname = t.schemaname AND s.tablename = t.relname
+)
+ORDER BY t.n_live_tup DESC;
+
+-- Planner size estimates: -1 means the table has never been analyzed or vacuumed
+SELECT relname, reltuples::bigint, relpages
+FROM pg_class
+WHERE relkind IN ('r', 'p') AND relnamespace = 'public'::regnamespace;`}</code></pre>
+  <p>Straight after the upgrade, the lab returned no rows from <code>pg_stats</code> and <code>reltuples = -1</code> for both tables.</p>
+
+  <h2>Rebuild statistics in the right order</h2>
+<pre><code>{`vacuumdb --all --analyze-in-stages`}</code></pre>
+  <p><code>--analyze-in-stages</code> runs three passes: statistics target 1, then 10, then the configured default. The first pass is quick and removes the worst guesses, so the application can be let back in sooner. On RDS and Aurora, run it from a client host with the master user, or run <code>ANALYZE VERBOSE;</code> in each database. Two details matter:</p>
+  <ul>
+    <li><strong>Partitioned tables:</strong> autovacuum does not analyze the partitioned parent. Run <code>ANALYZE</code> on each parent so the planner has statistics for queries across partitions.</li>
+    <li><strong>Extended statistics</strong> created with <code>CREATE STATISTICS</code> need <code>ANALYZE</code> too, including on PostgreSQL 18.</li>
+  </ul>
+
+  <h2>PostgreSQL 18 changes this, partly</h2>
+  <p>From PostgreSQL 18, <code>pg_upgrade</code> retains optimizer statistics. Extended statistics are not preserved, and <code>--no-statistics</code> turns the new behavior off. <code>vacuumdb</code> also gains <code>--missing-stats-only</code>, which computes only missing statistics; it requires a superuser and works with <code>--analyze-only</code> or <code>--analyze-in-stages</code>. If you are leaving PostgreSQL 14 for 18, still run the missing-statistics check above. Managed services can lag behind community behavior, so confirm what your provider documents for the target version.</p>
+
+  <h2>Extensions are not upgraded for you</h2>
+  <p>The upgrade keeps each extension at its old version. In the lab, <code>pg_stat_statements</code> created at 1.9 stayed at 1.9 on PostgreSQL 17, where 1.11 is available. Older extension versions can lack columns your monitoring expects. AWS states that a PostgreSQL upgrade does not upgrade extensions. Find and update them:</p>
+<pre><code>{`SELECT e.extname, e.extversion AS installed, a.default_version AS available
+FROM pg_extension AS e
+JOIN pg_available_extensions AS a ON a.name = e.extname
+WHERE e.extversion <> a.default_version;
+
+ALTER EXTENSION pg_stat_statements UPDATE;`}</code></pre>
+  <p>Read each extension's release notes first. PostGIS, pgvector and similar extensions can change behavior or need an index rebuild between versions.</p>
+
+  <h2>A checklist that prevents the morning-after regression</h2>
+  <h3>Before the upgrade</h3>
+  <ul>
+    <li>Capture a baseline: the top statements from <code>pg_stat_statements</code> by total time, and <code>EXPLAIN (ANALYZE, BUFFERS)</code> for the 10–20 most important queries. Cumulative statistics views start empty on the new cluster, so this is your only comparison point.</li>
+    <li>Rehearse on a snapshot restore or clone, then run the same queries against the upgraded copy before and after <code>ANALYZE</code>.</li>
+    <li>List extensions and their target versions. On RDS, also check the provider's prerequisites: open prepared transactions, logical replication slots and unsupported data types block the upgrade.</li>
+    <li>Plan the time to analyze. Measure it on the rehearsal copy; it grows with table count and the statistics target, not just data size.</li>
+  </ul>
+  <h3>Straight after the upgrade</h3>
+  <ul>
+    <li>Run <code>vacuumdb --all --analyze-in-stages</code> (or <code>ANALYZE</code> per database) before opening full traffic if the window allows.</li>
+    <li>Run the missing-statistics query and analyze partitioned parents.</li>
+    <li>Update extensions after reading their notes.</li>
+  </ul>
+  <h3>Validation</h3>
+  <ul>
+    <li>Compare the top statements by total time and the baseline plans with the pre-upgrade capture.</li>
+    <li>Watch for plans that changed shape, not just time: a nested loop where there was a hash join is the signature of a missing or stale estimate.</li>
+    <li>Keep the rollback path documented: on RDS the pre-upgrade snapshot; self-managed with <code>--link</code>, the old cluster cannot be started once the new one has run, so take a backup first.</li>
+  </ul>
+
+  <p>The PostgreSQL 14 deadlines make this timely. See <a href="/postgresql-14-eol">PostgreSQL 14 EOL planning</a> and the <a href="/insights/postgresql-14-minor-version-deadlines">RDS minor-version dates</a>. An <a href="/postgresql-upgrade-readiness">upgrade-readiness review</a> does the baseline, rehearsal comparison and post-cutover checks with you.</p>
+</ArticleLayout>

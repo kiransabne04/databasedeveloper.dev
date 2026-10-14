@@ -43,7 +43,7 @@ EXPLAIN (ANALYZE, BUFFERS) &lt;the regressed query with representative parameter
       <li>Estimates are off by orders of magnitude and the cause isn’t obvious from one plan.</li>
       <li>The candidate fixes (statistics, an index, a query rewrite or plan-cache settings) each carry risk, and someone has to pick one.</li>
     </ul>
-    <p>See the <a href="/case-studies/lab-generic-plan-regression">measured generic-plan regression lab</a> for a complete change, evidence and response sequence.</p>
+    <p>See the <a href="/case-studies/lab-generic-plan-regression">measured generic-plan regression lab</a> for a complete change, evidence and response sequence. If the regression started after a major version upgrade, check for <a href="/insights/postgresql-slow-after-major-upgrade">missing optimizer statistics</a> first.</p>
   </div></section>
   <section><div class="container"><CTA /></div></section>
 </BaseLayout>

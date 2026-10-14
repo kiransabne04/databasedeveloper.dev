@@ -1,0 +1,87 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="SQL Server Parameter Sniffing: Diagnose and Fix It" description="SQL Server 2022 lab: one cached plan read 9 pages for one customer and 900,524 for another. Find it in Query Store; compare PSP, RECOMPILE and indexes." eyebrow="SQL Server · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Have a SQL Server query that is fast one minute and slow the next?" ctaDescription="Share the Query Store evidence for the affected statement. A scoped review identifies the plan variance, its cause and the lowest-risk fix.">
+  <p>A stored procedure runs in milliseconds most of the day and then takes seconds for no visible reason. Restarting the service or clearing the plan cache "fixes" it until it comes back. That pattern is usually parameter sniffing: SQL Server compiles a plan for the first parameter value it sees and reuses it for every later value, including ones that need a completely different plan.</p>
+  <p>Every number here comes from a lab on SQL Server 2022 CU27 (16.0.4295.3) in Docker, with generated data. It is not a client system.</p>
+
+  <h2>The lab</h2>
+  <p>An <code>Orders</code> table has 600,000 rows. Customer 1 owns 300,000 of them; every other customer owns about two. A nonclustered index on <code>CustomerId</code> does not include the columns the procedure aggregates:</p>
+<pre><code>{`CREATE INDEX IX_Orders_CustomerId ON dbo.Orders (CustomerId);
+
+CREATE PROCEDURE dbo.CustomerSummary @CustomerId int AS
+SELECT COUNT(*) AS Orders, SUM(Total) AS Revenue, MAX(CreatedAt) AS LastOrder
+FROM dbo.Orders
+WHERE CustomerId = @CustomerId;`}</code></pre>
+  <p>At database compatibility level 150, the plan depends entirely on which customer runs first after the plan cache is cleared:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Plan compiled for</th><th>Then executed for</th><th>Plan used</th><th>Logical reads</th><th>Elapsed</th></tr></thead>
+    <tbody>
+      <tr><td>Customer 42 (2 rows)</td><td>Customer 42</td><td>Index seek + key lookups</td><td>9</td><td>1 ms</td></tr>
+      <tr><td>Customer 42 (2 rows)</td><td>Customer 1 (300,000 rows)</td><td>Index seek + 300,000 key lookups</td><td>900,524</td><td>308 ms</td></tr>
+      <tr><td>Customer 1</td><td>Customer 1</td><td>Parallel clustered index scan</td><td>18,606</td><td>129 ms</td></tr>
+      <tr><td>Customer 1</td><td>Customer 42</td><td>Parallel clustered index scan</td><td>18,606</td><td>12 ms</td></tr>
+    </tbody>
+  </table></div>
+  <p>Neither plan is wrong for the value it was compiled for. Reusing it for the other value is the problem: the large customer pays 48 times more reads than necessary, and the small customer pays 2,000 times more.</p>
+
+  <h2>Find it in Query Store</h2>
+  <p>The signature is one plan with a very wide spread between its fastest and slowest executions. Query Store keeps minimum and maximum duration and reads per plan and interval:</p>
+<pre><code>{`SELECT q.query_id, p.plan_id,
+       SUM(rs.count_executions)                          AS executions,
+       CAST(MIN(rs.min_duration) / 1000.0 AS decimal(10,1)) AS min_ms,
+       CAST(MAX(rs.max_duration) / 1000.0 AS decimal(10,1)) AS max_ms,
+       MIN(rs.min_logical_io_reads)                      AS min_reads,
+       MAX(rs.max_logical_io_reads)                      AS max_reads
+FROM sys.query_store_query AS q
+JOIN sys.query_store_plan AS p ON p.query_id = q.query_id
+JOIN sys.query_store_runtime_stats AS rs ON rs.plan_id = p.plan_id
+WHERE q.object_id = OBJECT_ID('dbo.CustomerSummary')
+GROUP BY q.query_id, p.plan_id
+ORDER BY max_ms DESC;`}</code></pre>
+  <p>In the lab, the seek plan showed a minimum of 1.2 ms and 9 reads, and a maximum of 308.6 ms and 900,524 reads. A spread of five orders of magnitude on the same plan is not noise. To see the value a cached plan was compiled for, read <code>ParameterCompiledValue</code> from the plan XML (run with <code>QUOTED_IDENTIFIER ON</code>, or the XML methods fail):</p>
+<pre><code>{`SELECT x.p.value('@Column', 'sysname')                       AS parameter,
+       x.p.value('@ParameterCompiledValue', 'nvarchar(100)')  AS compiled_value
+FROM sys.dm_exec_procedure_stats AS ps
+CROSS APPLY sys.dm_exec_query_plan(ps.plan_handle) AS qp
+CROSS APPLY qp.query_plan.nodes('declare namespace sp="http://schemas.microsoft.com/sqlserver/2004/07/showplan";
+  //sp:ParameterList/sp:ColumnReference') AS x(p)
+WHERE ps.object_id = OBJECT_ID('dbo.CustomerSummary');`}</code></pre>
+  <p>Then compare the compiled value's row count with the values that run slowly. Check the column's skew directly: <code>SELECT TOP (20) CustomerId, COUNT(*) FROM dbo.Orders GROUP BY CustomerId ORDER BY COUNT(*) DESC;</code></p>
+
+  <h2>Fixes, measured</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Fix</th><th>Small customer reads</th><th>Large customer reads</th><th>Trade-off</th></tr></thead>
+    <tbody>
+      <tr><td>Covering index (<code>INCLUDE (Total, CreatedAt)</code>)</td><td>3–4</td><td>1,155 (44 ms)</td><td>18.2 MB index; extra write cost</td></tr>
+      <tr><td>Parameter Sensitive Plan optimization (compat 160)</td><td>9</td><td>18,606</td><td>Automatic, but must be verified</td></tr>
+      <tr><td><code>OPTION (RECOMPILE)</code></td><td>9</td><td>18,606</td><td>About 2–3 ms of compile CPU per execution</td></tr>
+      <tr><td><code>OPTION (OPTIMIZE FOR UNKNOWN)</code></td><td>9</td><td>900,524</td><td>Did not help in this lab</td></tr>
+    </tbody>
+  </table></div>
+
+  <h3>Covering index: remove the reason for two plans</h3>
+<pre><code>{`CREATE INDEX IX_Orders_CustomerId ON dbo.Orders (CustomerId)
+  INCLUDE (Total, CreatedAt)
+  WITH (DROP_EXISTING = ON, ONLINE = ON);  -- ONLINE needs an edition that supports it`}</code></pre>
+  <p>The two plans existed because the seek needed a key lookup per row. With the aggregated columns in the index, a seek is cheap for both customers, and the result no longer depends on which value compiled first: 3–4 reads for the small customer and 1,155 for the large one, in either order. When a query has a narrow, stable column list, this is usually the most durable fix. It does not help when the large value genuinely needs a different join strategy.</p>
+
+  <h3>Parameter Sensitive Plan optimization</h3>
+  <p>At compatibility level 160, SQL Server 2022 can cache a dispatcher plan with several query variants for a skewed equality predicate. After switching the lab database to 160, Query Store showed a dispatcher plan and separate variants for the small and large cardinality ranges, and the reads were 9, 18,606 and 9 for small, large and small again. PSP currently works only with equality predicates and evaluates up to three predicates.</p>
+  <p>Verify rather than assume. In the lab, the first executions after switching compatibility level still read 900,524 pages for the large customer; the variants appeared on a later run. Check for variants with <code>sys.query_store_query_variant</code> and <code>sys.query_store_plan.plan_type_desc</code>, and use the <code>query_with_parameter_sensitivity</code> and <code>parameter_sensitive_plan_optimization_skipped_reason</code> Extended Events to see whether a query qualified. Raising the compatibility level also changes cardinality estimation and other behavior, so test it as an upgrade, not as a one-query fix.</p>
+
+  <h3>OPTION (RECOMPILE)</h3>
+  <p>Recompiling on every execution gives each call a plan for its own value. In the lab, that cost 2–3 ms of compile CPU per call. For a report that runs a few times an hour, that is a good trade. For a procedure called thousands of times a second, it moves the problem to CPU.</p>
+
+  <h3>OPTIMIZE FOR UNKNOWN and plan forcing</h3>
+  <p><code>OPTIMIZE FOR UNKNOWN</code> plans for the average density of the column. With 150,000 customers averaging about four rows, the average looks like the small case, so the large customer still received the seek plan and read 900,524 pages. Forcing one plan through Query Store (<code>sp_query_store_force_plan</code>) gives predictability, but every value then pays for that plan: forcing the scan plan would make each small-customer call read 18,606 pages instead of 9.</p>
+
+  <h2>Choosing and validating the fix</h2>
+  <ul>
+    <li><strong>Evidence first:</strong> confirm a single plan with a wide min/max spread, the compiled value, and the skew in the data. A slow query with one consistent plan is a different problem.</li>
+    <li><strong>Risk:</strong> indexes add write and storage cost; compatibility-level changes affect the whole database; <code>RECOMPILE</code> adds CPU per call; forcing hides future better plans.</li>
+    <li><strong>Rollback:</strong> drop or revert the index; set the previous compatibility level; remove the hint; <code>sp_query_store_unforce_plan</code>.</li>
+    <li><strong>Validation:</strong> compare Query Store min, max and average duration and reads for the statement over a comparable period, for both small and large parameter values.</li>
+  </ul>
+  <p>The same failure exists in PostgreSQL as generic-plan regressions; see the <a href="/case-studies/lab-generic-plan-regression">PostgreSQL generic-plan lab</a>. For more SQL Server diagnostics, including blocking chains and implicit conversions, see the <a href="/sql-server-performance">SQL Server performance review</a>.</p>
+</ArticleLayout>

@@ -2,6 +2,10 @@ import type { APIRoute } from 'astro';
 import { site } from '../config/site';
 
 const posts = [
+  { title: 'Find Slow PostgreSQL Queries with pg_stat_statements', path: '/insights/postgresql-slow-queries-pg-stat-statements', date: 'Wed, 14 Oct 2026 00:00:00 GMT', description: 'Rank statements by total time, diff snapshots and read buffer and temp-file signals. Lab-tested on PostgreSQL 17.' },
+  { title: 'PostgreSQL Slow After an Upgrade? Check Statistics First', path: '/insights/postgresql-slow-after-major-upgrade', date: 'Wed, 14 Oct 2026 00:00:00 GMT', description: 'A tested pg_upgrade lost optimizer statistics; how to detect and fix it on self-managed PostgreSQL and RDS.' },
+  { title: 'pgvector Filtered Search Returns Too Few Results: Fixes', path: '/insights/pgvector-filtered-search-missing-results', date: 'Wed, 14 Oct 2026 00:00:00 GMT', description: 'Measured iterative scans, exact search and partial indexes for filtered HNSW queries.' },
+  { title: 'SQL Server Parameter Sniffing: Diagnose and Fix It', path: '/insights/sql-server-parameter-sniffing-query-store', date: 'Wed, 14 Oct 2026 00:00:00 GMT', description: 'Query Store diagnosis and measured PSP, RECOMPILE and covering-index fixes on SQL Server 2022.' },
   { title: 'RDS PostgreSQL 14.18 and 14.19 Lose Standard Support on 31 October 2026', path: '/insights/postgresql-14-minor-version-deadlines', description: 'Check minor-version deadlines that arrive before the PostgreSQL 14 major-version date.' },
   { title: 'What AI Misses in a Production PostgreSQL Performance Diagnosis', path: '/insights/what-ai-misses-postgresql', description: 'A safe production recommendation needs workload, waits, change history and validation.' },
   { title: 'pgvector HNSW vs IVFFlat: Benchmark for Your Filters and Recall', path: '/insights/pgvector-hnsw-vs-ivfflat', description: 'Measure recall, filtered result count, latency and operational cost on the real workload.' },
@@ -21,7 +25,7 @@ const escapeXml = (value: string) => value.replace(/[&<>"']/g, (character) => ({
 export const GET: APIRoute = () => {
   const items = posts.map((post) => {
     const url = new URL(post.path, site.url).toString();
-    return `<item><title>${escapeXml(post.title)}</title><link>${url}</link><guid isPermaLink="true">${url}</guid><description>${escapeXml(post.description)}</description><pubDate>Tue, 13 Oct 2026 00:00:00 GMT</pubDate></item>`;
+    return `<item><title>${escapeXml(post.title)}</title><link>${url}</link><guid isPermaLink="true">${url}</guid><description>${escapeXml(post.description)}</description><pubDate>${'date' in post ? post.date : 'Tue, 13 Oct 2026 00:00:00 GMT'}</pubDate></item>`;
   }).join('');
   const feed = `<?xml version="1.0" encoding="UTF-8"?><rss version="2.0"><channel><title>DatabaseDeveloper insights</title><link>${site.url}/insights</link><description>${escapeXml(site.description)}</description><language>en</language>${items}</channel></rss>`;
   return new Response(feed, { headers: { 'Content-Type': 'application/rss+xml; charset=utf-8' } });

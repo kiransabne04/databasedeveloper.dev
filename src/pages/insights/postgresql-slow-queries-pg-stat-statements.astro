@@ -1,0 +1,108 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="Find Slow PostgreSQL Queries with pg_stat_statements" description="Rank PostgreSQL statements by total time, not the slowest run. Tested pg_stat_statements queries, snapshot diffs, buffer and temp-file signals, RDS setup." eyebrow="PostgreSQL performance · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Not sure which queries are costing you?" ctaDescription="Send pg_stat_statements output from a normal period and from the slow window. A scoped investigation ranks the statements, explains the cause and gives a validated change plan.">
+  <p>When a PostgreSQL database feels slow, the first instinct is to look for the slowest query. That is usually the wrong list. The statement that hurts the system most is often a fast query that runs thousands of times, not a slow report that runs twice a day. <code>pg_stat_statements</code> answers the right question: which normalized statements consume the most database time, and why.</p>
+  <p>Every number on this page comes from a lab on PostgreSQL 17.11 with generated data, not from a client system. The absolute timings will differ on your hardware; the method and the shape of the result carry over.</p>
+
+  <h2>Enable it and check it is collecting</h2>
+  <p><code>pg_stat_statements</code> needs the library loaded at server start and the extension created in each database you query it from:</p>
+<pre><code>{`SHOW shared_preload_libraries;          -- must include pg_stat_statements
+CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
+SHOW pg_stat_statements.track;          -- 'top' by default
+SHOW track_io_timing;                   -- 'on' adds read and write times`}</code></pre>
+  <p>On Amazon RDS and Aurora PostgreSQL, <code>shared_preload_libraries</code> and <code>track_io_timing</code> are set in a DB parameter group. The default groups cannot be edited, so use a custom parameter group (a cluster parameter group on Aurora); changing <code>shared_preload_libraries</code> needs a reboot. Check the current value with <code>SHOW</code> before planning a change. <code>track_io_timing</code> adds timing calls on every read; measure its overhead on your platform before leaving it on permanently.</p>
+
+  <h2>Rank by total time, not by the slowest call</h2>
+  <p>The lab ran three statements against a 2-million-row <code>orders</code> table and a 200,000-row <code>customers</code> table: a customer order lookup with no supporting index, run 200 times; a monthly revenue report, run twice; and a primary-key lookup, run 20,000 times. Ranked by mean execution time, the report looks like the problem:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Statement</th><th>Calls</th><th>Mean</th><th>Total</th><th>Share of total time</th></tr></thead>
+    <tbody>
+      <tr><td>Monthly report (<code>GROUP BY</code> over all orders)</td><td>2</td><td>549.52 ms</td><td>1,099 ms</td><td>13.5%</td></tr>
+      <tr><td>Orders for one customer</td><td>200</td><td>34.78 ms</td><td>6,955 ms</td><td>85.6%</td></tr>
+      <tr><td>Customer by primary key</td><td>20,000</td><td>0.004 ms</td><td>72 ms</td><td>0.9%</td></tr>
+    </tbody>
+  </table></div>
+  <p>The order lookup used 85.6% of all execution time, six times more than the report. On a production system the gap is usually larger, because the frequent statement is on a request path. This query produces the useful ranking:</p>
+<pre><code>{`SELECT left(query, 80)                                   AS query,
+       calls,
+       round(total_exec_time::numeric)                   AS total_ms,
+       round(mean_exec_time::numeric, 2)                 AS mean_ms,
+       round((100 * total_exec_time
+              / sum(total_exec_time) OVER ())::numeric, 1) AS pct_of_total,
+       rows,
+       shared_blks_hit + shared_blks_read                AS shared_blocks,
+       round(shared_blk_read_time::numeric)              AS read_ms,
+       temp_blks_written
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 20;`}</code></pre>
+  <p>On PostgreSQL 16 and earlier, the read-time column is <code>blk_read_time</code> instead of <code>shared_blk_read_time</code>. Statements are normalized: <code>WHERE customer_id = 4242</code> and <code>WHERE customer_id = 17</code> are one entry with <code>$1</code> in the text, which is what makes the totals meaningful.</p>
+
+  <h2>Read the resource columns before guessing the fix</h2>
+  <p>Time tells you where to look; the block and temp columns tell you what kind of problem it is.</p>
+  <ul>
+    <li><strong>Many shared blocks per call</strong> points at a scan doing more work than the result needs. The order lookup touched about 15,600 8 kB buffers per call to return at most 20 rows. That is the signature of a missing or unusable index.</li>
+    <li><strong><code>shared_blks_read</code> and read time</strong> show how much of that work missed the buffer cache. High reads with low read time usually means the operating system cache absorbed them; high read time means storage latency is part of the cost.</li>
+    <li><strong><code>temp_blks_written</code></strong> means a sort or hash spilled to disk. The report wrote about 15,400 temp blocks per run. Raising <code>work_mem</code> to 64 MB for the session did not remove the spill: the sort of 2 million rows still used a 61 MB external merge. Large spills need a query or data-model change, not just a bigger memory setting.</li>
+    <li><strong><code>rows</code> divided by <code>calls</code></strong> shows how many rows each call returns. A high block count for a small row count is the clearest index signal.</li>
+  </ul>
+
+  <h2>Measure a window, not the lifetime counters</h2>
+  <p>The counters accumulate from the last reset, often weeks earlier, so a recent regression is diluted by old history. Resetting with <code>pg_stat_statements_reset()</code> on production throws away the evidence other people may need. Take a snapshot instead, wait through the problem period, and diff:</p>
+<pre><code>{`-- 1. Before the window
+CREATE TABLE pss_snapshot AS
+SELECT now() AS captured_at, userid, dbid, toplevel, queryid,
+       calls, total_exec_time, rows,
+       shared_blks_hit, shared_blks_read, temp_blks_written
+FROM pg_stat_statements;
+
+-- 2. After the window
+SELECT left(s.query, 80) AS query,
+       s.calls - coalesce(p.calls, 0) AS calls,
+       round((s.total_exec_time - coalesce(p.total_exec_time, 0))::numeric, 1) AS exec_ms,
+       (s.shared_blks_hit + s.shared_blks_read)
+         - coalesce(p.shared_blks_hit + p.shared_blks_read, 0) AS blocks,
+       s.temp_blks_written - coalesce(p.temp_blks_written, 0) AS temp_blocks
+FROM pg_stat_statements AS s
+LEFT JOIN pss_snapshot AS p
+  ON p.userid = s.userid AND p.dbid = s.dbid
+ AND p.toplevel = s.toplevel AND p.queryid = s.queryid
+WHERE s.calls > coalesce(p.calls, 0)
+ORDER BY exec_ms DESC
+LIMIT 20;`}</code></pre>
+  <p>Store the snapshot table in a schema your team controls, or export it with the <a href="/evidence-collection">read-only evidence collector</a>. Also check <code>SELECT dealloc, stats_reset FROM pg_stat_statements_info;</code>: a rising <code>dealloc</code> means more distinct statements than <code>pg_stat_statements.max</code> (5,000 by default), so rarely-run entries are being evicted and the totals are incomplete.</p>
+
+  <h2>Confirm the cause with the plan</h2>
+  <p><code>pg_stat_statements</code> does not store plans. Take the top statement, substitute a representative parameter, and run it on a replica or a production-like copy:</p>
+<pre><code>{`EXPLAIN (ANALYZE, BUFFERS)
+SELECT id, status, total, created_at
+FROM orders
+WHERE customer_id = 4242
+ORDER BY created_at DESC
+LIMIT 20;`}</code></pre>
+  <p>In the lab this showed a parallel sequential scan in which each of three processes discarded about 666,662 rows, to find 14 matching rows in total, reading 15,596 buffers in 23.4 ms. <code>EXPLAIN ANALYZE</code> executes the statement, so never run it on a write without wrapping it in a transaction you roll back.</p>
+
+  <h2>Make the change and prove it</h2>
+  <p>The fix for this statement was a composite index, built without blocking writes:</p>
+<pre><code>{`CREATE INDEX CONCURRENTLY orders_customer_created_idx
+  ON orders (customer_id, created_at DESC);`}</code></pre>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Order lookup</th><th>Before</th><th>After</th></tr></thead>
+    <tbody>
+      <tr><td>Mean execution time (200 calls)</td><td>34.78 ms</td><td>0.045 ms</td></tr>
+      <tr><td>Total execution time</td><td>6,955 ms</td><td>8.9 ms</td></tr>
+      <tr><td>Buffers per call</td><td>about 15,600</td><td>about 13</td></tr>
+      <tr><td>New index size</td><td colspan="2">60 MB</td></tr>
+    </tbody>
+  </table></div>
+  <p>Treat even a simple index as a production change:</p>
+  <ul>
+    <li><strong>Risk:</strong> extra write cost on every insert and update of the indexed columns, extra storage, and a build that reads the whole table. <code>CREATE INDEX CONCURRENTLY</code> avoids blocking writes but takes longer and can leave an <code>INVALID</code> index if it fails.</li>
+    <li><strong>Rollback:</strong> <code>DROP INDEX CONCURRENTLY orders_customer_created_idx;</code></li>
+    <li><strong>Validation:</strong> repeat the snapshot diff over a comparable period and compare the statement's total time, blocks per call and the write latency of the table's insert path.</li>
+  </ul>
+
+  <h2>What pg_stat_statements cannot tell you</h2>
+  <p>It shows where execution time goes, not why a session waited to start. Lock waits, connection-pool queues and network time sit outside it. Pair it with wait events from <code>pg_stat_activity</code>, or with Database Insights on RDS and Aurora, and with the deploy and migration history for the same window. That correlation is the difference between a plausible index suggestion and a change you can defend. See the <a href="/problems/postgresql-high-cpu">high-CPU problem guide</a> for the wait-event side, and the <a href="/sample-report">sample report</a> for how ranked findings are written up.</p>
+</ArticleLayout>
