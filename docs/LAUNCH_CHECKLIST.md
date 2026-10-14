@@ -21,6 +21,7 @@
 - [x] Run `npm run audit:content` against the built archive pages and redirect configuration
 - [x] Retain the old `/rss.xml` feed path
 - [ ] Test all old URLs and redirects on the deployment preview before switching DNS
+- [ ] Export both Hashnode publications as JSON; migrate and verify the 15 `kiransabne.dev` posts separately before deleting the account
 - [ ] Compare Search Console's indexed URL report with the sitemap inventory for any additional old paths
 - [ ] Add Search Console
 - [ ] Review Search Console queries and real inquiry sources after launch before changing page priorities or claiming conversion optimization

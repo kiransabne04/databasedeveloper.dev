@@ -1,0 +1,67 @@
+---
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+---
+<ArticleLayout title="SQL Interview Questions and PostgreSQL Internals" description="Work through SQL interview questions on recursive CTEs, top-N queries and rolling windows, then explain PostgreSQL plans, indexes, partitioning and CDC trade-offs." eyebrow="SQL and PostgreSQL archive" published="2025-07-12" updated="2026-10-13" legacy ctaTitle="Applying these ideas to a production workload?" ctaDescription="An evidence-led investigation can separate a useful PostgreSQL change from one that only looks good in an isolated example.">
+  <p>Interview questions are most useful when the answer includes assumptions and edge cases. The original DatabaseDeveloper post pointed readers to a longer personal article. This local edition gives the questions and PostgreSQL reasoning a complete home at the original URL.</p>
+
+  <h2>1. How do you return an employee hierarchy?</h2>
+  <p>Use a recursive common table expression. The anchor selects roots; the recursive term follows each employee's manager relationship. Keep a path so a bad cycle in the data cannot loop indefinitely.</p>
+  <pre><code>WITH RECURSIVE org AS (
+  SELECT id, manager_id, name, 0 AS depth, ARRAY[id] AS path
+  FROM employees
+  WHERE manager_id IS NULL
+  UNION ALL
+  SELECT e.id, e.manager_id, e.name, o.depth + 1, o.path || e.id
+  FROM employees AS e
+  JOIN org AS o ON e.manager_id = o.id
+  WHERE NOT e.id = ANY(o.path)
+)
+SELECT id, manager_id, name, depth
+FROM org
+ORDER BY path;</code></pre>
+  <p>This starts only at roots. Orphaned employees will not appear, and a cycle with no root will be invisible rather than displayed. Say whether the question expects all rows, one subtree or only valid hierarchies. An index on <code>employees(manager_id)</code> can help repeated child lookups, but verify the plan on the actual data.</p>
+
+  <h2>2. What does “top three salaries per department” mean when people tie?</h2>
+  <p><code>dense_rank()</code> returns everyone in the top three salary levels. If the requirement is exactly three employees, use <code>row_number()</code> with a deterministic tie-breaker such as employee ID.</p>
+  <pre><code>SELECT id, department_id, salary
+FROM (
+  SELECT id, department_id, salary,
+         dense_rank() OVER (
+           PARTITION BY department_id ORDER BY salary DESC NULLS LAST
+         ) AS salary_rank
+  FROM employees
+) AS ranked
+WHERE salary_rank &lt;= 3;</code></pre>
+  <p>The example puts <code>NULL</code> salaries last. Ask whether those rows should be excluded entirely and whether departments with fewer than three people should still appear. The SQL is short; the definition of “top three” determines whether it is correct.</p>
+
+  <h2>3. How do you calculate a seven-day rolling total?</h2>
+  <p>First aggregate sales to one row per product and calendar day. Then a window over six preceding rows plus the current row gives a seven-row rolling sum. It is a true seven-day sum only when missing days are filled with zero rows before applying the window.</p>
+  <pre><code>WITH daily AS (
+  SELECT product_id, (sold_at AT TIME ZONE 'UTC')::date AS day,
+         sum(amount) AS total
+  FROM sales
+  GROUP BY product_id, (sold_at AT TIME ZONE 'UTC')::date
+)
+SELECT product_id, day,
+       sum(total) OVER (
+         PARTITION BY product_id ORDER BY day
+         ROWS BETWEEN 6 PRECEDING AND CURRENT ROW
+       ) AS rolling_total
+FROM daily;</code></pre>
+  <p>For sparse data, join a date series for each product before the window. The example uses UTC to turn timestamps into days; choose the business time zone deliberately. Those choices can change the result even when the window syntax is valid.</p>
+
+  <h2>4. How do you read a slow PostgreSQL execution plan?</h2>
+  <p>Start with <code>EXPLAIN (ANALYZE, BUFFERS)</code> for a safe read query on representative data. Compare estimated and actual rows, remember that inner nodes may run once per outer-loop row, and distinguish shared blocks read from blocks found in cache. A sequential scan is not automatically wrong; it may be cheaper when a large share of a table is needed.</p>
+  <p>For prepared statements, compare plans for common and rare parameter values. A generic plan chosen for an average value can be expensive for one tenant cohort. The <a href="/case-studies/lab-generic-plan-regression">measured generic-plan lab</a> shows that failure mode. PostgreSQL's <a href="https://www.postgresql.org/docs/17/using-explain.html">EXPLAIN guide</a> explains plan nodes and measurements.</p>
+
+  <h2>5. Which index would you choose?</h2>
+  <p>Start with the predicate, ordering, result size and write rate. B-tree supports equality and ordered range access. BRIN can be compact for a very large table whose indexed value follows physical page order, but it may recheck many rows. Partial and expression indexes solve narrower query shapes. The <a href="/postgresql-indexing-when-brin-beats-b-tree">BRIN versus B-tree guide</a> walks through the production comparison.</p>
+
+  <h2>6. When are partitioning and sharding different answers?</h2>
+  <p>Declarative partitioning splits one logical table into child tables within PostgreSQL. It can make retention and partition pruning useful, but does not itself add another database node. Sharding places subsets on separate nodes and adds routing, cross-shard work and rebalancing. A large row count alone proves neither is needed. Read the <a href="/how-to-scale-postgresql-databases-with-partitioning">partitioning</a> and <a href="/sharding-postgresql-techniques-for-horizontal-scalability">sharding</a> decision guides for the operational trade-offs.</p>
+
+  <h2>7. What does PostgreSQL CDC require operationally?</h2>
+  <p>Logical replication and decoding read committed row changes from WAL. A publication and subscription can replicate selected tables, while a logical decoding client can feed another system. A replication slot helps the consumer resume but can retain WAL if the consumer falls behind; monitor slot lag and storage. DDL is not replicated by built-in logical replication, so schema changes, initial snapshots, replica identity and failure recovery need separate plans. PostgreSQL's <a href="https://www.postgresql.org/docs/17/logical-replication.html">logical replication documentation</a> is the primary reference.</p>
+
+  <p>The strongest interview answer states the assumptions, shows a correct query and explains how it would behave on real data. Production decisions require workload evidence and a validation path, which is the focus of the <a href="/postgresql-performance-investigation">PostgreSQL performance investigation</a>.</p>
+</ArticleLayout>

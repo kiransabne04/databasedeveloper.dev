@@ -22,7 +22,7 @@ const articleSchema = {
   headline: title,
   description,
   mainEntityOfPage: pageUrl,
-  author: { '@type': 'Person', name: site.personName, url: `${site.url}/about`, sameAs: site.personUrl },
+  author: { '@type': 'Person', name: site.personName, url: `${site.url}/about` },
   publisher: { '@type': 'Organization', name: site.brand, url: site.url },
   datePublished: published,
   dateModified: updated

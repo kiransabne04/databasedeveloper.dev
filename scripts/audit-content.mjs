@@ -11,22 +11,29 @@ const legacyArticles = [
   '/sharding-postgresql-techniques-for-horizontal-scalability',
   '/mastering-clustering-in-postgresql-for-enhanced-query-performance',
   '/how-to-scale-postgresql-databases-with-partitioning',
-  '/postgresql-concurrency-and-locking-a-comprehensive-guide'
+  '/postgresql-concurrency-and-locking-a-comprehensive-guide',
+  '/crack-sql-interviews-with-these-postgresql-internals-and-real-questions'
 ];
 const sitemap = readFileSync(join(root, 'dist/sitemap-0.xml'), 'utf8');
+const insights = readFileSync(join(root, 'dist/insights/index.html'), 'utf8');
+const rss = readFileSync(join(root, 'dist/rss.xml'), 'utf8');
 const redirects = JSON.parse(readFileSync(join(root, 'vercel.json'), 'utf8')).redirects;
 const seenTitles = new Set();
 
 for (const route of legacyArticles) {
   const file = join(root, 'dist', route.slice(1), 'index.html');
   assert(existsSync(file), `Missing retained article: ${route}`);
+  assert(!redirects.some((item) => item.source === route), `Retained article is redirected: ${route}`);
   const html = readFileSync(file, 'utf8');
   const url = `${origin}${route}`;
   assert(html.includes(`<link rel="canonical" href="${url}"`), `Bad canonical: ${route}`);
   assert(sitemap.includes(`<loc>${url}</loc>`), `Missing sitemap URL: ${route}`);
+  assert(insights.includes(`href="${route}"`), `Missing insights listing: ${route}`);
+  assert(rss.includes(`<link>${url}</link>`), `Missing RSS item: ${route}`);
   assert(html.includes('<meta property="og:type" content="article"'), `Missing article Open Graph type: ${route}`);
   assert(/<h1\b[^>]*>.+?<\/h1>/s.test(html), `Missing H1: ${route}`);
   assert(/<meta name="description" content="[^"]+"/.test(html), `Missing description: ${route}`);
+  assert(!html.includes('kiransabne.dev'), `Article still depends on personal Hashnode site: ${route}`);
   const title = html.match(/<title>(.*?)<\/title>/s)?.[1];
   assert(title && !seenTitles.has(title), `Missing or duplicate title: ${route}`);
   seenTitles.add(title);
@@ -44,8 +51,4 @@ for (const route of legacyArticles) {
   }
 }
 
-const interview = redirects.find((item) => item.source === '/crack-sql-interviews-with-these-postgresql-internals-and-real-questions');
-assert(interview?.permanent && interview.destination.startsWith('https://kiransabne.dev/'), 'Missing permanent interview redirect');
-assert(!sitemap.includes(`<loc>${origin}${interview.source}</loc>`), 'Redirect URL should not be in the sitemap');
-
-console.log(`Content audit passed: ${legacyArticles.length} retained articles, one permanent interview redirect, metadata, schema, sitemap and internal links.`);
+console.log(`Content audit passed: ${legacyArticles.length} retained articles, metadata, schema, sitemap and internal links.`);

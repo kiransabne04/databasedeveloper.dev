@@ -6,7 +6,6 @@ export const site = {
     'Evidence-first PostgreSQL performance investigations for SaaS engineering teams, with specialist capability across SQL Server, pgvector, Snowflake and OLAP workloads.',
   email: 'kiran@databasedeveloper.dev',
   personName: 'Kiran Sabne',
-  personUrl: 'https://kiransabne.dev',
   planReaderUrl: 'https://planreader.dev',
   foundingOffer: {
     enabled: true,

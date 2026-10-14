@@ -41,8 +41,7 @@ const schemas = [
     founder: {
       '@type': 'Person',
       name: site.personName,
-      url: `${site.url}/about`,
-      sameAs: site.personUrl
+      url: `${site.url}/about`
     },
     areaServed: 'Worldwide',
     serviceType: [
@@ -117,7 +116,7 @@ const schemas = [
             <span class="brand-mark" aria-hidden="true">DD</span>
             <span>DatabaseDeveloper</span>
           </a>
-          <p>Evidence-first database performance investigations by <a href={site.personUrl}>{site.personName}</a>.</p>
+          <p>Evidence-first database performance investigations by <a href="/about">{site.personName}</a>.</p>
           <p class="small">PostgreSQL first. Specialist capability across SQL Server, pgvector, Snowflake and analytical/OLAP workloads.</p>
         </div>
         <div class="footer-links">
@@ -137,7 +136,7 @@ const schemas = [
           <div>
             <strong>Connect</strong>
             <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-            <a href={site.personUrl}>KiranSabne.dev ↗</a>
+            <a href="/about">About Kiran</a>
             <a href="/contact">Contact</a>
             <a href="/privacy">Privacy</a>
             <a href="/terms">Terms</a>
