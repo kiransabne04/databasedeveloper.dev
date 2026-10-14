@@ -11,8 +11,7 @@ const legacyArticles = [
   '/sharding-postgresql-techniques-for-horizontal-scalability',
   '/mastering-clustering-in-postgresql-for-enhanced-query-performance',
   '/how-to-scale-postgresql-databases-with-partitioning',
-  '/postgresql-concurrency-and-locking-a-comprehensive-guide',
-  '/crack-sql-interviews-with-these-postgresql-internals-and-real-questions'
+  '/postgresql-concurrency-and-locking-a-comprehensive-guide'
 ];
 const sitemap = readFileSync(join(root, 'dist/sitemap-0.xml'), 'utf8');
 const insights = readFileSync(join(root, 'dist/insights/index.html'), 'utf8');
@@ -51,4 +50,9 @@ for (const route of legacyArticles) {
   }
 }
 
-console.log(`Content audit passed: ${legacyArticles.length} retained articles, metadata, schema, sitemap and internal links.`);
+const interview = redirects.find((item) => item.source === '/crack-sql-interviews-with-these-postgresql-internals-and-real-questions');
+assert(interview?.permanent && interview.destination.startsWith('https://kiransabne.dev/'), 'Missing permanent interview redirect');
+assert(!existsSync(join(root, 'dist', interview.source.slice(1), 'index.html')), 'Redirected interview URL should not have a local page');
+assert(!sitemap.includes(`<loc>${origin}${interview.source}</loc>`), 'Redirect URL should not be in the sitemap');
+
+console.log(`Content audit passed: ${legacyArticles.length} retained articles, one permanent interview redirect, metadata, schema, sitemap and internal links.`);

@@ -11,7 +11,6 @@ const posts = [
   { title: 'PostgreSQL Sharding: When to Split Data Across Nodes', path: '/sharding-postgresql-techniques-for-horizontal-scalability', description: 'Assess shard keys, routing, rebalancing and cross-shard work.' },
   { title: 'BRIN vs B-tree in PostgreSQL: A Production Decision Guide', path: '/postgresql-indexing-when-brin-beats-b-tree', description: 'Decide from correlation, query evidence and index trade-offs.' },
   { title: 'pgvector Semantic Search with FastAPI: Production Checklist', path: '/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector', description: 'Move from a pgvector demo to measurable recall, filtering and latency.' },
-  { title: 'SQL Interview Questions and PostgreSQL Internals', path: '/crack-sql-interviews-with-these-postgresql-internals-and-real-questions', description: 'Recursive CTEs, top-N queries, rolling windows and practical PostgreSQL internals.' },
   { title: 'MongoDB Locking and Concurrency: Diagnose the Contended Operation', path: '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive', description: 'An updated archive guide to WiredTiger concurrency and contention.' }
 ] as const;
 
