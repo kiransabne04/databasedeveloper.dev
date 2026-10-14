@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import CTA from '../components/CTA.astro';
+import { site } from '../config/site';
 ---
 <BaseLayout title="SQL Server Performance Review — DatabaseDeveloper" description="SQL Server performance review using Query Store, wait statistics and blocking DMVs: plan regressions, parameter sensitivity, blocking and ORM-generated SQL.">
   <PageHero eyebrow="Secondary capability" title="SQL Server Performance Review" description="Evidence-led review of Query Store, plan changes, blocking, parameter sensitivity, indexing and application-generated SQL." />
@@ -80,6 +81,9 @@ WHERE s.session_id IN (SELECT blocking_session_id
       <li>Version, edition, compatibility level, and recent deploys, index or statistics changes</li>
     </ul>
     <p>SQL Server reviews are scoped individually after a short fit review. See <a href="/capabilities">capabilities</a> for how the method carries across platforms.</p>
+
+    <h2>SQL Server articles</h2>
+    <p>Kiran's SQL Server tutorials are published on <a href={site.sqlServerBlogUrl} data-track="mssqlserver_click">MSSQLServer.dev</a>: window functions, CTEs, isolation levels, row versioning, temporal tables, change tracking and In-Memory OLTP. This site keeps the production-performance material, such as the <a href="/insights/sql-server-parameter-sniffing-query-store">parameter sniffing lab</a>.</p>
   </div></section>
   <section><div class="container"><CTA title="Have a SQL Server performance problem?" description="Share the symptom and the evidence available. The first step is deciding whether a bounded review is a fit." /></div></section>
 </BaseLayout>

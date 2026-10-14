@@ -7,6 +7,7 @@ export const site = {
   email: 'kiran@databasedeveloper.dev',
   personName: 'Kiran Sabne',
   planReaderUrl: 'https://planreader.dev',
+  sqlServerBlogUrl: 'https://mssqlserver.dev',
   // GA4 measurement ID (public). Loads only on the production hostnames below, after consent.
   gaId: import.meta.env.PUBLIC_GA_ID || 'G-4YXPCMHXYD',
   analyticsHosts: ['databasedeveloper.dev', 'www.databasedeveloper.dev'],

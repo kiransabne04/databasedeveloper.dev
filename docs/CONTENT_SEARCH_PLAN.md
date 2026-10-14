@@ -20,6 +20,7 @@ Updated 13 October 2026. This is a search-intent map, not a claim of keyword vol
 - Give each article one primary question in its title and opening. Explain the decisive evidence, operational trade-off and validation step. Use SQL or code where it helps a reader act; label examples and avoid invented production results.
 - Link informational articles to a relevant problem or service page when a real production investigation could help. The shared article CTA is secondary to the technical answer.
 - Keep the DatabaseDeveloper archive self-contained. The BRIN and semantic-search pointer posts now have complete local guides; the interview pointer redirects to its full article on `kiransabne.dev`, which is not duplicated here. Inventory any separate `kiransabne.dev` publication before deleting a shared Hashnode account.
+- SQL Server tutorials (syntax, features, how-to) publish on `mssqlserver.dev`; SQL Server production-performance labs and problem guides publish here and link to the tutorials. Never publish the same article on both.
 - Do not claim a target rank or publish search-volume figures without a measured source. Search-result sampling shows intent, not demand size or conversion rate.
 
 ## Measurement after launch

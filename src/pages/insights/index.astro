@@ -48,6 +48,7 @@ const groups = [
     related: { label: 'All capabilities', href: '/capabilities' },
     items: [
       { href: '/insights/sql-server-parameter-sniffing-query-store', kicker: 'SQL Server · Lab-tested', title: 'SQL Server parameter sniffing', text: 'One cached plan read 9 pages for one customer and 900,524 for another. Query Store diagnosis and measured fixes.' },
+      { href: 'https://mssqlserver.dev', kicker: 'SQL Server · MSSQLServer.dev ↗', title: 'SQL Server tutorials', text: 'Window functions, CTEs, isolation levels, row versioning, temporal tables and change tracking, on Kiran\'s SQL Server blog.' },
       { href: '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive', kicker: 'MongoDB', title: 'MongoDB locking and concurrency', text: 'WiredTiger lock modes, versioning, expiring lock fields and transaction retries.' },
       { href: '/sql-server-performance', kicker: 'SQL Server', title: 'SQL Server performance review', text: 'Query Store, plan regressions, blocking chains and ORM implicit conversions.' },
       { href: '/snowflake-performance', kicker: 'Snowflake', title: 'Snowflake performance and cost', text: 'Query history, warehouse sizing, pruning, spills and workload isolation.' }
@@ -60,7 +61,7 @@ const schema = {
   '@type': 'CollectionPage',
   name: 'PostgreSQL and database performance guides',
   url: `${site.url}/insights`,
-  hasPart: groups.flatMap((group) => group.items.map((item) => ({ '@type': 'WebPage', name: item.title, url: `${site.url}${item.href}` })))
+  hasPart: groups.flatMap((group) => group.items.filter((item) => item.href.startsWith('/')).map((item) => ({ '@type': 'WebPage', name: item.title, url: `${site.url}${item.href}` })))
 };
 ---
 <BaseLayout title="PostgreSQL Performance Guides — DatabaseDeveloper" description="Practical guides to PostgreSQL locking, indexing, partitioning, upgrades and pgvector, grounded in production evidence and safe-change judgment." schema={schema}>
@@ -71,7 +72,7 @@ const schema = {
       <div class="section-head"><div><h2>{group.title}</h2></div><p>{group.intro} Related: <a href={group.related.href}>{group.related.label}</a>.</p></div>
       <div class="grid three">
         {group.items.map((item) => (
-          <a class="card card-link" href={item.href}><span class="kicker">{item.kicker}</span><h3>{item.title}</h3><p>{item.text}</p></a>
+          <a class="card card-link" href={item.href} data-track={item.href.startsWith('/') ? undefined : 'mssqlserver_click'}><span class="kicker">{item.kicker}</span><h3>{item.title}</h3><p>{item.text}</p></a>
         ))}
       </div>
     </div></section>
