@@ -7,5 +7,11 @@ import PageHero from '../../components/PageHero.astro';
   <section><div class="container grid two">
     <a class="card card-link" href="/case-studies/lab-generic-plan-regression"><span class="kicker">Measured lab</span><h3>Generic plan regression</h3><p>A plan setting hurt small tenants. Follow the change, plan evidence and tested response.</p></a>
     <a class="card card-link" href="/case-studies/lab-lock-queue"><span class="kicker">Measured lab</span><h3>DDL lock queue</h3><p>An idle transaction, one ALTER TABLE and 14 seconds of zero reads, reproduced and measured.</p></a>
-  </div><div class="container"><p class="small muted">These are synthetic labs using generated data in an isolated environment, not client incidents.</p></div></section>
+  </div><div class="container prose">
+    <p class="small muted">These are synthetic labs using generated data in an isolated environment, not client incidents.</p>
+    <h2>What a lab case shows</h2>
+    <p>Each lab reproduces a kind of production problem I have worked on, using a fresh PostgreSQL instance and generated data. The <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs">setup and workload scripts</a> and captured output are public, so you can rerun them and check the numbers. The point is the reasoning: which evidence pointed to the cause, which response was tested, and how the result was validated. That is the same structure a client report follows; see the <a href="/sample-report">sample report</a>.</p>
+    <h2>Client cases</h2>
+    <p>Client engagements are confidential by default. A client case appears here only after the client has approved an anonymised write-up in writing. None is published yet.</p>
+  </div></section>
 </BaseLayout>

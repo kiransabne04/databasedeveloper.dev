@@ -190,7 +190,7 @@ DROP TABLE orders_2023;
 
 * [PostgreSQL Partitioning Official Documentation](https://www.postgresql.org/docs/current/ddl-partitioning.html)
     
-* [PostgreSQL Partition Pruning](https://www.postgresql.org/docs/current/ddl-partition-pruning.html)
+* [PostgreSQL Partition Pruning](https://www.postgresql.org/docs/current/ddl-partitioning.html#DDL-PARTITION-PRUNING)
     
 
 Partitioning in PostgreSQL is a game-changer for databases managing extensive datasets. By strategically implementing and managing partitions, developers and DBAs can significantly enhance PostgreSQL performance, making it an essential skill for scaling database systems effectively.
