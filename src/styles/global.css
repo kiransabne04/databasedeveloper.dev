@@ -87,6 +87,7 @@ button, input, textarea, select { font: inherit; }
   display: inline-flex; align-items:center; gap:.5rem;
   color: var(--accent); font-size:.78rem; text-transform:uppercase; letter-spacing:.14em; font-weight:850;
 }
+.keep-case { text-transform:none; }
 .eyebrow::before { content:""; width:18px; height:1px; background:var(--accent); }
 h1,h2,h3 { line-height:1.08; letter-spacing:-.04em; }
 h1 { font-size:clamp(2.25rem, 4.6vw, 4rem); margin:.8rem 0 1.25rem; max-width:900px; }
