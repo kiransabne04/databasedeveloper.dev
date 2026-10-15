@@ -18,22 +18,21 @@ export const site = {
   // Empty hides every "book a call" link, so no page points at a dead booking URL.
   bookingUrl: import.meta.env.PUBLIC_BOOKING_URL || 'https://cal.com/kiransabne13/triage-call',
   triageCallMinutes: 20,
+  // Hosted form endpoint (Formspree). Empty falls back to an email draft.
+  contactEndpoint: import.meta.env.PUBLIC_CONTACT_ENDPOINT || 'https://formspree.io/f/maeqleqk',
   foundingOffer: {
     enabled: true,
     international: '$450',
-    india: '₹29,000',
     label: 'Founding investigation',
     scope: 'up to 5 dominant statements or problem areas and 7 days of follow-up questions'
   },
   investigationTurnaround: '5 business days',
   standardOffer: {
     scope: 'up to 10 dominant statements or problem areas and 14 days of follow-up questions',
-    international: '$750+',
-    india: '₹45,000+'
+    international: '$750+'
   },
   upgradeOffer: {
-    international: '$750–900',
-    india: '₹45k–55k'
+    international: '$750–900'
   }
 } as const;
 

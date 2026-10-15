@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import { site } from '../config/site';
-const formEndpointEnabled = Boolean(import.meta.env.PUBLIC_CONTACT_ENDPOINT);
+const formEndpointEnabled = Boolean(site.contactEndpoint);
 const gaEnabled = Boolean(site.gaId);
 const plausibleEnabled = Boolean(import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN);
 ---
@@ -10,7 +10,7 @@ const plausibleEnabled = Boolean(import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN);
   <PageHero eyebrow="Privacy" title="Share only the context needed to start a conversation." description="This page describes the public website. A paid engagement has its own scope and data-handling agreement." primaryLabel="Contact" primaryHref="/contact" />
   <section><div class="container prose">
     <p>If you contact DatabaseDeveloper, we receive the contact details and technical context you choose to send. We use that information to respond to your inquiry and discuss a possible engagement.</p>
-    {formEndpointEnabled ? <p>The contact form sends your inquiry through the configured form service.</p> : <p>The contact form opens an email draft in your email app. Your message is sent only when you send that draft.</p>}
+    {formEndpointEnabled ? <p>The contact form sends your inquiry through Formspree, a form-handling service, which forwards it by email.</p> : <p>The contact form opens an email draft in your email app. Your message is sent only when you send that draft.</p>}
     <p>Do not submit passwords, credentials, database dumps or sensitive personal/customer data through the public website.</p>
     {gaEnabled && <>
       <h2>Analytics cookies</h2>

@@ -11,8 +11,8 @@
 - [ ] Check mobile navigation
 - [ ] Check all CTA links
 - [x] Provide a functional email-draft fallback for the contact form
-- [ ] Decide whether email-draft inquiries are sufficient for launch; a hosted form is needed to measure completed form submissions
-- [ ] Configure `PUBLIC_CONTACT_ENDPOINT` only after choosing a form provider
+- [x] Hosted contact form via Formspree (default in `src/config/site.ts`; `PUBLIC_CONTACT_ENDPOINT` overrides it)
+- [ ] In GA4, mark `contact_submit` as a key event
 - [x] 20-minute triage event live at https://cal.com/kiransabne13/triage-call (default in `src/config/site.ts`; `PUBLIC_BOOKING_URL` overrides it)
 - [ ] In GA4, mark `booking_click` as a key event
 - [x] Analytics provider chosen: Google Analytics 4 (free). Loads only after consent via the built-in banner; ad features off; privacy page updated

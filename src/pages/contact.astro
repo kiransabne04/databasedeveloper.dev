@@ -2,7 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import { site } from '../config/site';
-const endpoint = import.meta.env.PUBLIC_CONTACT_ENDPOINT;
+const endpoint = site.contactEndpoint;
 const action = endpoint || `mailto:${site.email}`;
 ---
 <BaseLayout title="Request a Database Investigation — DatabaseDeveloper" description="Tell DatabaseDeveloper what is happening in production, which database/platform you run and what evidence is available.">
@@ -10,6 +10,12 @@ const action = endpoint || `mailto:${site.email}`;
   <section>
     <div class="container grid two">
       <form id="inquiry-form" class="card" action={action} method="POST" enctype={endpoint ? undefined : "text/plain"} data-email={site.email} data-mailto-fallback={endpoint ? "false" : "true"}>
+        {endpoint && (
+          <>
+            <input type="hidden" name="_subject" value="Database investigation request" />
+            <input type="text" name="_gotcha" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
+          </>
+        )}
         <div class="form-grid">
           <div class="field"><label for="name">Name</label><input id="name" name="name" required autocomplete="name" /></div>
           <div class="field"><label for="email">Email</label><input id="email" type="email" name="email" required autocomplete="email" /></div>
@@ -27,6 +33,7 @@ const action = endpoint || `mailto:${site.email}`;
         </div>
         <div class="actions"><button class="button primary" type="submit">{endpoint ? 'Send request' : 'Open email draft'}</button></div>
         {!endpoint && <p class="small muted">Your email app will open with these details filled in. Review and send the draft there.</p>}
+        <p id="form-status" class="small" role="status" aria-live="polite"></p>
       </form>
 
       <aside class="card">
@@ -49,6 +56,7 @@ const action = endpoint || `mailto:${site.email}`;
           <li>What evidence can be exported safely</li>
         </ul>
         <p class="notice"><strong>Do not send credentials, production dumps or confidential customer data through this form.</strong></p>
+        <p class="muted">The work is async-first. Calls fit US East mornings and EU afternoons.</p>
         <p>Email: <a href={`mailto:${site.email}`}>{site.email}</a></p>
       </aside>
     </div>
@@ -65,7 +73,22 @@ const action = endpoint || `mailto:${site.email}`;
       });
       form.addEventListener('submit', (event) => {
         if (form.dataset.mailtoFallback !== 'true') {
-          window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_submit' }));
+          event.preventDefault();
+          const status = form.querySelector<HTMLElement>('#form-status');
+          const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+          if (button) button.disabled = true;
+          if (status) status.textContent = 'Sending…';
+          fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
+            .then((response) => {
+              if (!response.ok) throw new Error(String(response.status));
+              window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_submit' }));
+              form.reset();
+              if (status) status.textContent = 'Thanks. Your request was sent and I will reply by email.';
+            })
+            .catch(() => {
+              if (status) status.textContent = `Sending failed. Please email ${form.dataset.email} directly.`;
+            })
+            .finally(() => { if (button) button.disabled = false; });
           return;
         }
         event.preventDefault();

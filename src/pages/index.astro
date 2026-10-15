@@ -3,9 +3,9 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import CapabilityGrid from '../components/CapabilityGrid.astro';
 import ProblemGrid from '../components/ProblemGrid.astro';
 import InvestigationWorkflow from '../components/InvestigationWorkflow.astro';
-import PG14Notice from '../components/PG14Notice.astro';
 import CTA from '../components/CTA.astro';
 import { site } from '../config/site';
+import { pg14Facts } from '../data/facts';
 ---
 <BaseLayout
   title="PostgreSQL Performance Consultant — DatabaseDeveloper"
@@ -20,12 +20,17 @@ import { site } from '../config/site';
           For SaaS engineering teams dealing with rising latency, high database cost, query regressions,
           locking, connection pressure or risky PostgreSQL upgrades.
         </p>
+        <p class="notice hero-deadline">
+          <strong>PostgreSQL 14 stops getting fixes on {pg14Facts.communityEol}.</strong>
+          On RDS and Aurora, Extended Support charges start {pg14Facts.rdsExtendedSupportYear1Start}.
+          <a data-track="hero_upgrade_click" href="/postgresql-upgrade-readiness">Upgrade readiness review, report in {site.investigationTurnaround} →</a>
+        </p>
         <div class="actions">
           <a class="button primary" data-track="primary_cta_click" href="/contact">Request an investigation</a>
           <a class="button ghost" data-track="sample_report_click" href="/sample-report">See sample report</a>
         </div>
         {site.foundingOffer.enabled && (
-          <p class="small muted">Founding investigation: {site.foundingOffer.international} / {site.foundingOffer.india} for the first three suitable engagements, covering {site.foundingOffer.scope}.</p>
+          <p class="small muted">Founding investigation: {site.foundingOffer.international} for the first three suitable engagements, covering {site.foundingOffer.scope}.</p>
         )}
         <p class="small muted">One cluster and its dominant workload · client-run, read-only evidence · written findings and review call</p>
       </div>
@@ -41,10 +46,6 @@ import { site } from '../config/site';
       </aside>
     </div>
   </div>
-
-  <section>
-    <div class="container"><PG14Notice /></div>
-  </section>
 
   <section>
     <div class="container">

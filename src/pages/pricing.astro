@@ -9,26 +9,26 @@ import { site } from '../config/site';
     <div class="container grid two">
       <div class="card price-card">
         <span class="kicker">Core</span><h3>PostgreSQL Performance Investigation</h3>
-        <div class="price">{site.foundingOffer.international} <small>/ {site.foundingOffer.india} founding</small></div>
-        <p class="muted">First three suitable engagements. Founding scope: {site.foundingOffer.scope}. Standard price after founding engagements: {site.standardOffer.international} / {site.standardOffer.india}, covering {site.standardOffer.scope}.</p>
+        <div class="price">{site.foundingOffer.international} <small>founding</small></div>
+        <p class="muted">First three suitable engagements. Founding scope: {site.foundingOffer.scope}. Standard price after founding engagements: {site.standardOffer.international}, covering {site.standardOffer.scope}.</p>
         <ul><li>One cluster</li><li>One primary workload</li><li>Evidence-linked findings</li><li>Report in {site.investigationTurnaround}</li><li>Review call</li></ul>
         <a class="button primary" href="/postgresql-performance-investigation">View scope</a>
       </div>
       <div class="card price-card">
         <span class="kicker">Deadline track</span><h3>PostgreSQL Upgrade Readiness</h3>
-        <div class="price">{site.upgradeOffer.international} <small>/ {site.upgradeOffer.india}</small></div>
+        <div class="price">{site.upgradeOffer.international}</div>
         <p class="muted">Version/extensions, application risk, baseline, plan-regression checks and post-upgrade validation.</p>
         <a class="button" href="/postgresql-upgrade-readiness">View review</a>
       </div>
       <div class="card price-card">
         <span class="kicker">After investigation</span><h3>Remediation Sprint</h3>
-        <div class="price">$2k–3k <small>/ ₹1.2L–1.75L</small></div>
+        <div class="price">$2k–3k</div>
         <p class="muted">Bounded implementation support and before/after validation with the client engineering team.</p>
         <a class="button" href="/contact">Discuss scope</a>
       </div>
       <div class="card price-card">
         <span class="kicker">Recurring</span><h3>Database Advisory</h3>
-        <div class="price">~$900+ <small>/ ~₹50k/mo</small></div>
+        <div class="price">~$900+ <small>/ month</small></div>
         <p class="muted">Release/schema/query reviews and bounded async advisory. No emergency/on-call SLA.</p>
         <a class="button" href="/contact">Discuss fit</a>
       </div>
@@ -43,6 +43,7 @@ import { site } from '../config/site';
       <li><strong>Regular schema, release and query reviews</strong> without an on-call commitment: advisory.</li>
     </ul>
     <p>Not sure? Describe the symptom on the <a href="/contact">contact page</a>; the reply says which option fits, or that none does.</p>
+    <p>Prices are in US dollars. Teams in India can be quoted and invoiced in INR.</p>
   </div></section>
   <section><div class="container prose"><p class="notice"><strong>Scope note:</strong> Prices are starting points, not a promise for every environment. Final scope depends on evidence, number of workloads, platform complexity and turnaround.</p></div></section>
 </BaseLayout>
