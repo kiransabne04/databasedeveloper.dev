@@ -1,0 +1,165 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import CTA from '../components/CTA.astro';
+import { site } from '../config/site';
+import { pg14Facts } from '../data/facts';
+
+const endpoint = site.contactEndpoint;
+const pdfPath = '/downloads/postgresql-14-upgrade-checklist.pdf';
+const updated = '2026-10-21';
+const schema = {
+  '@context': 'https://schema.org',
+  '@type': 'HowTo',
+  name: 'PostgreSQL 14 upgrade checklist',
+  description: 'Inventory, blockers, baseline, rehearsal, cutover and validation steps for leaving PostgreSQL 14 on RDS, Aurora or self-managed servers.',
+  url: `${site.url}/postgresql-14-upgrade-checklist`,
+  dateModified: updated,
+  author: { '@type': 'Person', name: site.personName, url: `${site.url}/about` },
+  step: [
+    'Inventory instances, extensions, replication and consumers',
+    'Choose the target version and upgrade path',
+    'Clear known blockers',
+    'Capture a performance baseline',
+    'Rehearse on a copy and time it',
+    'Run the cutover with statistics and replication steps written down',
+    'Validate against the baseline and keep the rollback path'
+  ].map((name, index) => ({ '@type': 'HowToStep', position: index + 1, name }))
+};
+---
+<BaseLayout
+  title="PostgreSQL 14 Upgrade Checklist (RDS, Aurora, Self-Managed) — DatabaseDeveloper"
+  description="A PostgreSQL 14 upgrade checklist: inventory queries, blockers pg_upgrade and RDS check for, baseline capture, rehearsal, cutover and validation. PDF available."
+  schema={schema}
+>
+  <PageHero
+    eyebrow="PG14 end of life · Checklist"
+    title="PostgreSQL 14 upgrade checklist"
+    description={`Community support for PostgreSQL 14 ends ${pg14Facts.communityEol}; RDS and Aurora standard support ends ${pg14Facts.rdsStandardSupportEnd}. This is the order of work I use to leave PG14 without a surprise blocker in the window or a slow application the next morning.`}
+    primaryLabel="Ask about upgrade readiness"
+    secondaryLabel="Get the PDF"
+    secondaryHref="#pdf"
+  />
+
+  <section>
+    <div class="container prose">
+      <p class="small muted">Updated <time datetime={updated}>{updated}</time>. Dates verified {pg14Facts.verifiedOn}; re-check the <a href={pg14Facts.awsSource}>RDS</a> and <a href={pg14Facts.auroraSource}>Aurora</a> release calendars before scheduling.</p>
+
+      <h2 id="inventory">1. Inventory</h2>
+      <ul class="checklist">
+        <li>List every PG14 instance and cluster, including read replicas, staging copies and forgotten reporting databases. On AWS: <code>aws rds describe-db-instances --query "DBInstances[?starts_with(EngineVersion, '14')].[DBInstanceIdentifier,EngineVersion]"</code>.</li>
+        <li>Note the minor version. RDS {pg14Facts.rdsEarlyMinorEnds}; Aurora {pg14Facts.auroraEarlyMinorEnds}. See <a href="/insights/postgresql-14-minor-version-deadlines">what happens at a minor-version deadline</a>.</li>
+        <li>Record extensions and versions in every database:
+<pre><code>{`SELECT current_database(), extname, extversion FROM pg_extension ORDER BY 2;`}</code></pre></li>
+        <li>Find logical replication: slots, publications and subscriptions. These feed CDC tools (Debezium, AWS DMS, Fivetran, Airbyte) and need their own plan.
+<pre><code>{`SELECT slot_name, slot_type, plugin, active FROM pg_replication_slots;
+SELECT pubname FROM pg_publication;
+SELECT subname, subenabled FROM pg_subscription;`}</code></pre></li>
+        <li>List client drivers, ORM and pooler versions (PgBouncer, RDS Proxy). Note anything still using MD5 password authentication; PostgreSQL 18 deprecates it.</li>
+      </ul>
+
+      <h2 id="target">2. Target version and path</h2>
+      <ul class="checklist">
+        <li>Pick the target from your platform's supported list, not the newest number. On RDS: <code>aws rds describe-db-engine-versions --engine postgres --engine-version &lt;current&gt; --query "DBEngineVersions[*].ValidUpgradeTarget[*].EngineVersion"</code>.</li>
+        <li>Choose the path: in-place major upgrade (downtime for the whole <code>pg_upgrade</code>), RDS/Aurora Blue/Green (short switchover, logical replication limits), or self-managed logical replication. The trade-offs are in <a href="/insights/rds-aurora-postgresql-14-to-18-blue-green">RDS and Aurora 14 → 18: downtime and Blue/Green</a>.</li>
+        <li>Confirm each extension exists at a compatible version on the target. RDS removes <code>plrust</code> from version 18; check the provider's extension list for the rest.</li>
+      </ul>
+
+      <h2 id="blockers">3. Clear known blockers</h2>
+      <ul class="checklist">
+        <li>No open prepared transactions: <code>SELECT count(*) FROM pg_prepared_xacts;</code></li>
+        <li>No user columns of <code>regproc</code>, <code>regprocedure</code>, <code>regoper</code>, <code>regoperator</code>, <code>regconfig</code>, <code>regdictionary</code>, <code>regnamespace</code> or <code>regcollation</code>.</li>
+        <li>No invalid databases left by an interrupted <code>DROP DATABASE</code>: <code>SELECT datname FROM pg_database WHERE datconnlimit = -2;</code></li>
+        <li>Logical slots: RDS and Aurora block an in-place upgrade from 14 while they exist. Self-managed <code>pg_upgrade</code> from 14 does not block; it drops them without a warning. Plan the CDC restart either way: <a href="/insights/postgresql-upgrade-logical-replication-slots">what happens to logical replication slots</a>.</li>
+        <li>Count large objects: <code>SELECT count(*) FROM pg_largeobject_metadata;</code> Millions of them make the schema restore slow and memory-hungry, and Blue/Green does not replicate them.</li>
+        <li>Self-managed to 18: PostgreSQL 18's <code>initdb</code> enables data checksums by default and <code>pg_upgrade</code> refuses a mismatch. Use <code>--no-data-checksums</code> for the new cluster if the old one has none.</li>
+        <li>Run the check on a copy: <code>pg_upgrade --check</code> self-managed, or a trial upgrade of a snapshot restore on RDS and read <code>pg_upgrade_precheck.log</code>. <a href="/insights/pg-upgrade-check-failures">Common pg_upgrade --check failures and their fixes</a>.</li>
+      </ul>
+
+      <h2 id="baseline">4. Capture a baseline</h2>
+      <ul class="checklist">
+        <li>Save the top statements by total execution time from <code>pg_stat_statements</code> over a normal busy period. The new cluster starts with empty cumulative statistics, so this is the only comparison point. <a href="/insights/postgresql-slow-queries-pg-stat-statements">How to rank them</a>.</li>
+        <li>Save <code>EXPLAIN (ANALYZE, BUFFERS)</code> for the 10–20 queries that matter most to users, with real parameter values.</li>
+        <li>Record p95 latency, CPU, connections and error rate for the same window.</li>
+      </ul>
+
+      <h2 id="rehearse">5. Rehearse on a copy</h2>
+      <ul class="checklist">
+        <li>Restore a recent snapshot or clone and run the real upgrade on it. Time each phase: upgrade, statistics rebuild, extension updates, application smoke test.</li>
+        <li>Run the baseline queries on the upgraded copy before and after <code>ANALYZE</code>. Plans that change shape are the risk list.</li>
+        <li>Point a test build of the application, its migrations and its CDC consumer at the copy.</li>
+      </ul>
+
+      <h2 id="cutover">6. Cutover</h2>
+      <ul class="checklist">
+        <li>Write the runbook with owners and timings from the rehearsal, including the go/no-go moment.</li>
+        <li>Take a snapshot or backup immediately before. With <code>pg_upgrade --link</code>, the old cluster cannot be started safely once the new one has run.</li>
+        <li>Rebuild statistics before full traffic: <code>ANALYZE</code> per database on RDS and Aurora; self-managed 18, <code>vacuumdb --all --analyze-in-stages --missing-stats-only</code> then <code>vacuumdb --all --analyze-only</code>. Analyze partitioned parents explicitly. <a href="/insights/postgresql-slow-after-major-upgrade">Why this step matters</a>.</li>
+        <li>Update extensions after reading their release notes: <code>ALTER EXTENSION … UPDATE;</code></li>
+        <li>Recreate replication slots and restart CDC consumers with a re-snapshot or reconciliation plan for the gap.</li>
+      </ul>
+
+      <h2 id="validate">7. Validate and keep the way back</h2>
+      <ul class="checklist">
+        <li>Compare top statements and baseline plans with the pre-upgrade capture within the first hour, then after a full business day.</li>
+        <li>Watch for a nested loop where there was a hash join, or row estimates far from actual rows: that is a missing or stale statistic, not a new-version bug, until proven otherwise.</li>
+        <li>Agree the rollback trigger in advance (for example, p95 above an agreed limit for 30 minutes after statistics are rebuilt) and how long the old instance or snapshot is kept.</li>
+      </ul>
+
+      <div id="pdf" class="card checklist-pdf">
+        <h2>Get the checklist as a PDF</h2>
+        {endpoint ? (
+          <>
+            <p>Leave your email and the download link appears here. Your address comes to me directly; it is not added to a mailing list.</p>
+            <form id="checklist-form" action={endpoint} method="POST">
+              <input type="hidden" name="_subject" value="PG14 checklist PDF request" />
+              <input type="hidden" name="form" value="pg14-checklist" />
+              <input type="text" name="_gotcha" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
+              <div class="field"><label for="checklist-email">Work email</label><input id="checklist-email" type="email" name="email" required autocomplete="email" /></div>
+              <div class="actions"><button class="button primary" type="submit">Send me the PDF link</button></div>
+              <p id="checklist-status" class="small muted" role="status"></p>
+            </form>
+            <p id="checklist-download" hidden><a class="button primary" data-track="checklist_pdf_download" href={pdfPath} download>Download the PDF</a></p>
+          </>
+        ) : (
+          <p><a class="button primary" data-track="checklist_pdf_download" href={pdfPath} download>Download the PDF</a></p>
+        )}
+      </div>
+    </div>
+  </section>
+
+  <section><div class="container"><CTA eyebrow="Upgrade readiness" title="Want this done against your own workload?" description="A fixed-scope readiness review runs the inventory, blocker checks and baseline with you, and leaves you with a ranked risk list, a validation plan and rollback criteria." primaryLabel="Ask about upgrade readiness" secondaryLabel="See the readiness review" secondaryHref="/postgresql-upgrade-readiness" /></div></section>
+
+  <script>
+    const form = document.querySelector<HTMLFormElement>('#checklist-form');
+    if (form) {
+      form.addEventListener('submit', (event) => {
+        event.preventDefault();
+        const status = form.querySelector<HTMLElement>('#checklist-status');
+        const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+        const download = document.querySelector<HTMLElement>('#checklist-download');
+        const data = new FormData(form);
+        try {
+          const context = JSON.parse(sessionStorage.getItem('dd-campaign-context') || '{}');
+          for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'landing_page']) {
+            if (typeof context[key] === 'string' && context[key]) data.set(key, context[key]);
+          }
+        } catch { /* The request still works without campaign context. */ }
+        if (button) button.disabled = true;
+        if (status) status.textContent = 'Sending…';
+        fetch(form.action, { method: 'POST', body: data, headers: { Accept: 'application/json' } })
+          .then((response) => {
+            if (!response.ok) throw new Error(String(response.status));
+            window.dispatchEvent(new CustomEvent('dd:track', { detail: 'checklist_email_submit' }));
+            form.hidden = true;
+            if (download) download.hidden = false;
+          })
+          .catch(() => {
+            if (status) status.textContent = 'That did not go through. The download is below anyway.';
+            if (download) download.hidden = false;
+          })
+          .finally(() => { if (button) button.disabled = false; });
+      });
+    }
+  </script>
+</BaseLayout>

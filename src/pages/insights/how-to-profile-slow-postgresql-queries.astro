@@ -1,0 +1,76 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+import { site } from '../../config/site';
+---
+<ArticleLayout title="How to Profile Slow PostgreSQL Queries" description="A four-step method for profiling slow PostgreSQL queries: rank with pg_stat_statements, capture real plans with auto_explain, reproduce with EXPLAIN ANALYZE, then validate the fix." eyebrow="PostgreSQL performance" published="2026-10-21" updated="2026-10-21" ctaTitle="Profiling a production system you cannot pause?" ctaDescription="A scoped investigation works from read-only evidence: pg_stat_statements, captured plans and wait events. You get ranked findings with a validation plan for each change.">
+  <p>PostgreSQL has no single profiler. Profiling a slow query means using three built-in tools in order, each answering a different question: <code>pg_stat_statements</code> tells you which statements cost the most time, <code>auto_explain</code> captures the plan the server actually used when one was slow, and <code>EXPLAIN (ANALYZE, BUFFERS)</code> lets you reproduce and measure that plan. Then you change one thing and check the same numbers again.</p>
+
+  <h2>1. Rank statements by total time</h2>
+  <p>Start with the workload, not the query someone complained about. <code>pg_stat_statements</code> groups statements by normalized text and accumulates calls, execution time, rows and buffer use since the last reset:</p>
+<pre><code>{`SELECT queryid, calls,
+       round(total_exec_time::numeric, 0) AS total_ms,
+       round(mean_exec_time::numeric, 1)  AS mean_ms,
+       round((100 * total_exec_time / sum(total_exec_time) OVER ())::numeric, 1) AS pct,
+       shared_blks_read, temp_blks_written,
+       left(query, 80) AS query
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 15;`}</code></pre>
+  <p>A fast statement that runs 20,000 times often outweighs a slow report that runs twice. High <code>shared_blks_read</code> points at I/O, and <code>temp_blks_written</code> at sorts or hashes spilling past <code>work_mem</code>. To see what changed during an incident, snapshot the view before and after and compare the difference. The full method, including setup on RDS and Aurora, is in <a href="/insights/postgresql-slow-queries-pg-stat-statements">finding slow queries with pg_stat_statements</a>.</p>
+  <p>If total execution time is low but the application is still slow, the time is going somewhere else: waiting for locks, waiting for a connection from the pool, or in the network. Sample <code>pg_stat_activity</code> for <code>wait_event_type</code> and <code>state</code>, or use Database Insights on RDS, before you tune any plan.</p>
+
+  <h2>2. Capture the plan the server actually used</h2>
+  <p>Running <code>EXPLAIN</code> later shows the plan for today's statistics and your parameter values, which may not be the plan that was slow. <code>auto_explain</code> logs the plan at the moment a statement exceeds a threshold:</p>
+<pre><code>{`# postgresql.conf, or the DB parameter group on RDS and Aurora
+shared_preload_libraries = 'pg_stat_statements,auto_explain'
+auto_explain.log_min_duration = '500ms'
+auto_explain.log_format = 'json'          # easier to paste into a plan viewer
+auto_explain.sample_rate = 1              # lower it on busy systems`}</code></pre>
+  <p>Leave <code>auto_explain.log_analyze</code> off unless you have measured its cost. The <a href="https://www.postgresql.org/docs/current/auto-explain.html">documentation</a> warns that with it on, per-node timing runs for every statement, not just the logged ones, which "can have an extremely negative impact on performance". If you need actual row counts, turn it on with <code>auto_explain.log_timing = off</code> and a low <code>sample_rate</code>, for a limited period.</p>
+  <p>A logged plan from a lab on this site shows why this step matters. The query took 555 ms because the planner walked the <code>created_at</code> index backwards and filtered every row for one small tenant:</p>
+<pre><code>{`LOG:  duration: 555.793 ms  plan:
+  Query Text: SELECT id, status, created_at, amount
+  FROM orders
+  WHERE tenant_id = $1 AND status = 'open'
+  ORDER BY created_at DESC
+  LIMIT 20;
+  Query Parameters: $1 = '1020'
+  Limit  (cost=0.43..384.74 rows=20 width=27)
+    ->  Index Scan Backward using orders_created_idx on orders  (cost=0.43..128688.77 rows=6697 width=27)
+          Filter: ((tenant_id = $1) AND (status = 'open'::text))`}</code></pre>
+  <p>The same statement was fast for most tenants, so testing it by hand with a typical value would not have reproduced it. The <a href="/case-studies/lab-generic-plan-regression">generic plan regression lab</a> walks through the cause and the fix.</p>
+
+  <h2>3. Reproduce and measure with EXPLAIN ANALYZE</h2>
+  <p>With the slow parameter values in hand, run the statement with timing and buffer counts. <code>ANALYZE</code> executes the statement, so wrap anything that writes in a transaction you roll back:</p>
+<pre><code>{`BEGIN;
+EXPLAIN (ANALYZE, BUFFERS, SETTINGS, FORMAT TEXT)
+SELECT id, status, created_at, amount
+FROM orders
+WHERE tenant_id = 1020 AND status = 'open'
+ORDER BY created_at DESC
+LIMIT 20;
+ROLLBACK;`}</code></pre>
+  <p>From PostgreSQL 18, buffer counts are included automatically with <code>ANALYZE</code>. What to read first:</p>
+  <ul>
+    <li><strong>Estimated rows against actual rows</strong> on each node. An error of 100× or more usually explains the wrong join type or scan; fix the estimate (statistics, extended statistics, query shape) before reaching for an index.</li>
+    <li><strong>Where the time accumulates.</strong> Actual time is cumulative for a node and its children, and is per loop; multiply by <code>loops</code>.</li>
+    <li><strong>Rows removed by filter</strong> on a scan: the index found rows the query then threw away.</li>
+    <li><strong>Buffers:</strong> <code>shared read</code> came from disk or the OS cache; <code>temp</code> means a spill.</li>
+  </ul>
+  <p>Large plans are hard to read as text. Paste the JSON or text output into <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a> to see which nodes take the time and where estimates go wrong.</p>
+  <p>Run it twice and keep the second result if you want warm-cache numbers, and say which you are comparing. On a primary under load, prefer a recent restore or a replica with the same data and settings.</p>
+
+  <ArticleOffer offer="investigation" title="Cannot reproduce the slow plan, or cannot run EXPLAIN ANALYZE on production?" text="That is the usual case on a busy primary. An investigation works from pg_stat_statements snapshots, auto_explain output and wait events collected read-only, and ranks the causes with a validation plan for each." />
+
+  <h2>4. Change one thing, then measure the same numbers</h2>
+  <p>Make a single change, such as an index, an <code>ANALYZE</code>, extended statistics or a query rewrite, then repeat steps 3 and 1: the plan and timing for the slow parameter values, and the statement's share of total time across the workload. An index that speeds up one query also costs every write to that table, so check the write-heavy statements in <code>pg_stat_statements</code> too. If the share of total time did not fall, the change did not fix the problem the users felt.</p>
+
+  <h2>Short version</h2>
+  <ol>
+    <li><code>pg_stat_statements</code>: which statements cost the most total time, and is the time even in the database.</li>
+    <li><code>auto_explain</code>: the plan used when it was slow, with the parameter values.</li>
+    <li><code>EXPLAIN (ANALYZE, BUFFERS)</code>: reproduce, then compare estimates with actual rows and find where time and buffers go.</li>
+    <li>One change, then the same measurements as before.</li>
+  </ol>
+</ArticleLayout>

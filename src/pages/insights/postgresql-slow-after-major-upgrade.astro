@@ -1,7 +1,8 @@
 ---
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
 ---
-<ArticleLayout title="PostgreSQL Slow After an Upgrade? Check Statistics First" description="A tested PG14 to PG17 pg_upgrade lost optimizer statistics and a join went from 222 ms to 904 ms. Detect it, fix it and plan upgrades on RDS and Aurora." eyebrow="PostgreSQL upgrades · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Planning a PostgreSQL major upgrade?" ctaDescription="An upgrade-readiness review captures a performance baseline, checks extensions and risky queries, and gives you a validation plan for the hours after the cutover.">
+<ArticleLayout offer="upgrade" title="PostgreSQL Slow After an Upgrade? Check Statistics First" description="A tested PG14 to PG17 pg_upgrade lost optimizer statistics and a join went from 222 ms to 904 ms. Detect it, fix it and plan upgrades on RDS and Aurora." eyebrow="PostgreSQL upgrades · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Planning a PostgreSQL major upgrade?" ctaDescription="An upgrade-readiness review captures a performance baseline, checks extensions and risky queries, and gives you a validation plan for the hours after the cutover.">
   <p>A major PostgreSQL upgrade can finish cleanly and still leave the application slower the next morning. The most common cause is not the new version's planner. It is that the upgraded cluster starts with no optimizer statistics, so the planner guesses row counts until <code>ANALYZE</code> runs. This guide reproduces that on a real <code>pg_upgrade</code> from PostgreSQL 14 to 17, shows how to detect it, and lists the checks to run before and after an upgrade.</p>
   <p>The lab used generated data in Docker: PostgreSQL 14.24 upgraded to 17.11 with <code>pg_upgrade --link</code>. It is not a client system, and the timings are for illustration.</p>
 
@@ -69,6 +70,8 @@ WHERE e.extversion <> a.default_version;
 ALTER EXTENSION pg_stat_statements UPDATE;`}</code></pre>
   <p>Read each extension's release notes first. PostGIS, pgvector and similar extensions can change behavior or need an index rebuild between versions.</p>
 
+  <ArticleOffer offer="upgrade" title="Upgrade window coming up?" text="A readiness review captures the baseline, rehearses the upgrade on a copy and gives you the queries to compare in the first hour after cutover." />
+
   <h2>A checklist that prevents the morning-after regression</h2>
   <h3>Before the upgrade</h3>
   <ul>
@@ -90,5 +93,6 @@ ALTER EXTENSION pg_stat_statements UPDATE;`}</code></pre>
     <li>Keep the rollback path documented: on RDS the pre-upgrade snapshot; self-managed with <code>--link</code>, the old cluster cannot be started once the new one has run, so take a backup first.</li>
   </ul>
 
+  <p>The full order of work, including the blockers <code>pg_upgrade</code> and RDS check for, is in the <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a>. If CDC reads from the database, read <a href="/insights/postgresql-upgrade-logical-replication-slots">what happens to logical replication slots</a> before the window.</p>
   <p>The PostgreSQL 14 deadlines make this timely. See <a href="/postgresql-14-eol">PostgreSQL 14 EOL planning</a> and the <a href="/insights/postgresql-14-minor-version-deadlines">RDS minor-version dates</a>. An <a href="/postgresql-upgrade-readiness">upgrade-readiness review</a> does the baseline, rehearsal comparison and post-cutover checks with you.</p>
 </ArticleLayout>

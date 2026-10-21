@@ -6,7 +6,7 @@ import { pg14Facts } from '../data/facts';
 ---
 <BaseLayout
   title="PostgreSQL 14 End of Life: Upgrade Planning — DatabaseDeveloper"
-  description="PostgreSQL 14 community support ends 12 November 2026. RDS and Aurora dates, early minor-version deadlines and an upgrade-readiness checklist."
+  description="PostgreSQL 14 community support ends 12 November 2026. RDS and Aurora dates, early minor-version deadlines and a link to the full upgrade checklist."
 >
   <PageHero
     eyebrow="Time-sensitive guide"
@@ -43,6 +43,7 @@ import { pg14Facts } from '../data/facts';
       <p>If you are on one of these, you may need a minor-version upgrade before the major-version decision. Either way, test it like a change: baseline first, then compare after. <a href="/insights/postgresql-14-minor-version-deadlines">What RDS does at a minor-version deadline, and how to check your instances.</a></p>
 
       <h2>What to do first</h2>
+      <p>The short version is below. The full <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a> has the queries, the blockers RDS and <code>pg_upgrade</code> check for, and a PDF copy.</p>
       <ol>
         <li>Inventory PG14 instances, extensions and client libraries.</li>
         <li>Choose a supported target version based on application constraints and support horizon.</li>

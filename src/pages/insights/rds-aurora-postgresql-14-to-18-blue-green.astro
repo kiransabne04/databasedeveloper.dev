@@ -1,0 +1,90 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+---
+<ArticleLayout offer="upgrade" title="RDS and Aurora PostgreSQL 14 to 18: Downtime and Blue/Green" description="In-place upgrade or Blue/Green for leaving PostgreSQL 14 on RDS and Aurora: where the downtime goes, the logical replication limits that break Blue/Green, and the checks to run first." eyebrow="PostgreSQL upgrades · RDS and Aurora" published="2026-10-21" updated="2026-10-21" ctaTitle="Choosing between in-place and Blue/Green?" ctaDescription="An upgrade-readiness review checks your schema and workload against these limits, rehearses the path you choose and sets the go/no-go and rollback criteria.">
+  <p>On RDS and Aurora there are two managed ways off PostgreSQL 14: modify the instance to a new major version in place, or create a Blue/Green deployment with the new version on the green side and switch over. The in-place path is simple and its downtime is the whole upgrade. Blue/Green shrinks the outage to a switchover, but for a major version it runs on logical replication, which brings limits that catch teams in the middle of the change window.</p>
+  <p>This page summarizes the AWS documentation as of 21 October 2026, with links to each source. It is not a lab result; AWS changes these limits, so re-read the linked pages before you plan.</p>
+
+  <h2>Check the upgrade target first</h2>
+<pre><code>{`# RDS for PostgreSQL
+aws rds describe-db-engine-versions --engine postgres --engine-version 14.20 \\
+  --query "DBEngineVersions[*].ValidUpgradeTarget[*].EngineVersion" --output text
+
+# Aurora PostgreSQL
+aws rds describe-db-engine-versions --engine aurora-postgresql --engine-version <current> \\
+  --query 'DBEngineVersions[].ValidUpgradeTarget[?IsMajorVersionUpgrade == \`true\`].EngineVersion' --output text`}</code></pre>
+  <p>Current RDS 14 minors list 18.x as a direct target. If yours does not, a minor-version upgrade comes first; see the <a href="/insights/postgresql-14-minor-version-deadlines">PG14 minor-version deadlines</a>.</p>
+
+  <h2>In-place: downtime is the whole upgrade</h2>
+  <p>RDS and Aurora run <code>pg_upgrade</code> on the instance. The database is unavailable from the start of the upgrade until it completes. AWS does not publish a formula for the duration; <code>pg_upgrade</code> spends much of its time dumping and restoring the schema, so many tables, indexes or large objects make it longer. AWS takes snapshots before and after the upgrade when backup retention is above zero.</p>
+  <ul>
+    <li><strong>RDS read replicas</strong> in the same Region are upgraded with the primary, which can lengthen downtime. Promote or delete them first if that matters.</li>
+    <li><strong>Aurora readers</strong> each have a brief outage after the writer upgrade completes.</li>
+    <li><strong>Blockers</strong> are checked first and written to <code>pg_upgrade_precheck.log</code>: prepared transactions, <code>reg*</code> columns, invalid databases, logical replication slots and unsupported extensions. See <a href="/insights/pg-upgrade-check-failures">pg_upgrade --check failures and fixes</a>.</li>
+    <li><strong>Statistics:</strong> AWS's guides for both services say to run <code>ANALYZE</code> on every database afterwards. Budget that time inside the window; <a href="/insights/postgresql-slow-after-major-upgrade">here is what skipping it does</a>.</li>
+  </ul>
+  <p>The only way to know the duration is to restore a snapshot (or clone the Aurora cluster) and upgrade the copy. That also produces the precheck log without touching production.</p>
+
+  <h2>Blue/Green: a short switchover, with conditions</h2>
+  <p>When the green environment runs a higher major version, RDS and Aurora replicate from blue to green with PostgreSQL logical replication. At switchover, RDS runs guardrail checks, stops writes on both sides, drops connections, waits for green to catch up, renames the instances and endpoints so the application keeps the same hostname, then allows writes on green. The <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments-switching.html">switchover timeout</a> defaults to 300 seconds and can be set from 30 to 3,600; if switchover exceeds it, everything rolls back.</p>
+  <p>AWS does not give a fixed downtime for PostgreSQL. It depends on replication lag at the moment of switchover, long-running transactions and how quickly your application reconnects. Clients that cache DNS for longer than 5 seconds keep writing to the old blue instance.</p>
+
+  <h3>Limits that break or block a PostgreSQL Blue/Green upgrade</h3>
+  <p>From the <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/blue-green-deployments-considerations.html">RDS</a> and <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraUserGuide/blue-green-deployments-considerations.html">Aurora</a> limitation pages:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Situation</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr><td>Any DDL on blue after green is created (<code>CREATE TABLE</code>, <code>ALTER TABLE</code>, a migration, a new partition)</td><td>Green enters <strong>Replication degraded</strong>; delete the deployment and green databases and start again</td></tr>
+      <tr><td>Large objects created or modified on blue</td><td>Same: replication degraded, recreate</td></tr>
+      <tr><td>Blue is a logical publisher or subscriber (Debezium, DMS, pglogical)</td><td>Not supported; switchover guardrails check for it. Drop the slots and subscriptions, recreate after switchover</td></tr>
+      <tr><td>Tables without a primary key</td><td><code>UPDATE</code> and <code>DELETE</code> on them are not permitted; add a key or set <code>REPLICA IDENTITY FULL</code></td></tr>
+      <tr><td><code>pg_partman</code> on blue; <code>pg_cron</code> on green</td><td><code>pg_partman</code> must be disabled on blue; <code>pg_cron</code> must stay disabled on green</td></tr>
+      <tr><td>Materialized views</td><td>RDS: not refreshed on green. Aurora: refreshing one on blue breaks replication</td></tr>
+      <tr><td>Unlogged tables</td><td>Not replicated (Aurora can with <code>rds.logically_replicate_unlogged_tables = 1</code> set before creation)</td></tr>
+      <tr><td>Sequences</td><td>Not replicated continuously; RDS sets them on green during switchover. Hundreds of thousands can exceed the timeout</td></tr>
+      <tr><td>Heavy continuous writes</td><td>Green's apply process is single-threaded and can fall behind. AWS suggests DMS for this case</td></tr>
+      <tr><td><code>GRANT</code> / <code>REVOKE</code> on blue</td><td>Not replicated; you get a warning and must apply them to green yourself</td></tr>
+    </tbody>
+  </table></div>
+  <p>The DDL rule is the one that bites SaaS teams: a routine deploy that runs a migration, or <code>pg_partman</code> creating next month's partition, invalidates the green environment. Freeze schema changes from green creation to switchover, and create partitions far enough ahead before you start.</p>
+
+  <h3>After switchover</h3>
+  <ul>
+    <li>Point-in-time recovery history does not carry over. The new production database can only be restored back to when green was created. Keep the old blue instance for your recovery window.</li>
+    <li>AWS DMS tasks cannot resume from the blue checkpoint; recreate them. Other CDC tools need a new slot and a plan for the gap: <a href="/insights/postgresql-upgrade-logical-replication-slots">what happens to logical replication slots</a>.</li>
+    <li>IAM roles are not copied, and anything that filters on resource ID (CloudTrail consumers, AWS Backup, Performance Insights API calls) needs the new IDs.</li>
+  </ul>
+
+  <h2>Run these on blue before creating the deployment</h2>
+<pre><code>{`-- Tables that cannot replicate UPDATE/DELETE
+SELECT c.oid::regclass AS table_name
+FROM pg_class c
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE c.relkind = 'r' AND c.relreplident IN ('d', 'n')
+  AND n.nspname NOT IN ('pg_catalog', 'information_schema')
+  AND NOT EXISTS (SELECT 1 FROM pg_constraint p WHERE p.conrelid = c.oid AND p.contype = 'p');
+
+-- Large objects, unlogged tables, materialized views
+SELECT count(*) AS large_objects FROM pg_largeobject_metadata;
+SELECT oid::regclass FROM pg_class WHERE relpersistence = 'u' AND relkind = 'r';
+SELECT schemaname, matviewname FROM pg_matviews;
+
+-- Existing logical slots and subscriptions
+SELECT slot_name, plugin, active FROM pg_replication_slots WHERE slot_type = 'logical';
+SELECT subname FROM pg_subscription;
+
+-- Extensions that need handling
+SELECT extname FROM pg_extension WHERE extname IN ('pg_partman', 'pg_cron', 'pglogical', 'pgactive', 'pgaudit');`}</code></pre>
+  <p>Then, on green before switchover, run <code>ANALYZE</code> in each database. AWS recommends it, and it moves the statistics rebuild out of the outage. On Aurora, Query Plan Management (<code>apg_plan_mgmt</code>) can hold known-good plans across the version change if plan regressions are the main risk.</p>
+
+  <ArticleOffer offer="upgrade" title="Not sure your schema survives Blue/Green?" text="A readiness review runs these checks, measures the in-place upgrade time on a copy and recommends a path with go/no-go criteria." />
+
+  <h2>Which path fits</h2>
+  <ul>
+    <li><strong>In-place</strong> when a maintenance window of the measured upgrade time is acceptable, or the schema changes too often to freeze.</li>
+    <li><strong>Blue/Green</strong> when the outage must be short and you can freeze DDL, handle tables without keys and large objects, and rebuild CDC afterwards.</li>
+    <li><strong>DMS or self-managed logical replication</strong> when write volume is too high for a single apply worker, or you need more control over cutover and fallback.</li>
+  </ul>
+  <p>Whichever path you choose, the performance risk is the same: plans that change on the new version. Capture a baseline before you start. The full order of work is in the <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a>.</p>
+</ArticleLayout>

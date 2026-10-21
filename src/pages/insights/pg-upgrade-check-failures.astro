@@ -1,0 +1,93 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+---
+<ArticleLayout offer="upgrade" title="pg_upgrade --check Failures and Fixes: PostgreSQL 14 to 18" description="Real pg_upgrade --check output from a tested PG14 to PG18 run: checksum mismatch, prepared transactions, reg* columns. The fix for each, the RDS equivalents and what --check misses." eyebrow="PostgreSQL upgrades · Lab-tested" published="2026-10-21" updated="2026-10-21" ctaTitle="Want the blockers found before the change window?" ctaDescription="An upgrade-readiness review runs the checks on a copy of your database, ranks what it finds and gives you a rehearsed runbook with rollback criteria.">
+  <p><code>pg_upgrade --check</code> runs the compatibility checks without changing anything, and you can run it while the old server is still up. It stops at the first failed check, so a cluster with three problems shows them one at a time. This page shows the messages from a real PostgreSQL 14.24 → 18.6 run, what each means and how to clear it, then the checks it does not cover.</p>
+  <p>The lab used Docker and generated data. The <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/pg-upgrade-14-to-18">script and full output</a> are public. Run the check with the same transfer mode you will use for the real upgrade (<code>--link</code>, <code>--clone</code>, <code>--copy-file-range</code> or <code>--swap</code>), because some checks are mode-specific.</p>
+
+  <h2>"old cluster does not use data checksums but the new one does"</h2>
+<pre><code>{`Checking cluster versions                                     ok
+old cluster does not use data checksums but the new one does
+Failure, exiting`}</code></pre>
+  <p><strong>Cause:</strong> from PostgreSQL 18, <code>initdb</code> enables data checksums by default. PostgreSQL 14's <code>initdb</code> did not, so most PG14 clusters have none. <code>pg_upgrade</code> requires both clusters to match.</p>
+  <p><strong>Fix:</strong> recreate the new cluster without checksums, which the PostgreSQL 18 release notes recommend for this case:</p>
+<pre><code>{`/usr/lib/postgresql/18/bin/initdb -D /var/lib/postgresql/18/main --no-data-checksums`}</code></pre>
+  <p>If you want checksums, enable them on the old cluster first with <code>pg_checksums --enable</code> while it is shut down. That rewrites every data file, so time it on a copy. Check either cluster with <code>pg_controldata &lt;datadir&gt; | grep checksum</code>. Packaging scripts such as Debian's <code>pg_createcluster</code> pass their own <code>initdb</code> options, so check what yours does.</p>
+  <p>This one does not apply to RDS or Aurora, where AWS creates the new cluster.</p>
+
+  <h2>"The source cluster contains prepared transactions"</h2>
+<pre><code>{`Checking for prepared transactions
+The source cluster contains prepared transactions
+Failure, exiting`}</code></pre>
+  <p><strong>Cause:</strong> a two-phase commit transaction was prepared and never committed or rolled back. It usually comes from an XA transaction manager (some Java application servers and message brokers) that lost track of it. Besides blocking the upgrade, an orphaned prepared transaction holds locks and stops vacuum from removing dead rows.</p>
+  <p><strong>Fix:</strong> find it, confirm with the owning application which outcome is correct, then resolve it:</p>
+<pre><code>{`SELECT gid, prepared, owner, database FROM pg_prepared_xacts;
+
+COMMIT PREPARED 'stuck_2pc';   -- or
+ROLLBACK PREPARED 'stuck_2pc';`}</code></pre>
+  <p>Do not guess between commit and rollback on production data. If nothing should be using two-phase commit, set <code>max_prepared_transactions = 0</code> on the new cluster so it cannot happen again.</p>
+
+  <h2>"Checking for reg* data types in user tables"</h2>
+<pre><code>{`Checking data type usage                                      failed check: Checking for reg* data types in user tables
+Data type checks failed:
+Your installation contains one of the reg* data types in user tables.
+These data types reference system OIDs that are not preserved by
+pg_upgrade, so this cluster cannot currently be upgraded.  You can
+drop the problem columns and restart the upgrade.
+A list of the problem columns is in the file:
+    /work/new18/pg_upgrade_output.d/20261021T034907.196/tables_using_reg.txt`}</code></pre>
+  <p>The file names each column:</p>
+<pre><code>{`In database: postgres
+  public.job_hooks.handler`}</code></pre>
+  <p><strong>Cause:</strong> a user table stores <code>regproc</code>, <code>regprocedure</code>, <code>regoper</code>, <code>regoperator</code>, <code>regconfig</code>, <code>regdictionary</code>, <code>regnamespace</code> or <code>regcollation</code> values. They are stored as OIDs, which change in the new cluster. <code>regclass</code>, <code>regrole</code> and <code>regtype</code> are allowed.</p>
+  <p><strong>Fix:</strong> convert the column to <code>text</code>, which stores the name instead of the OID, and cast it back where the application needs it:</p>
+<pre><code>{`ALTER TABLE job_hooks ALTER COLUMN handler TYPE text;`}</code></pre>
+  <p>That rewrites the table and takes an <code>ACCESS EXCLUSIVE</code> lock, so plan it for a large table. Look in <code>pg_upgrade_output.d</code> after any failure; most data-type checks write a file like this one.</p>
+
+  <ArticleOffer offer="upgrade" title="Want this list for your own cluster before the window?" text="A readiness review runs these checks on a copy of your database, plus the ones pg_upgrade does not do: CDC slots, plan regressions and how long the statistics rebuild takes." />
+
+  <h2>What passed but still matters</h2>
+  <p>After those three fixes, the check printed <code>*Clusters are compatible*</code>. The PG14 cluster still had a logical replication slot used for CDC, and after the real upgrade the slot was gone. <code>pg_upgrade</code> only migrates logical slots from PostgreSQL 17 or later. See <a href="/insights/postgresql-upgrade-logical-replication-slots">pg_upgrade drops logical replication slots from PostgreSQL 14</a>.</p>
+  <p>The upgrade also ended with this, because PostgreSQL 18 now transfers most optimizer statistics but not all:</p>
+<pre><code>{`Some statistics are not transferred by pg_upgrade.
+Once you start the new server, consider running these two commands:
+    /usr/lib/postgresql/18/bin/vacuumdb -U postgres --all --analyze-in-stages --missing-stats-only
+    /usr/lib/postgresql/18/bin/vacuumdb -U postgres --all --analyze-only`}</code></pre>
+  <p>In the lab, column statistics for <code>orders</code> survived, but the extended statistics object had no data until <code>vacuumdb --missing-stats-only</code> ran, and <code>pg_stat_user_tables</code> started from zero. On a PG14 → 17 upgrade nothing survives; <a href="/insights/postgresql-slow-after-major-upgrade">that is the usual cause of a slow morning after</a>.</p>
+
+  <h2>Other failures from 14 that the check reports</h2>
+  <p>Not reproduced in this lab, but checked by <code>pg_upgrade</code> or documented by AWS:</p>
+  <ul>
+    <li><strong>Missing libraries:</strong> "Checking for presence of required libraries" fails when an extension's shared library is not installed for the new version. Install the extension package for 18 first. <code>loadable_libraries.txt</code> names the library and the databases that use it.</li>
+    <li><strong>Install user:</strong> the user you connect as must be the bootstrap superuser of both clusters. Pass it with <code>-U</code>.</li>
+    <li><strong>New cluster not empty:</strong> the target must be freshly created by <code>initdb</code>, with no user objects.</li>
+    <li><strong>Invalid databases:</strong> a database left by an interrupted <code>DROP DATABASE</code> has <code>datconnlimit = -2</code>. Drop it.</li>
+    <li><strong>Locale and encoding:</strong> template databases must be compatible. Create the new cluster with the same locale settings as the old one.</li>
+  </ul>
+
+  <h2>The RDS and Aurora equivalent</h2>
+  <p>On RDS and Aurora you do not run <code>pg_upgrade</code> yourself. The managed upgrade runs a precheck first and writes the result to <code>pg_upgrade_precheck.log</code> in the instance logs. AWS documents the same classes of blocker: prepared transactions, <code>reg*</code> columns, invalid databases, logical replication slots, extensions not supported on the target, and very large numbers of large objects. The safe way to see the list is to restore a snapshot (or clone an Aurora cluster), start the upgrade on the copy and read that log. See the <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.PostgreSQL.MajorVersion.Process.html">RDS major upgrade process</a>.</p>
+
+  <h2>Run all the checks before the window</h2>
+<pre><code>{`-- Prepared transactions
+SELECT gid, prepared, owner, database FROM pg_prepared_xacts;
+
+-- reg* columns that block pg_upgrade (run in each database)
+SELECT n.nspname, c.relname, a.attname, a.atttypid::regtype
+FROM pg_attribute a
+JOIN pg_class c ON c.oid = a.attrelid
+JOIN pg_namespace n ON n.oid = c.relnamespace
+WHERE NOT a.attisdropped AND a.attnum > 0
+  AND a.atttypid IN ('regproc'::regtype, 'regprocedure'::regtype, 'regoper'::regtype,
+                     'regoperator'::regtype, 'regconfig'::regtype, 'regdictionary'::regtype,
+                     'regnamespace'::regtype, 'regcollation'::regtype)
+  AND n.nspname NOT IN ('pg_catalog', 'information_schema');
+
+-- Invalid databases
+SELECT datname FROM pg_database WHERE datconnlimit = -2;
+
+-- Logical slots that will not survive an upgrade from 14
+SELECT slot_name, plugin, active FROM pg_replication_slots WHERE slot_type = 'logical';`}</code></pre>
+  <p>The full sequence, from inventory to rollback criteria, is in the <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a>.</p>
+</ArticleLayout>

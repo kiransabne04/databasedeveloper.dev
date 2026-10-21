@@ -1,0 +1,169 @@
+
+==== Versions ====
+postgres (PostgreSQL) 14.24 (Debian 14.24-1.pgdg13+2)
+postgres (PostgreSQL) 18.6 (Debian 18.6-1.pgdg13+2)
+
+==== Build PG14 cluster (initdb defaults) ====
+initdb: warning: enabling "trust" authentication for local connections
+You can change this by editing pg_hba.conf or using the option -A, or
+--auth-local and --auth-host, the next time you run initdb.
+           ?column?            
+-------------------------------
+ slot created: debezium_orders
+(1 row)
+
+    slot_name    |  plugin  | slot_type 
+-----------------+----------+-----------
+ debezium_orders | pgoutput | logical
+(1 row)
+
+ orders_pg_stats_rows 
+----------------------
+                    4
+(1 row)
+
+ data_checksums 
+----------------
+ off
+(1 row)
+
+
+==== Run 1: pg_upgrade --check against a PG18 initdb with default settings ====
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+Data page checksum version:           1
+Performing Consistency Checks
+-----------------------------
+Checking cluster versions                                     ok
+old cluster does not use data checksums but the new one does
+Failure, exiting
+
+==== Run 2: new cluster with --no-data-checksums ====
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+Performing Consistency Checks
+-----------------------------
+Checking cluster versions                                     ok
+Checking database connection settings                         ok
+Checking database user is the install user                    ok
+Checking for prepared transactions                            
+The source cluster contains prepared transactions
+Failure, exiting
+
+==== Fix the prepared transaction only, then re-check ====
+Performing Consistency Checks
+-----------------------------
+Checking cluster versions                                     ok
+Checking database connection settings                         ok
+Checking database user is the install user                    ok
+Checking for prepared transactions                            ok
+Checking for contrib/isn with bigint-passing mismatch         ok
+Checking data type usage                                      failed check: Checking for reg* data types in user tables
+Data type checks failed: 
+Your installation contains one of the reg* data types in user tables.
+These data types reference system OIDs that are not preserved by
+pg_upgrade, so this cluster cannot currently be upgraded.  You can
+drop the problem columns and restart the upgrade.
+A list of the problem columns is in the file:
+    /work/new18/pg_upgrade_output.d/20261021T034907.196/tables_using_reg.txt
+Failure, exiting
+--- tables_using_reg.txt
+In database: postgres
+  public.job_hooks.handler
+
+==== Fix the reg* column ====
+    slot_name    | active | retained_wal 
+-----------------+--------+--------------
+ debezium_orders | f      | 131 kB
+(1 row)
+
+
+==== Run 3: pg_upgrade --check after fixes ====
+Performing Consistency Checks
+-----------------------------
+Checking cluster versions                                     ok
+Checking database connection settings                         ok
+Checking database user is the install user                    ok
+Checking for prepared transactions                            ok
+Checking for contrib/isn with bigint-passing mismatch         ok
+Checking data type usage                                      ok
+Checking for not-null constraint inconsistencies              ok
+Checking for presence of required libraries                   ok
+Checking database user is the install user                    ok
+Checking for prepared transactions                            ok
+Checking for new cluster tablespace directories               ok
+*Clusters are compatible*
+
+==== Run 4: pg_upgrade --link ====
+Copying old pg_multixact/members to new server                ok
+Setting next multixact ID and offset for new cluster          ok
+Resetting WAL archives                                        ok
+Setting the default char signedness for new cluster           ok
+Setting frozenxid and minmxid counters in new cluster         ok
+Restoring global objects in the new cluster                   ok
+Restoring database schemas in the new cluster                 ok
+Adding ".old" suffix to old "global/pg_control"               ok
+If you want to start the old cluster, you will need to remove
+the ".old" suffix from "/work/old14/global/pg_control.old".
+Because "link" mode was used, the old cluster cannot be safely
+started once the new cluster has been started.
+Linking user relation files                                   ok
+Setting next OID for new cluster                              ok
+Sync data directory to disk                                   ok
+Creating script to delete old cluster                         ok
+Checking for extension updates                                ok
+Upgrade Complete
+----------------
+Some statistics are not transferred by pg_upgrade.
+Once you start the new server, consider running these two commands:
+    /usr/lib/postgresql/18/bin/vacuumdb -U postgres --all --analyze-in-stages --missing-stats-only
+    /usr/lib/postgresql/18/bin/vacuumdb -U postgres --all --analyze-only
+Running this script will delete the old cluster's data files:
+    ./delete_old_cluster.sh
+
+==== On PG18 after upgrade ====
+                                                         version                                                          
+--------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+ slot_name | plugin | slot_type 
+-----------+--------+-----------
+(0 rows)
+
+ pubname 
+---------
+ cdc_pub
+(1 row)
+
+ orders_pg_stats_rows 
+----------------------
+                    4
+(1 row)
+
+      stxname       | stxdinherit | has_data 
+--------------------+-------------+----------
+ orders_cust_status |             | f
+(1 row)
+
+ relname | reltuples 
+---------+-----------
+ orders  |    500000
+(1 row)
+
+ relname | n_live_tup | n_mod_since_analyze | last_analyze | last_autoanalyze 
+---------+------------+---------------------+--------------+------------------
+ orders  |          0 |                   0 |              | 
+(1 row)
+
+vacuumdb: processing database "postgres": Generating minimal optimizer statistics (1 target)
+vacuumdb: processing database "template1": Generating minimal optimizer statistics (1 target)
+vacuumdb: processing database "postgres": Generating medium optimizer statistics (10 targets)
+vacuumdb: processing database "template1": Generating medium optimizer statistics (10 targets)
+vacuumdb: processing database "postgres": Generating default (full) optimizer statistics
+vacuumdb: processing database "template1": Generating default (full) optimizer statistics
+      stxname       | has_data 
+--------------------+----------
+ orders_cust_status | t
+(1 row)
+

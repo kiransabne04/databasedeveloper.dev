@@ -1,5 +1,6 @@
 ---
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
 ---
 <ArticleLayout title="Find Slow PostgreSQL Queries with pg_stat_statements" description="Rank PostgreSQL statements by total time, not the slowest run. Tested pg_stat_statements queries, snapshot diffs, buffer and temp-file signals, RDS setup." eyebrow="PostgreSQL performance · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Not sure which queries are costing you?" ctaDescription="Send pg_stat_statements output from a normal period and from the slow window. A scoped investigation ranks the statements, explains the cause and gives a validated change plan.">
   <p>When a PostgreSQL database feels slow, the first instinct is to look for the slowest query. That is usually the wrong list. The statement that hurts the system most is often a fast query that runs thousands of times, not a slow report that runs twice a day. <code>pg_stat_statements</code> answers the right question: which normalized statements consume the most database time, and why.</p>
@@ -103,6 +104,8 @@ LIMIT 20;`}</code></pre>
     <li><strong>Validation:</strong> repeat the snapshot diff over a comparable period and compare the statement's total time, blocks per call and the write latency of the table's insert path.</li>
   </ul>
 
+  <ArticleOffer offer="investigation" title="Top statements ranked, but the cause still unclear?" text="The ranking shows where the time goes, not why. An investigation correlates it with plans, waits and deploy history, and ranks each change with its risk, rollback and validation." />
+
   <h2>What pg_stat_statements cannot tell you</h2>
-  <p>It shows where execution time goes, not why a session waited to start. Lock waits, connection-pool queues and network time sit outside it. Pair it with wait events from <code>pg_stat_activity</code>, or with Database Insights on RDS and Aurora, and with the deploy and migration history for the same window. That correlation is the difference between a plausible index suggestion and a change you can defend. See the <a href="/problems/postgresql-high-cpu">high-CPU problem guide</a> for the wait-event side, and the <a href="/sample-report">sample report</a> for how ranked findings are written up.</p>
+  <p>It shows where execution time goes, not why a session waited to start. Lock waits, connection-pool queues and network time sit outside it. Pair it with wait events from <code>pg_stat_activity</code>, or with Database Insights on RDS and Aurora, and with the deploy and migration history for the same window. That correlation is the difference between a plausible index suggestion and a change you can defend. See the <a href="/problems/postgresql-high-cpu">high-CPU problem guide</a> for the wait-event side, and the <a href="/sample-report">sample report</a> for how ranked findings are written up. For the next steps after ranking (capturing the real plan with <code>auto_explain</code> and measuring it with <code>EXPLAIN ANALYZE</code>), see <a href="/insights/how-to-profile-slow-postgresql-queries">how to profile slow PostgreSQL queries</a>.</p>
 </ArticleLayout>

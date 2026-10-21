@@ -1,0 +1,74 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+---
+<ArticleLayout offer="upgrade" title="pg_upgrade from PostgreSQL 14 Drops Logical Replication Slots" description="Tested PG14 to PG18: pg_upgrade --check passed with a Debezium slot present, and the slot was gone afterwards. What RDS and Aurora do instead, and how to plan the CDC restart." eyebrow="PostgreSQL upgrades · Lab-tested" published="2026-10-21" updated="2026-10-21" ctaTitle="CDC feeding a warehouse from PostgreSQL 14?" ctaDescription="An upgrade-readiness review maps every slot, publication and consumer, and plans the restart and reconciliation before the change window.">
+  <p>If a CDC tool such as Debezium, AWS DMS, Fivetran or Airbyte reads from your PostgreSQL 14 database, it uses a logical replication slot. A major upgrade from 14 does not keep that slot. On a self-managed server, <code>pg_upgrade</code> drops it without an error or a warning. On RDS and Aurora, the upgrade refuses to start until you drop it yourself. Either way, the consumer has to restart from a new position, and changes written in between need a plan.</p>
+  <p>The lab for this page upgraded PostgreSQL 14.24 to 18.6 with <code>pg_upgrade --link</code> in Docker, with generated data. The <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/pg-upgrade-14-to-18">script and full output</a> are public.</p>
+
+  <h2>What the lab showed</h2>
+  <p>The PG14 cluster had <code>wal_level = logical</code>, a publication <code>cdc_pub</code> and a slot named like a Debezium slot:</p>
+<pre><code>{`    slot_name    |  plugin  | slot_type
+-----------------+----------+-----------
+ debezium_orders | pgoutput | logical`}</code></pre>
+  <p><code>pg_upgrade --check</code> passed with the slot present. No line in the output mentions replication slots:</p>
+<pre><code>{`Checking for prepared transactions                            ok
+Checking for contrib/isn with bigint-passing mismatch         ok
+Checking data type usage                                      ok
+Checking for not-null constraint inconsistencies              ok
+Checking for presence of required libraries                   ok
+Checking database user is the install user                    ok
+Checking for prepared transactions                            ok
+Checking for new cluster tablespace directories               ok
+*Clusters are compatible*`}</code></pre>
+  <p>After the upgrade, on PostgreSQL 18 with <code>wal_level = logical</code> set again, the publication was there and the slot was not:</p>
+<pre><code>{`SELECT slot_name, plugin, slot_type FROM pg_replication_slots;
+ slot_name | plugin | slot_type
+-----------+--------+-----------
+(0 rows)
+
+SELECT pubname FROM pg_publication;
+ pubname
+---------
+ cdc_pub`}</code></pre>
+  <p>That combination is easy to misread. The publication looks like the replication setup survived, and a connector that reconnects may simply create a new slot at the current WAL position and carry on. Anything committed between the old slot's last confirmed position and the new slot's creation never reaches the consumer.</p>
+
+  <h2>Why: slots migrate only from PostgreSQL 17</h2>
+  <p>PostgreSQL 17 taught <code>pg_upgrade</code> to carry logical slots across, but only when the old cluster is already 17 or later. The <a href="https://www.postgresql.org/docs/current/logical-replication-upgrade.html">logical replication upgrade documentation</a> says: "Logical slots on clusters before version 17.0 will silently be ignored." Subscriptions on a PG14 subscriber are treated the same way.</p>
+  <p>So the 14 → 18 jump loses the slots, and the next major upgrade from 18 can keep them if the conditions hold: <code>wal_level = logical</code> and enough <code>max_replication_slots</code> on the new cluster, the output plugin installed, and every slot fully consumed before the upgrade.</p>
+
+  <h2>RDS and Aurora: the upgrade is blocked instead</h2>
+  <p>Managed PostgreSQL behaves differently, which is safer but still needs a plan. The <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.PostgreSQL.MajorVersion.Process.html">RDS major upgrade guide</a> states that an upgrade can't occur while the database has logical replication slots, and that slots are typically used by AWS DMS and pipelines to data lakes and BI tools. You drop them, upgrade, and recreate them. AWS adds that on source version 17 and later, slots on non-replica instances can be kept.</p>
+  <p>Blue/Green deployments do not help here. For a major version upgrade they use logical replication themselves, and the blue database can't be a logical publisher or subscriber; the switchover guardrails check for it. The CDC slot has to go before switchover and be recreated on the new production database. AWS DMS tasks can't resume from the old checkpoint either. Details in <a href="/insights/rds-aurora-postgresql-14-to-18-blue-green">RDS and Aurora 14 → 18 with Blue/Green</a>.</p>
+
+  <h2>Find every slot and who owns it</h2>
+<pre><code>{`SELECT slot_name, plugin, database, active, active_pid,
+       pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn)) AS retained_wal,
+       confirmed_flush_lsn
+FROM pg_replication_slots
+WHERE slot_type = 'logical';`}</code></pre>
+  <p>Match each slot to a consumer and a team. An inactive slot with a large <code>retained_wal</code> is worth investigating before any upgrade: it is holding WAL on disk, and nobody may know what it was for.</p>
+
+  <ArticleOffer offer="upgrade" title="Debezium, DMS or Fivetran reading from PostgreSQL 14?" text="A readiness review maps every slot to its consumer and owner, and plans the drain, recreation and reconciliation with the teams downstream." />
+
+  <h2>Plan the CDC restart</h2>
+  <ol>
+    <li><strong>Agree the gap strategy with the consumer's owner.</strong> Options are a fresh snapshot of the published tables after the upgrade, an incremental re-sync from an <code>updated_at</code> column, or stopping writes until the old slot is fully consumed and creating the new slot before writes resume.</li>
+    <li><strong>Drain the old slot.</strong> Let the consumer catch up so <code>confirmed_flush_lsn</code> reaches <code>pg_current_wal_lsn()</code> while writes are stopped, then stop the connector.</li>
+    <li><strong>Drop the slot</strong> (required on RDS and Aurora, implicit with self-managed <code>pg_upgrade</code>): <code>SELECT pg_drop_replication_slot('debezium_orders');</code></li>
+    <li><strong>Upgrade</strong>, set <code>wal_level = logical</code> (on RDS, <code>rds.logical_replication = 1</code> in the new parameter group) and check publications.</li>
+    <li><strong>Recreate the slot before writes resume</strong>, or let the connector create it, then run the agreed snapshot or reconciliation.</li>
+    <li><strong>Validate</strong> with row counts or checksums on a few busy tables at the destination against the source.</li>
+  </ol>
+  <p>In Debezium the gap behavior depends on the connector's <code>snapshot.mode</code> and stored offsets; test the exact restart on the rehearsal copy rather than assuming it.</p>
+
+  <h2>Checklist</h2>
+  <ul>
+    <li>List logical slots, publications and subscriptions on every PG14 database.</li>
+    <li>Name the owner and the downstream system for each slot.</li>
+    <li>Decide snapshot, incremental re-sync or write freeze for the gap.</li>
+    <li>Rehearse the drop, upgrade, recreate and connector restart on a copy.</li>
+    <li>Reconcile row counts after cutover.</li>
+  </ul>
+  <p>The rest of the sequence is in the <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a>. For blockers that <code>pg_upgrade --check</code> does catch, see <a href="/insights/pg-upgrade-check-failures">pg_upgrade --check failures and fixes</a>.</p>
+</ArticleLayout>
