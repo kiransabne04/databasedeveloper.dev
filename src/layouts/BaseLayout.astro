@@ -221,10 +221,20 @@ const schemas = [
         });
       }
 
-      const campaign = new URLSearchParams(location.search).get('utm_campaign') || undefined;
-      const source = new URLSearchParams(location.search).get('utm_source') || undefined;
+      // Keep campaign context within this tab when a visitor follows an internal link.
+      const campaignKey = 'dd-campaign-context';
+      const params = new URLSearchParams(location.search);
+      const incoming = Object.fromEntries(['utm_source', 'utm_medium', 'utm_campaign'].map((key) => [key, (params.get(key) || '').trim().slice(0, 120)]));
+      let campaignContext = {};
+      try {
+        campaignContext = JSON.parse(sessionStorage.getItem(campaignKey) || '{}');
+        if (Object.values(incoming).some(Boolean)) {
+          campaignContext = { ...incoming, landing_page: location.pathname };
+          sessionStorage.setItem(campaignKey, JSON.stringify(campaignContext));
+        }
+      } catch { campaignContext = Object.values(incoming).some(Boolean) ? { ...incoming, landing_page: location.pathname } : {}; }
       function track(name) {
-        const props = { source_page: location.pathname, ...(source ? { utm_source: source } : {}), ...(campaign ? { utm_campaign: campaign } : {}) };
+        const props = { source_page: location.pathname, ...campaignContext };
         if (window.plausible) window.plausible(name, { props });
         if (window.gtag) window.gtag('event', name, props);
       }

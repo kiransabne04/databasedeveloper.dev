@@ -10,6 +10,10 @@ const action = endpoint || `mailto:${site.email}`;
   <section>
     <div class="container grid two">
       <form id="inquiry-form" class="card" action={action} method="POST" enctype={endpoint ? undefined : "text/plain"} data-email={site.email} data-mailto-fallback={endpoint ? "false" : "true"}>
+        <input type="hidden" name="utm_source" />
+        <input type="hidden" name="utm_medium" />
+        <input type="hidden" name="utm_campaign" />
+        <input type="hidden" name="landing_page" />
         {endpoint && (
           <>
             <input type="hidden" name="_subject" value="Database investigation request" />
@@ -64,6 +68,13 @@ const action = endpoint || `mailto:${site.email}`;
   <script>
     const form = document.querySelector<HTMLFormElement>('#inquiry-form');
     if (form) {
+      try {
+        const context = JSON.parse(sessionStorage.getItem('dd-campaign-context') || '{}');
+        for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'landing_page']) {
+          const input = form.elements.namedItem(key);
+          if (input instanceof HTMLInputElement && typeof context[key] === 'string') input.value = context[key];
+        }
+      } catch { /* Contact still works when session storage is unavailable. */ }
       let started = false;
       form.addEventListener('focusin', () => {
         if (!started) {
@@ -96,7 +107,8 @@ const action = endpoint || `mailto:${site.email}`;
         const fields = new FormData(form);
         const labels: Record<string, string> = {
           name: 'Name', email: 'Email', database: 'Database / platform', version: 'Version',
-          problem: 'Problem', evidence: 'Evidence available', impact: 'Production impact', timeline: 'Desired timeline'
+          problem: 'Problem', evidence: 'Evidence available', impact: 'Production impact', timeline: 'Desired timeline',
+          utm_source: 'Source', utm_medium: 'Medium', utm_campaign: 'Campaign', landing_page: 'Landing page'
         };
         const body = Object.entries(labels)
           .filter(([key]) => String(fields.get(key) ?? '').trim())

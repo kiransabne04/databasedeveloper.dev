@@ -6,7 +6,8 @@ const {
   primaryLabel = 'Request an investigation',
   primaryHref = '/contact',
   secondaryLabel,
-  secondaryHref
+  secondaryHref,
+  supportingText
 } = Astro.props;
 ---
 <div class="container hero">
@@ -16,7 +17,8 @@ const {
     <p class="lede">{description}</p>
     <div class="actions">
       <a class="button primary" data-track="primary_cta_click" href={primaryHref}>{primaryLabel}</a>
-      {secondaryLabel && secondaryHref && <a class="button ghost" href={secondaryHref}>{secondaryLabel}</a>}
+      {secondaryLabel && secondaryHref && <a class="button ghost" data-track={secondaryHref === '/sample-report' ? 'sample_report_click' : undefined} href={secondaryHref}>{secondaryLabel}</a>}
     </div>
+    {supportingText && <p class="small muted hero-supporting">{supportingText}</p>}
   </div>
 </div>

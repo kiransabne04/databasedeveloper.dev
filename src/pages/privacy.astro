@@ -11,6 +11,7 @@ const plausibleEnabled = Boolean(import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN);
   <section><div class="container prose">
     <p>If you contact DatabaseDeveloper, we receive the contact details and technical context you choose to send. We use that information to respond to your inquiry and discuss a possible engagement.</p>
     {formEndpointEnabled ? <p>The contact form sends your inquiry through Formspree, a form-handling service, which forwards it by email.</p> : <p>The contact form opens an email draft in your email app. Your message is sent only when you send that draft.</p>}
+    <p>If you arrive through a link with campaign tags, this tab keeps those tags and the first page you visited until the tab closes. They are included with an inquiry you choose to send so we can understand which link led you here.</p>
     <p>Do not submit passwords, credentials, database dumps or sensitive personal/customer data through the public website.</p>
     {gaEnabled && <>
       <h2>Analytics cookies</h2>
