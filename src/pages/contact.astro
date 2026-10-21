@@ -14,6 +14,8 @@ const action = endpoint || `mailto:${site.email}`;
         <input type="hidden" name="utm_medium" />
         <input type="hidden" name="utm_campaign" />
         <input type="hidden" name="landing_page" />
+        <input type="hidden" name="offer" />
+        <input type="hidden" name="from_page" />
         {endpoint && (
           <>
             <input type="hidden" name="_subject" value="Database investigation request" />
@@ -75,6 +77,17 @@ const action = endpoint || `mailto:${site.email}`;
           if (input instanceof HTMLInputElement && typeof context[key] === 'string') input.value = context[key];
         }
       } catch { /* Contact still works when session storage is unavailable. */ }
+      // Guides link here with ?offer=…&from=… so the inquiry shows which page produced it.
+      const params = new URLSearchParams(location.search);
+      const offer = (params.get('offer') || '').slice(0, 40);
+      const fromPage = (params.get('from') || '').slice(0, 200);
+      const offerInput = form.elements.namedItem('offer');
+      const fromInput = form.elements.namedItem('from_page');
+      if (offerInput instanceof HTMLInputElement && /^[a-z]+$/.test(offer)) offerInput.value = offer;
+      if (fromInput instanceof HTMLInputElement && fromPage.startsWith('/')) fromInput.value = fromPage;
+      const database = form.elements.namedItem('database');
+      const platformForOffer: Record<string, string> = { pgvector: 'pgvector', sqlserver: 'SQL Server' };
+      if (database instanceof HTMLSelectElement && platformForOffer[offer]) database.value = platformForOffer[offer];
       let started = false;
       form.addEventListener('focusin', () => {
         if (!started) {
@@ -92,7 +105,7 @@ const action = endpoint || `mailto:${site.email}`;
           fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
             .then((response) => {
               if (!response.ok) throw new Error(String(response.status));
-              window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_submit' }));
+              window.dispatchEvent(new CustomEvent('dd:track', { detail: { name: 'contact_submit', props: { offer: /^[a-z]+$/.test(offer) ? offer : undefined, from_page: fromPage.startsWith('/') ? fromPage : undefined } } }));
               form.reset();
               if (status) status.textContent = 'Thanks. Your request was sent and I will reply by email.';
             })
@@ -108,7 +121,8 @@ const action = endpoint || `mailto:${site.email}`;
         const labels: Record<string, string> = {
           name: 'Name', email: 'Email', database: 'Database / platform', version: 'Version',
           problem: 'Problem', evidence: 'Evidence available', impact: 'Production impact', timeline: 'Desired timeline',
-          utm_source: 'Source', utm_medium: 'Medium', utm_campaign: 'Campaign', landing_page: 'Landing page'
+          utm_source: 'Source', utm_medium: 'Medium', utm_campaign: 'Campaign', landing_page: 'Landing page',
+          offer: 'Offer', from_page: 'Came from'
         };
         const body = Object.entries(labels)
           .filter(([key]) => String(fields.get(key) ?? '').trim())

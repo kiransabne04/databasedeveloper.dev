@@ -1,9 +1,12 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
+import ArticleOffer from '../components/ArticleOffer.astro';
 import { Content as Original } from '../originals/how-to-scale-postgresql-databases-with-partitioning.md';
 ---
 <ArticleLayout title="How to Scale PostgreSQL Databases with Partitioning" description="When PostgreSQL table partitioning helps: test partition pruning, time-based retention, unique-key constraints and planning cost before migrating a large table." eyebrow="PostgreSQL data lifecycle" published="2025-01-05" updated="2026-10-14" original>
   <Original />
+
+  <ArticleOffer offer="investigation" title="Partitioning a table that is already large and busy?" text="The hard parts are choosing the key from real query patterns and migrating without a long lock. An investigation checks first whether partitioning, an index or a retention change fixes the measured problem." />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
   <p class="production-intro">These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>

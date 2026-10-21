@@ -1,14 +1,18 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
+import ArticleOffer from '../components/ArticleOffer.astro';
 import { Content as Original } from '../originals/mastering-clustering-in-postgresql-for-enhanced-query-performance.md';
 ---
-<ArticleLayout title="Mastering Clustering in PostgreSQL for Enhanced Query Performance" description="Test whether PostgreSQL CLUSTER improves heap locality for range scans, then weigh ACCESS EXCLUSIVE locking, disk space and how fast the benefit decays." eyebrow="PostgreSQL physical design" published="2025-01-30" updated="2026-10-14" original>
+<ArticleLayout title="PostgreSQL CLUSTER and Clustered Indexes: When a Table Rewrite Helps" description="PostgreSQL has no clustered index. Test whether CLUSTER improves heap locality for range scans, then weigh ACCESS EXCLUSIVE locking, disk space and how fast the benefit decays." eyebrow="PostgreSQL physical design" published="2025-01-30" updated="2026-10-14" original>
   <Original />
+
+  <ArticleOffer offer="investigation" title="Considering CLUSTER or pg_repack on a busy table?" text="CLUSTER takes an ACCESS EXCLUSIVE lock, pg_repack needs extra space, and the benefit fades as rows change. An investigation checks whether heap locality is really the bottleneck before you schedule a rewrite." />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
   <p class="production-intro">These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>
   <h3>What CLUSTER changes</h3>
   <p><code>CLUSTER</code> rewrites a table so its rows follow an existing index's order. It can improve locality for queries that fetch many neighboring rows in that order. PostgreSQL does not maintain that physical ordering as later inserts and updates occur, so any gain can fade as the table changes.</p>
+  <p>PostgreSQL has no clustered index in the SQL Server or MySQL InnoDB sense, where the table is stored in index order and kept that way. Every PostgreSQL table is a heap, and every index, including the primary key, is a separate structure. <code>CLUSTER</code> is the closest equivalent, but it is a one-time reorder, not a maintained property.</p>
   <p>This is different from partitioning, which splits rows into separate tables, and from adding an index, which leaves the table's physical order unchanged. A range scan that already uses a selective covering index may gain little from a rewrite.</p>
 
   <h3>Which query might benefit?</h3>

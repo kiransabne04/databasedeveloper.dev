@@ -15,6 +15,11 @@ export const plannedRedirects: Array<{ from: string; to: string; status: 301 | 3
     status: 308
   },
   {
+    from: '/members',
+    to: '/insights',
+    status: 308
+  },
+  {
     from: '/recommendations',
     to: '/insights',
     status: 308

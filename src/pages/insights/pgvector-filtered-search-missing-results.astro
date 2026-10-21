@@ -1,7 +1,8 @@
 ---
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
 ---
-<ArticleLayout title="pgvector Filtered Search Returns Too Few Results: Fixes" description="Why a pgvector HNSW query with a WHERE filter returns 0 of 10 rows, and tested fixes: iterative index scans, exact search, partial indexes and partitioning." eyebrow="pgvector · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Is filtered vector search returning the wrong results?" ctaDescription="A pgvector review measures recall per tenant or filter, the plans PostgreSQL chooses and the cost of each fix before anything changes in production.">
+<ArticleLayout offer="pgvector" title="pgvector Filtered Search Returns Too Few Results: Fixes" description="Why a pgvector HNSW query with a WHERE filter returns 0 of 10 rows, and tested fixes: iterative index scans, exact search, partial indexes and partitioning." eyebrow="pgvector · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Is filtered vector search returning the wrong results?" ctaDescription="A pgvector review measures recall per tenant or filter, the plans PostgreSQL chooses and the cost of each fix before anything changes in production.">
   <p>A pgvector query asks for the 10 nearest documents for one tenant, and gets back three, or none, even though the tenant has thousands of documents. Nothing errors. The cause is how approximate indexes and SQL filters interact: the HNSW index finds a fixed number of nearest candidates first, and PostgreSQL applies the <code>WHERE</code> clause afterwards. This guide reproduces the problem and measures each fix.</p>
   <p>The lab used pgvector 0.8.7 on PostgreSQL 17 with 300,000 generated 64-dimension vectors in 500 clusters. 50 tenants each own about 6,000 rows (2% of the table). Results were compared with exact search. These are lab numbers from synthetic data, not a client system; real embeddings will give different recall values.</p>
 
@@ -66,6 +67,8 @@ ORDER BY distance + 0;`}</code></pre>
   ON docs USING hnsw (embedding vector_l2_ops)
   WHERE tenant_id = 123;`}</code></pre>
   <p>pgvector's guidance is to use partial indexes when filtering by a few distinct values, and partitioning when filtering by many. Partial indexes suit a handful of very large tenants or categories; hundreds of them become an operational burden. List or hash partitioning by tenant gives each partition its own smaller index, at the cost of partition management and cross-tenant queries.</p>
+
+  <ArticleOffer offer="pgvector" title="Filtered search returning too few results in production?" text="The right fix depends on filter selectivity, your recall target and memory. A pgvector review measures each option on your data and recommends one with the trade-offs written down." />
 
   <h2>How to detect it in production</h2>
   <ul>

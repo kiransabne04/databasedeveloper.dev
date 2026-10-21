@@ -233,8 +233,8 @@ const schemas = [
           sessionStorage.setItem(campaignKey, JSON.stringify(campaignContext));
         }
       } catch { campaignContext = Object.values(incoming).some(Boolean) ? { ...incoming, landing_page: location.pathname } : {}; }
-      function track(name) {
-        const props = { source_page: location.pathname, ...campaignContext };
+      function track(name, extra = {}) {
+        const props = { source_page: location.pathname, ...campaignContext, ...extra };
         if (window.plausible) window.plausible(name, { props });
         if (window.gtag) window.gtag('event', name, props);
       }
@@ -247,6 +247,7 @@ const schemas = [
       });
       window.addEventListener('dd:track', (event) => {
         if (typeof event.detail === 'string') track(event.detail);
+        else if (event.detail && typeof event.detail.name === 'string') track(event.detail.name, event.detail.props || {});
       });
       const path = location.pathname.replace(/\/$/, '') || '/';
       if (path === '/postgresql-performance-investigation') track('investigation_page_view');

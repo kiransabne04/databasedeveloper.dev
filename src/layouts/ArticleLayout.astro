@@ -1,7 +1,7 @@
 ---
 import BaseLayout from './BaseLayout.astro';
-import CTA from '../components/CTA.astro';
 import { site } from '../config/site';
+import { offers, contactHref, type OfferKey } from '../data/offers';
 
 interface Props {
   title: string;
@@ -12,9 +12,15 @@ interface Props {
   original?: boolean;
   ctaTitle?: string;
   ctaDescription?: string;
+  /** Paid offer this guide leads to; drives the header line and closing panel. */
+  offer?: OfferKey;
+  /** Hide the header offer line where no offer matches the topic. */
+  offerLine?: boolean;
 }
 
-const { title, description, eyebrow, published, updated, original = false, ctaTitle, ctaDescription } = Astro.props;
+const { title, description, eyebrow, published, updated, original = false, ctaTitle, ctaDescription, offer = 'investigation', offerLine = true } = Astro.props;
+const details = offers[offer];
+const ask = contactHref(offer, Astro.url.pathname);
 const pageUrl = new URL(Astro.url.pathname, site.url).toString();
 const articleSchema = {
   '@context': 'https://schema.org',
@@ -44,9 +50,35 @@ const breadcrumbSchema = {
       <h1 class="article-title">{title}</h1>
       <p class="lede">{description}</p>
       <p class="small muted">By <a href="/about">{site.personName}</a> · Published <time datetime={published}>{published}</time> · Updated <time datetime={updated}>{updated}</time></p>
+      {offerLine && <p class="article-service small">Dealing with this in production? I do this as fixed-scope paid work: <a data-track="article_header_offer_click" href={details.href}>{details.name}</a>, {details.price.charAt(0).toLowerCase() + details.price.slice(1)}.</p>}
       {original && <p class="small muted">Technically reviewed and corrected on <time datetime={updated}>{updated}</time>, with added <a href="#production-notes">production notes</a>.</p>}
     </header>
     <section><div class="container prose article-body"><slot /></div></section>
   </article>
-  <section><div class="container"><CTA title={ctaTitle ?? 'Need help with a production PostgreSQL problem?'} description={ctaDescription ?? 'Bring the symptom and available evidence. A scoped investigation turns competing hypotheses into a ranked validation plan.'} /></div></section>
+  <section>
+    <div class="container">
+      <div class="cta-panel article-close">
+        <div>
+          <span class="eyebrow">{details.name}</span>
+          <h2>{ctaTitle ?? 'Need help with a production PostgreSQL problem?'}</h2>
+          <p class="muted">{ctaDescription ?? 'Bring the symptom and available evidence. A scoped investigation turns competing hypotheses into a ranked validation plan.'}</p>
+          <ul class="article-close-list">
+            {details.receive.map((item) => <li>{item}</li>)}
+          </ul>
+          <p class="small"><strong>{details.price}.</strong> {details.terms}.</p>
+          <p class="small muted">To start, send: {details.send}. You get a direct answer on whether it fits before any paid work.</p>
+          {site.bookingUrl && (
+            <p class="small muted">Prefer to talk first? <a href={site.bookingUrl} target="_blank" rel="noopener" data-track="booking_click">Book a {site.triageCallMinutes}-minute triage call</a>.</p>
+          )}
+        </div>
+        <div class="actions">
+          <a class="button primary" data-track="primary_cta_click" href={ask}>{details.askLabel}</a>
+          <a class="button" data-track={details.magnet.track} href={details.magnet.href}>{details.magnet.label}</a>
+        </div>
+      </div>
+      <div class="author-box">
+        <p><strong>About the author.</strong> I'm <a href="/about">{site.personName}</a>. I have spent about 8 years running production PostgreSQL, Aurora/RDS, SQL Server and Snowflake: execution plans, CDC and logical replication, large migrations and upgrade planning. These guides come from that work and from public <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs">labs</a> you can rerun. I take a small number of fixed-scope engagements; see <a href="/how-it-works">how they work</a>.</p>
+      </div>
+    </div>
+  </section>
 </BaseLayout>

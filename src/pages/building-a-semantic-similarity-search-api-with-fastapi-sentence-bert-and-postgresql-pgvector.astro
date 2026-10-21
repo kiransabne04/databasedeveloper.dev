@@ -1,9 +1,12 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
+import ArticleOffer from '../components/ArticleOffer.astro';
 import { Content as Original } from '../originals/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector.md';
 ---
-<ArticleLayout title="Building a Semantic Similarity Search API with FastAPI, Sentence-BERT, and PostgreSQL pgvector" description="Take a FastAPI and Sentence-BERT pgvector API beyond a demo: benchmark exact vs HNSW search, filtered recall, tenant isolation and end-to-end latency." eyebrow="pgvector architecture" published="2025-10-21" updated="2026-10-14" original ctaTitle="Is vector search slowing a production workload?" ctaDescription="Review recall, filters, latency and PostgreSQL resource use together before choosing an index or a larger database instance.">
+<ArticleLayout offer="pgvector" title="Building a Semantic Similarity Search API with FastAPI, Sentence-BERT, and PostgreSQL pgvector" description="Take a FastAPI and Sentence-BERT pgvector API beyond a demo: benchmark exact vs HNSW search, filtered recall, tenant isolation and end-to-end latency." eyebrow="pgvector architecture" published="2025-10-21" updated="2026-10-14" original ctaTitle="Is vector search slowing a production workload?" ctaDescription="Review recall, filters, latency and PostgreSQL resource use together before choosing an index or a larger database instance.">
   <Original />
+
+  <ArticleOffer offer="pgvector" title="Taking vector search from demo to production?" text="Recall drops, filters return too few rows and latency grows with the table. A pgvector review measures recall and latency on your data and ranks the index and filtering choices." />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
   <p class="production-intro">These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>

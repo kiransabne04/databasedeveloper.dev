@@ -1,9 +1,12 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
+import ArticleOffer from '../components/ArticleOffer.astro';
 import { Content as Original } from '../originals/postgresql-concurrency-and-locking-a-comprehensive-guide.md';
 ---
 <ArticleLayout title="PostgreSQL Concurrency and Locking: A Comprehensive Guide" description="Diagnose PostgreSQL lock waits with pg_blocking_pids, transaction age and wait events. Separate row contention, DDL queues and deadlocks before tuning." eyebrow="PostgreSQL concurrency" published="2025-01-03" updated="2026-10-14" original>
   <Original />
+
+  <ArticleOffer offer="investigation" title="Lock waits or deadlocks in production?" text="Blocking chains change minute to minute. An investigation works from pg_locks and pg_stat_activity samples you capture read-only, finds the session at the head of the chain and the change that stops it recurring." />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
   <p class="production-intro">These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>

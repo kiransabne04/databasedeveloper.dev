@@ -1,9 +1,12 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
+import ArticleOffer from '../components/ArticleOffer.astro';
 import { Content as Original } from '../originals/postgresql-indexing-when-brin-beats-b-tree.md';
 ---
-<ArticleLayout title="PostgreSQL Indexing: When BRIN Beats B-Tree" description="Choose a PostgreSQL BRIN or B-tree index from physical correlation, range selectivity, heap rechecks and ORDER BY needs—not table size alone." eyebrow="PostgreSQL indexing" published="2025-10-15" updated="2026-10-14" original>
+<ArticleLayout title="BRIN vs B-Tree in PostgreSQL: When BRIN Beats B-Tree" description="BRIN vs B-tree in PostgreSQL: choose the index from physical correlation, range selectivity, heap rechecks and ORDER BY needs—not table size alone." eyebrow="PostgreSQL indexing" published="2025-10-15" updated="2026-10-14" original>
   <Original />
+
+  <ArticleOffer offer="investigation" title="Choosing an index for a table that is already slow in production?" text="Whether BRIN, B-tree or no new index helps depends on physical correlation and the real query mix. An investigation measures that on your workload and ranks it against the other causes of latency." />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
   <p class="production-intro">These notes add the diagnostic queries, decision criteria and validation steps the topic needs on a production system.</p>

@@ -2,6 +2,8 @@
 
 Sharding is a key technique to horizontally scale PostgreSQL databases by distributing data across multiple servers or instances. It enables PostgreSQL to handle massive datasets and high-traffic environments by partitioning data into smaller, more manageable shards. This guide provides a deep dive into PostgreSQL sharding, including its implementation, use cases, benefits, drawbacks, and best practices.
 
+<aside class="article-offer"><p class="article-offer-title"><strong>Before you shard</strong></p><p>A <a data-track="article_offer_click" href="/postgresql-performance-investigation">PostgreSQL performance investigation</a> tells you whether partitioning, indexing, connection pooling or a read replica gets you there first, from your own workload evidence.</p></aside>
+
 ---
 
 ### What is Sharding in PostgreSQL?

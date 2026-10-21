@@ -1,13 +1,16 @@
 ---
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
 ---
-<ArticleLayout title="pgvector HNSW vs IVFFlat: Benchmark for Your Filters and Recall" description="Choose a pgvector ANN index by measuring recall, filtered result count, p95 latency, build cost and write overhead on your actual workload." eyebrow="pgvector performance" published="2026-10-13" updated="2026-10-13" ctaTitle="Need a pgvector performance review?" ctaDescription="Bring the query, filter pattern, vector count and latency or recall target. The first step is scoping a bounded review of the complete PostgreSQL workload.">
+<ArticleLayout offer="pgvector" title="pgvector HNSW vs IVFFlat: Benchmark for Your Filters and Recall" description="Choose a pgvector ANN index by measuring recall, filtered result count, p95 latency, build cost and write overhead on your actual workload." eyebrow="pgvector performance" published="2026-10-13" updated="2026-10-13" ctaTitle="Need a pgvector performance review?" ctaDescription="Bring the query, filter pattern, vector count and latency or recall target. The first step is scoping a bounded review of the complete PostgreSQL workload.">
   <h2>Start with an exact baseline</h2>
   <p>Approximate nearest-neighbor indexes trade some recall for speed. Before comparing HNSW and IVFFlat, run representative queries with exact search and save the top-k results. That gives you a ground truth for recall at k, not merely a lower latency number. Include common and difficult queries, multiple tenants, metadata filters and the vector count you expect after growth.</p>
 
   <h2>What changes between HNSW and IVFFlat?</h2>
   <p>HNSW uses a graph and can be built before data is loaded. It often offers a strong speed–recall trade-off, with more memory and slower build or maintenance cost. IVFFlat groups vectors into lists and is best created after representative data is available; its probe count controls how many lists are searched. Neither is automatically the right choice for a small collection, a rapidly changing dataset or a heavily filtered query.</p>
   <p>Filtering is a common surprise. With approximate indexes, a metadata predicate can reduce the candidates left after the vector scan, so a query requesting ten results may return fewer than ten. The answer may involve filter design, a different index strategy, higher search effort or iterative scans, depending on pgvector version and workload. Test the returned-result count as well as latency.</p>
+
+  <ArticleOffer offer="pgvector" title="Need this decision made on your own data?" text="A pgvector review builds the exact baseline, measures recall and latency for both index types at your filter selectivity and recommends one, with build time and memory included." />
 
   <h2>A benchmark that supports a decision</h2>
   <ol>

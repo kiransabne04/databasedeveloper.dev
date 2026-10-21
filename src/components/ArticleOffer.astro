@@ -1,0 +1,24 @@
+---
+import { offers, contactHref, type OfferKey } from '../data/offers';
+
+interface Props {
+  offer: OfferKey;
+  /** The production situation where help is worth paying for, in the reader's terms. */
+  title: string;
+  text: string;
+}
+
+const { offer, title, text } = Astro.props;
+const details = offers[offer];
+const ask = contactHref(offer, Astro.url.pathname);
+---
+<aside class="article-offer" aria-label={`About the ${details.name}`}>
+  <p class="article-offer-title"><strong>{title}</strong></p>
+  <p>{text}</p>
+  <p class="small">
+    <a data-track="article_offer_click" href={ask}>{details.askLabel}</a>
+    <span aria-hidden="true"> · </span>
+    <a href={details.href}>How the {details.name} works</a>
+    <span class="muted"> · {details.price}</span>
+  </p>
+</aside>

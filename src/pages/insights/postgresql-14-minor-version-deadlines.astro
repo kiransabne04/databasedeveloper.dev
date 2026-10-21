@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
 import CTA from '../../components/CTA.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
 import { pg14Facts } from '../../data/facts';
 import { site } from '../../config/site';
 const postUrl = `${site.url}/insights/postgresql-14-minor-version-deadlines`;
@@ -53,6 +54,8 @@ aws rds describe-db-clusters \
 # Anything AWS has already scheduled
 aws rds describe-pending-maintenance-actions</code></pre>
     <p>Run the AWS CLI commands once per region you use.</p>
+
+    <ArticleOffer offer="upgrade" title="Several PG14 instances and a deadline coming?" text="A readiness review inventories versions, extensions and replication across them, and gives you an upgrade order with go/no-go criteria for each." />
 
     <h2>If you are on an affected version</h2>
     <ol>

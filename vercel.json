@@ -12,6 +12,11 @@
       "permanent": true
     },
     {
+      "source": "/members",
+      "destination": "/insights",
+      "permanent": true
+    },
+    {
       "source": "/recommendations",
       "destination": "/insights",
       "permanent": true

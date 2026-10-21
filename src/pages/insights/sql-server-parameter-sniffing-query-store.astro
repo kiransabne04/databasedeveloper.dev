@@ -1,7 +1,8 @@
 ---
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
 ---
-<ArticleLayout title="SQL Server Parameter Sniffing: Diagnose and Fix It" description="SQL Server 2022 lab: one cached plan read 9 pages for one customer and 900,524 for another. Find it in Query Store; compare PSP, RECOMPILE and indexes." eyebrow="SQL Server · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Have a SQL Server query that is fast one minute and slow the next?" ctaDescription="Share the Query Store evidence for the affected statement. A scoped review identifies the plan variance, its cause and the lowest-risk fix.">
+<ArticleLayout offer="sqlserver" title="SQL Server Parameter Sniffing: Diagnose and Fix It" description="SQL Server 2022 lab: one cached plan read 9 pages for one customer and 900,524 for another. Find it in Query Store; compare PSP, RECOMPILE and indexes." eyebrow="SQL Server · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Have a SQL Server query that is fast one minute and slow the next?" ctaDescription="Share the Query Store evidence for the affected statement. A scoped review identifies the plan variance, its cause and the lowest-risk fix.">
   <p>A stored procedure runs in milliseconds most of the day and then takes seconds for no visible reason. Restarting the service or clearing the plan cache "fixes" it until it comes back. That pattern is usually parameter sniffing: SQL Server compiles a plan for the first parameter value it sees and reuses it for every later value, including ones that need a completely different plan.</p>
   <p>Every number here comes from a lab on SQL Server 2022 CU27 (16.0.4295.3) in Docker, with generated data. It is not a client system.</p>
 
@@ -75,6 +76,8 @@ WHERE ps.object_id = OBJECT_ID('dbo.CustomerSummary');`}</code></pre>
 
   <h3>OPTIMIZE FOR UNKNOWN and plan forcing</h3>
   <p><code>OPTIMIZE FOR UNKNOWN</code> plans for the average density of the column. With 150,000 customers averaging about four rows, the average looks like the small case, so the large customer still received the seek plan and read 900,524 pages. Forcing one plan through Query Store (<code>sp_query_store_force_plan</code>) gives predictability, but every value then pays for that plan: forcing the scan plan would make each small-customer call read 18,606 pages instead of 9.</p>
+
+  <ArticleOffer offer="sqlserver" title="Parameter sniffing on a query that matters?" text="The right fix depends on how skewed the data is and how often the query runs. A SQL Server review measures the options in Query Store and gives you a validated change with a rollback." />
 
   <h2>Choosing and validating the fix</h2>
   <ul>
