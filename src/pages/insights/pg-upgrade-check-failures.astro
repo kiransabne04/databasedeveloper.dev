@@ -20,7 +20,7 @@ Failure, exiting`}</code></pre>
 <pre><code>{`Checking for prepared transactions
 The source cluster contains prepared transactions
 Failure, exiting`}</code></pre>
-  <p><strong>Cause:</strong> a two-phase commit transaction was prepared and never committed or rolled back. It usually comes from an XA transaction manager (some Java application servers and message brokers) that lost track of it. Besides blocking the upgrade, an orphaned prepared transaction holds locks and stops vacuum from removing dead rows.</p>
+  <p><strong>Cause:</strong> a two-phase commit transaction was prepared and never committed or rolled back. It usually comes from an XA transaction manager (some Java application servers and message brokers) that lost track of it. Besides blocking the upgrade, an orphaned prepared transaction holds locks, stops vacuum from removing dead rows and, left long enough, <a href="/insights/postgresql-transaction-id-wraparound">stops the database accepting writes</a>.</p>
   <p><strong>Fix:</strong> find it, confirm with the owning application which outcome is correct, then resolve it:</p>
 <pre><code>{`SELECT gid, prepared, owner, database FROM pg_prepared_xacts;
 

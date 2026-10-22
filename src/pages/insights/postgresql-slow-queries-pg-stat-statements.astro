@@ -46,7 +46,7 @@ LIMIT 20;`}</code></pre>
   <ul>
     <li><strong>Many shared blocks per call</strong> points at a scan doing more work than the result needs. The order lookup touched about 15,600 8 kB buffers per call to return at most 20 rows. That is the signature of a missing or unusable index.</li>
     <li><strong><code>shared_blks_read</code> and read time</strong> show how much of that work missed the buffer cache. High reads with low read time usually means the operating system cache absorbed them; high read time means storage latency is part of the cost.</li>
-    <li><strong><code>temp_blks_written</code></strong> means a sort or hash spilled to disk. The report wrote about 15,400 temp blocks per run. Raising <code>work_mem</code> to 64 MB for the session did not remove the spill: the sort of 2 million rows still used a 61 MB external merge. Large spills need a query or data-model change, not just a bigger memory setting.</li>
+    <li><strong><code>temp_blks_written</code></strong> means a sort or hash spilled to disk. The report wrote about 15,400 temp blocks per run. Raising <code>work_mem</code> to 64 MB for the session did not remove the spill: the sort of 2 million rows still used a 61 MB external merge. Large spills need a query or data-model change, not just a bigger memory setting. A <a href="/insights/postgresql-work-mem-temp-file-spills">separate lab on work_mem</a> measured how little removing a spill can save.</li>
     <li><strong><code>rows</code> divided by <code>calls</code></strong> shows how many rows each call returns. A high block count for a small row count is the clearest index signal.</li>
   </ul>
 

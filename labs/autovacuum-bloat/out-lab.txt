@@ -1,0 +1,116 @@
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+
+==== Version and autovacuum settings ====
+                                                         version                                                          
+--------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+              name               |  setting  
+---------------------------------+-----------
+ autovacuum_naptime              | 5
+ autovacuum_vacuum_cost_limit    | -1
+ autovacuum_vacuum_max_threshold | 100000000
+ autovacuum_vacuum_scale_factor  | 0.2
+ autovacuum_vacuum_threshold     | 50
+(5 rows)
+
+
+==== Build accounts: 200,000 rows ====
+ table_size 
+------------
+ 27 MB
+(1 row)
+
+
+==== Autovacuum trigger point for this table ====
+ relname  | reltuples | dead_rows_to_trigger 
+----------+-----------+----------------------
+ accounts |    200000 |                40050
+(1 row)
+
+
+==== Open a session that reads, then sits idle in transaction ====
+
+==== Update every row three times ====
+
+==== pg_stat_user_tables after autovacuum has run ====
+ relname  | n_live_tup | n_dead_tup | autovacuum_count | autovacuumed | table_size 
+----------+------------+------------+------------------+--------------+------------
+ accounts |     200000 |     600000 |                4 | t            | 108 MB
+(1 row)
+
+
+==== Autovacuum log lines for accounts ====
+	WAL usage: 0 records, 0 full page images, 0 bytes, 0 buffers full
+	system usage: CPU: user: 0.10 s, system: 0.01 s, elapsed: 0.53 s
+2026-10-22 03:53:28.791 UTC [93] LOG:  automatic vacuum of table "postgres.public.accounts": index scans: 0
+	pages: 0 removed, 13794 remain, 13794 scanned (100.00% of total), 0 eagerly scanned
+	tuples: 0 removed, 800000 remain, 600000 are dead but not yet removable
+	removable cutoff: 756, which was 15 XIDs old when operation ended
+	frozen: 0 pages from table (0.00% of total) had 0 tuples frozen
+	visibility map: 0 pages set all-visible, 0 pages set all-frozen (0 were all-visible)
+	index scan not needed: 0 pages from table (0.00% of total) had 0 dead item identifiers removed
+	avg read rate: 0.000 MB/s, avg write rate: 0.000 MB/s
+	buffer usage: 27634 hits, 0 reads, 0 dirtied
+	WAL usage: 0 records, 0 full page images, 0 bytes, 0 buffers full
+	system usage: CPU: user: 0.09 s, system: 0.01 s, elapsed: 0.53 s
+
+==== Manual VACUUM VERBOSE while the session is still open ====
+pages: 0 removed, 13794 remain, 13794 scanned (100.00% of total), 0 eagerly scanned
+tuples: 0 removed, 800000 remain, 600000 are dead but not yet removable
+removable cutoff: 756, which was 15 XIDs old when operation ended
+
+==== Find what holds the xmin horizon ====
+ pid | application_name |        state        | xmin_age | xact_open_for |                last_query                
+-----+------------------+---------------------+----------+---------------+------------------------------------------
+  71 | report-export    | idle in transaction |       15 | 00:00:23.2836 | SELECT count(*) FROM accounts;
+ 111 | psql             | active              |        0 | 00:00:00      | SELECT pid, application_name, state, age
+(2 rows)
+
+ gid | xmin_age 
+-----+----------
+(0 rows)
+
+ slot_name | slot_type | xmin_age | catalog_xmin_age 
+-----------+-----------+----------+------------------
+(0 rows)
+
+
+==== End the blocking session ====
+--- next autovacuum of accounts
+	pages: 0 removed, 13794 remain, 13794 scanned (100.00% of total), 0 eagerly scanned
+	tuples: 600000 removed, 200000 remain, 0 are dead but not yet removable
+	removable cutoff: 771, which was 0 XIDs old when operation ended
+	new relfrozenxid: 758, which is 4 XIDs ahead of previous value
+ n_live_tup | n_dead_tup | table_size 
+------------+------------+------------
+     200000 |          0 | 108 MB
+(1 row)
+
+ tuple_count | dead_tuple_count | free_percent 
+-------------+------------------+--------------
+      200000 |                0 |         74.9
+(1 row)
+
+
+==== Three more full updates now reuse the free space ====
+ table_size 
+------------
+ 108 MB
+(1 row)
+
+
+==== VACUUM FULL returns the space (ACCESS EXCLUSIVE lock for the duration) ====
+Time: 684.114 ms
+ table_size 
+------------
+ 27 MB
+(1 row)
+
+
+==== Per-table autovacuum settings for a large table ====
+ relname  |                               reloptions                               
+----------+------------------------------------------------------------------------
+ accounts | {autovacuum_vacuum_scale_factor=0.01,autovacuum_vacuum_threshold=1000}
+(1 row)
+

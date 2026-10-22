@@ -1,0 +1,101 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+---
+<ArticleLayout title="PostgreSQL Transaction ID Wraparound: Warning to Recovery" description="Reproduced on PostgreSQL 18: the wraparound warning, the error that stops writes, why VACUUM FREEZE did not help, and the recovery steps that worked." eyebrow="PostgreSQL reliability · Lab-tested" published="2026-10-22" updated="2026-10-22" ctaTitle="Is transaction ID age climbing on your database?" ctaDescription="A scoped investigation finds what is holding back freezing, checks whether autovacuum can keep up with your write rate, and gives you thresholds and alarms to set.">
+  <p>PostgreSQL transaction IDs are 32-bit and wrap around. To keep old rows visible, vacuum has to <em>freeze</em> them before about 2 billion newer transactions have been assigned. Usually autovacuum does this without anyone noticing. When something stops it, the database warns at 40 million transactions from the limit and stops accepting writes at 3 million. Reads still work, but the application is effectively down until vacuum catches up.</p>
+  <p>The lab reproduced both stages on PostgreSQL 18.6 in Docker. Burning 2 billion transaction IDs takes days, so the script used <code>pg_resetwal -x</code> to move the next transaction ID close to the limit. That is a lab shortcut only; never run <code>pg_resetwal</code> on a database you care about. Everything else is ordinary server behavior. The <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/xid-wraparound">script and full output</a> are public.</p>
+
+  <h2>The setup: one forgotten prepared transaction</h2>
+  <p>A transaction prepared for two-phase commit (<code>PREPARE TRANSACTION</code>) and never committed or rolled back. That happens when an XA transaction manager in a Java application server or message broker loses track of one. It holds the oldest transaction ID in the cluster and survives restarts:</p>
+<pre><code>{`     gid      | transaction |           prepared
+--------------+-------------+-------------------------------
+ xa-ledger-42 |         756 | 2026-10-22 03:55:36.081571+00`}</code></pre>
+  <p>A session left idle in a transaction or an abandoned replication slot does the same; <a href="/insights/postgresql-autovacuum-not-removing-dead-tuples">this page on autovacuum blockers</a> shows how to find each. Prepared transactions are the easiest to miss, because they do not appear in <code>pg_stat_activity</code>.</p>
+
+  <h2>Stage 1: the warning</h2>
+  <p>With the next transaction ID moved to 2,120,000,000, every database was at 98.7% of the way to wraparound, and any statement that needed a new transaction ID got this:</p>
+<pre><code>{`WARNING:  database "template1" must be vacuumed within 27484391 transactions
+HINT:  To avoid transaction ID assignment failures, execute a database-wide VACUUM in that database.
+You might also need to commit or roll back old prepared transactions, or drop stale replication slots.`}</code></pre>
+  <p>The warning named <code>template1</code>, not the database the application was using. It names whichever database the server is tracking as oldest, so check them all. Applications rarely show database warnings to anyone; set up the monitoring below so you do not rely on someone reading the log.</p>
+
+  <h2>Autovacuum ran, and could not fix it</h2>
+  <p>Autovacuum started an anti-wraparound vacuum straight away, and from PostgreSQL 14 the failsafe (<code>vacuum_failsafe_age</code>, 1.6 billion by default) made it skip index cleanup and throttling to finish faster:</p>
+<pre><code>{`WARNING:  bypassing nonessential maintenance of table "postgres.public.events" as a failsafe after 0 index scans
+LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.public.events": index scans: 0
+	removable cutoff: 756, which was 2119999245 XIDs old when operation ended
+	new relfrozenxid: 756, which is 4 XIDs ahead of previous value`}</code></pre>
+  <p>The <code>removable cutoff</code> is 756, the prepared transaction. Vacuum cannot freeze anything newer than the oldest transaction still running, so <code>relfrozenxid</code> moved forward by 4 and the age did not fall. A manual <code>VACUUM (FREEZE, VERBOSE)</code> said so directly:</p>
+<pre><code>{`WARNING:  cutoff for removing and freezing tuples is far in the past
+HINT:  Close open transactions soon to avoid wraparound problems.`}</code></pre>
+  <p>This is the most important point on this page: <strong>near wraparound, vacuum settings are not the fix if something holds the horizon.</strong> More workers, a higher cost limit or a manual freeze all run, and they all stop at the same cutoff.</p>
+
+  <h2>Stage 2: writes stop</h2>
+  <p>With the next transaction ID at 2,145,000,000, fewer than 3 million from the limit:</p>
+<pre><code>{`INSERT INTO events VALUES (100002, 'y');
+ERROR:  database is not accepting commands that assign new transaction IDs to avoid wraparound data loss in database "postgres"
+HINT:  Execute a database-wide VACUUM in that database.
+You might also need to commit or roll back old prepared transactions, or drop stale replication slots.
+
+SELECT count(*) FROM events;
+ count
+--------
+ 100001`}</code></pre>
+  <p>Reads work and writes fail. For most applications that means an outage.</p>
+
+  <ArticleOffer offer="investigation" title="Transaction ID age above a few hundred million and rising?" text="Well before the warning stage, an investigation finds what is holding back freezing, measures whether autovacuum keeps up with your write rate, and gives you per-table settings and alarm thresholds." />
+
+  <h2>Recovery: remove the blocker, then plain VACUUM</h2>
+  <p>The <a href="https://www.postgresql.org/docs/current/routine-vacuuming.html#VACUUM-FOR-WRAPAROUND">PostgreSQL documentation</a> is explicit that you do not need to stop the server or use single-user mode, contrary to what older advice says. The steps, in order:</p>
+  <ol>
+    <li><strong>Resolve old prepared transactions</strong> in <code>pg_prepared_xacts</code>, after confirming with the owning application whether to commit or roll back.</li>
+    <li><strong>End long-running transactions:</strong> rows in <code>pg_stat_activity</code> with a large <code>age(backend_xid)</code> or <code>age(backend_xmin)</code>.</li>
+    <li><strong>Drop stale replication slots:</strong> large <code>age(xmin)</code> or <code>age(catalog_xmin)</code> in <code>pg_replication_slots</code>. A replica or CDC consumer that still uses the slot will need rebuilding or a re-snapshot.</li>
+    <li><strong>Run plain <code>VACUUM</code></strong> in the affected database. Not <code>VACUUM FULL</code>, which needs a transaction ID and fails. Not <code>VACUUM FREEZE</code>, which does more work than needed to get writes back.</li>
+  </ol>
+<pre><code>{`-- Every blocker type in one list, oldest first
+SELECT 'prepared xact' AS kind, gid AS name, age(transaction) AS xid_age FROM pg_prepared_xacts
+UNION ALL
+SELECT 'backend', pid::text || ' ' || coalesce(application_name, ''), greatest(age(backend_xid), age(backend_xmin))
+FROM pg_stat_activity
+WHERE (backend_xid IS NOT NULL OR backend_xmin IS NOT NULL) AND pid <> pg_backend_pid()
+UNION ALL
+SELECT 'replication slot', slot_name, greatest(age(xmin), age(catalog_xmin)) FROM pg_replication_slots
+ORDER BY xid_age DESC NULLS LAST;`}</code></pre>
+  <p>In the lab it returned one row, the prepared transaction:</p>
+<pre><code>{`     kind      |     name     |  xid_age
+---------------+--------------+------------
+ prepared xact | xa-ledger-42 | 2119999257`}</code></pre>
+  <p>After <code>ROLLBACK PREPARED 'xa-ledger-42'</code>, one <code>VACUUM</code> of the table did what autovacuum and the manual freeze could not:</p>
+<pre><code>{`removable cutoff: 2145000000, which was 0 XIDs old when operation ended
+new relfrozenxid: 2120000000, which is 2119999244 XIDs ahead of previous value`}</code></pre>
+  <p>Then <code>vacuumdb --all</code> for the other databases. Ages fell to 25 million and writes worked again. The lab tables were tiny, so this took under a second. On a multi-terabyte database a vacuum that has to read every page can take hours, and writes stay down for that time. Vacuum the tables with the oldest <code>relfrozenxid</code> first, and do not stop the anti-wraparound autovacuum that may already be running on them.</p>
+
+  <h2>Monitor it before the warning</h2>
+<pre><code>{`-- Per database: transaction ID and multixact age
+SELECT datname, age(datfrozenxid) AS xid_age, mxid_age(datminmxid) AS mxid_age,
+       round(100.0 * age(datfrozenxid) / 2147483648, 1) AS pct_to_wraparound
+FROM pg_database ORDER BY xid_age DESC;
+
+-- Per table, in the current database: what the next aggressive vacuums will hit
+SELECT c.oid::regclass AS table_name, age(c.relfrozenxid) AS xid_age,
+       pg_size_pretty(pg_total_relation_size(c.oid)) AS size
+FROM pg_class c
+WHERE c.relkind IN ('r', 'm', 't')
+ORDER BY age(c.relfrozenxid) DESC LIMIT 20;`}</code></pre>
+  <p>With the defaults, autovacuum forces a freeze on a table at <code>autovacuum_freeze_max_age</code>, 200 million. An age that settles somewhere above that and falls back after each anti-wraparound vacuum is normal. An age that keeps climbing past it means something is wrong. Multixact IDs, used for row locks shared by several transactions, wrap around the same way and are frozen by the same vacuums.</p>
+  <ul>
+    <li><strong>RDS and Aurora:</strong> alarm on the CloudWatch metric <code>MaximumUsedTransactionIDs</code>. RDS adaptive autovacuum starts making autovacuum more aggressive when it reaches 500 million or <code>autovacuum_freeze_max_age</code>, whichever is greater, and logs an event when it does. That event is worth a page. RDS for PostgreSQL also provides <code>postgres_get_av_diag()</code>, which reports blockers older than 500 million transactions and suggests commands to resolve them.</li>
+    <li><strong>Self-managed:</strong> alert on the per-database query above. Pick a threshold that leaves time to investigate during working hours, well below the 2 billion limit.</li>
+  </ul>
+
+  <h2>Checklist</h2>
+  <ol>
+    <li>Alarm on transaction ID age well before the warning stage.</li>
+    <li>Check <code>pg_prepared_xacts</code>; if nothing should use two-phase commit, set <code>max_prepared_transactions = 0</code>.</li>
+    <li>Set <code>idle_in_transaction_session_timeout</code> for application roles.</li>
+    <li>Drop replication slots that nothing consumes.</li>
+    <li>If it happens: resolve the blockers first, then plain <code>VACUUM</code>, oldest tables first.</li>
+  </ol>
+</ArticleLayout>

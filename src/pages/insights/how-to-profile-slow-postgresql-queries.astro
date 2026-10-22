@@ -17,7 +17,7 @@ import { site } from '../../config/site';
 FROM pg_stat_statements
 ORDER BY total_exec_time DESC
 LIMIT 15;`}</code></pre>
-  <p>A fast statement that runs 20,000 times often outweighs a slow report that runs twice. High <code>shared_blks_read</code> points at I/O, and <code>temp_blks_written</code> at sorts or hashes spilling past <code>work_mem</code>. To see what changed during an incident, snapshot the view before and after and compare the difference. The full method, including setup on RDS and Aurora, is in <a href="/insights/postgresql-slow-queries-pg-stat-statements">finding slow queries with pg_stat_statements</a>.</p>
+  <p>A fast statement that runs 20,000 times often outweighs a slow report that runs twice. High <code>shared_blks_read</code> points at I/O, and <code>temp_blks_written</code> at sorts or hashes spilling past <code>work_mem</code> (<a href="/insights/postgresql-work-mem-temp-file-spills">measure what the spills cost before raising it</a>). To see what changed during an incident, snapshot the view before and after and compare the difference. The full method, including setup on RDS and Aurora, is in <a href="/insights/postgresql-slow-queries-pg-stat-statements">finding slow queries with pg_stat_statements</a>.</p>
   <p>If total execution time is low but the application is still slow, the time is going somewhere else: waiting for locks, waiting for a connection from the pool, or in the network. Sample <code>pg_stat_activity</code> for <code>wait_event_type</code> and <code>state</code>, or use Database Insights on RDS, before you tune any plan.</p>
 
   <h2>2. Capture the plan the server actually used</h2>

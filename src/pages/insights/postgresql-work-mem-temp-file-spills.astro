@@ -1,0 +1,106 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+---
+<ArticleLayout title="PostgreSQL work_mem Tuning: Temp File Spills Measured" description="Tested on PostgreSQL 18: 336 MB of temp file spills at the default work_mem. Raising it 64x removed every spill but saved at most 8%. What to change instead." eyebrow="PostgreSQL performance · Lab-tested" published="2026-10-22" updated="2026-10-22" ctaTitle="Temp files climbing and not sure what to change?" ctaDescription="A scoped investigation finds which statements spill, measures what the spills cost on your storage, and ranks the fixes: indexes, query shape, per-role memory or instance changes.">
+  <p>When a sort or hash table needs more memory than <code>work_mem</code> allows, PostgreSQL writes the excess to temporary files and finishes the work on disk. The usual advice is to raise <code>work_mem</code>. Sometimes that is right. But each sort or hash node in each query can use that much memory, and in this lab, removing every spill made the queries at most 8% faster. Measure what the spills cost first.</p>
+  <p>The lab used PostgreSQL 18.6 in Docker on a laptop, with parallel query turned off to keep the plans simple. The <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/work-mem-spills">script and full output</a> are public.</p>
+
+  <h2>Three spills at the default 4 MB</h2>
+  <p>An <code>orders</code> table with 2 million rows (115 MB) and <code>customers</code> with 500,000. Three common query shapes, each at the default <code>work_mem</code> of 4 MB:</p>
+<pre><code>{`Sort (actual rows=2000000.00 loops=1)
+  Sort Key: amount DESC, created_at
+  Sort Method: external merge  Disk: 82280kB
+  Buffers: shared hit=11965 read=2747, temp read=20560 written=20595
+
+HashAggregate (actual rows=500000.00 loops=1)
+  Group Key: customer_id
+  Batches: 33  Memory Usage: 8209kB  Disk Usage: 63296kB
+
+Hash (actual rows=500000.00 loops=1)
+  Buckets: 262144  Batches: 4  Memory Usage: 7904kB
+  Buffers: shared read=3677 written=2700, temp written=1647`}</code></pre>
+  <p>The signals to look for in a plan:</p>
+  <ul>
+    <li><strong>Sort:</strong> <code>external merge  Disk:</code> instead of <code>quicksort  Memory:</code>.</li>
+    <li><strong>Hash aggregate:</strong> <code>Batches</code> above 1 and a <code>Disk Usage</code> figure.</li>
+    <li><strong>Hash join:</strong> <code>Batches</code> above 1 on the <code>Hash</code> node.</li>
+    <li><strong>Buffers:</strong> <code>temp read</code> and <code>temp written</code>, in 8 kB blocks. From PostgreSQL 18, <code>EXPLAIN ANALYZE</code> shows buffers without asking.</li>
+  </ul>
+  <p>Hash nodes get <code>work_mem</code> times <code>hash_mem_multiplier</code>, which defaults to 2 from PostgreSQL 15. That is why the hash aggregate used 8 MB at a 4 MB setting.</p>
+
+  <h2>Find spills without running EXPLAIN</h2>
+  <p>On a production system you start from the workload, not a single plan. Three sources, from the lab:</p>
+<pre><code>{`-- Per statement: pg_stat_statements
+ query                                          | calls | temp_blks_written | temp_written | mean_ms
+------------------------------------------------+-------+-------------------+--------------+--------
+ SELECT id, customer_id, amount FROM orders ... |     1 |             20595 | 161 MB       |   1820
+ SELECT customer_id, count(*), sum(amount) ...  |     1 |             14921 | 117 MB       |    441
+ SELECT c.region, o.amount FROM orders o ...    |     1 |              7454 | 58 MB        |    335
+
+-- Per database: pg_stat_database
+ datname  | temp_files | temp_bytes
+----------+------------+------------
+ postgres |          8 | 200 MB
+
+-- In the server log, with log_temp_files = 0
+LOG:  temporary file: path "base/pgsql_tmp/pgsql_tmp62.0", size 84254720
+STATEMENT:  EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF) ...`}</code></pre>
+  <p>Order <code>pg_stat_statements</code> by <code>temp_blks_written</code> to find the statements that write most to temporary files, and divide by <code>calls</code> for the amount per execution. <code>log_temp_files</code> takes a size in kB; <code>0</code> logs every file, which is fine in a lab but noisy in production. Start at a few MB. The log entry is written when the file is removed, so a query that is still running does not appear yet; on PostgreSQL 12 and later, <code>pg_ls_tmpdir()</code> lists the temporary files that exist now. Its file names contain the process ID of the session that created them. The two counters disagree because the sort read and wrote its data more than once while merging; <code>temp_bytes</code> counts file sizes.</p>
+
+  <h2>What more memory bought</h2>
+  <p>The same queries with <code>SET LOCAL work_mem = '256MB'</code>:</p>
+<pre><code>{`Sort Method: quicksort  Memory: 142902kB
+HashAggregate ... Batches: 1  Memory Usage: 204817kB
+Hash ... Buckets: 524288  Batches: 1  Memory Usage: 27534kB`}</code></pre>
+  <p>No temp files. Then five runs of each query at each setting, execution time in milliseconds:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Query</th><th>4 MB (5 runs)</th><th>256 MB (5 runs)</th><th>Median change</th></tr></thead>
+    <tbody>
+      <tr><td>Sort, 2M rows</td><td>434 310 328 370 316</td><td>310 306 307 308 325</td><td>328 → 308 ms, −6%</td></tr>
+      <tr><td>Hash aggregate, 500k groups</td><td>575 475 524 463 413</td><td>801 410 619 543 386</td><td>475 → 543 ms, no gain</td></tr>
+      <tr><td>Hash join, 500k inner rows</td><td>372 387 359 374 353</td><td>351 342 340 339 345</td><td>372 → 342 ms, −8%</td></tr>
+    </tbody>
+  </table></div>
+  <p>The hash aggregate used 200 MB of memory to avoid 63 MB of temp files and was no faster; its run-to-run spread is wider than the difference. The temp files here were small enough to stay in the operating system's page cache on a laptop SSD, so spilling cost little. The queries spent their time reading rows and building sorts and hash tables, not on temp file I/O.</p>
+  <p>That will not hold everywhere. Spills cost more when:</p>
+  <ul>
+    <li><strong>Storage is network-attached and throttled.</strong> On RDS without Optimized Reads, temp files go to EBS and share its IOPS and throughput limits with table reads and WAL.</li>
+    <li><strong>Many sessions spill at once</strong> and their temp files no longer fit in the page cache.</li>
+    <li><strong>Temp space is limited.</strong> On Aurora, temp files share each instance's local storage with log files, so watch the <code>FreeLocalStorage</code> metric. On RDS instance classes with local NVMe (Optimized Reads), temp files go to <code>rds_temp_tablespace</code> on that disk, and AWS notes that transactions can fail when it fills.</li>
+  </ul>
+  <p>So the measurement that matters is your own: the same statement's time and temp usage at two settings, on the instance class it runs on, at normal concurrency.</p>
+
+  <ArticleOffer offer="investigation" title="Temp files in the hundreds of GB, and no one knows if they matter?" text="An investigation ranks the statements that spill, measures what the spills cost on your storage and at your concurrency, and recommends the cheapest fix for each, with its memory risk." />
+
+  <h2>Why not raise work_mem for everyone</h2>
+  <p><code>work_mem</code> is a limit per sort or hash node, per process, not per query or per server. A plan with three hash joins and a sort can use four times the setting, hash nodes can use twice that, and each parallel worker gets its own. As an illustration, 200 connections each running one query with two hash nodes at a 256 MB setting and the default multiplier could ask for up to 200 GB. Most of the time far less is used, but the out-of-memory event happens at the busiest moment, and on Linux the out-of-memory killer can restart the whole server.</p>
+  <p>Give memory to the statements that need it instead:</p>
+<pre><code>{`-- For one transaction (reports, batch jobs, migrations)
+BEGIN;
+SET LOCAL work_mem = '256MB';
+-- the query
+COMMIT;
+
+-- For a role that only runs reports
+ALTER ROLE reporting SET work_mem = '64MB';`}</code></pre>
+  <p>The role setting applies to new sessions of that role; existing pooled connections keep the old value until they reconnect. In the lab, the hash aggregate still used 5 batches at 64 MB because it needed about 200 MB, so check the plan after the change rather than assuming it fits. A <code>SET</code> outside a transaction lasts for the session; with PgBouncer in transaction mode, it can leak to other clients that reuse that server connection, so use <code>SET LOCAL</code>.</p>
+
+  <h2>Often the better fix is not memory</h2>
+  <ul>
+    <li><strong>Avoid the sort.</strong> An index on <code>(amount DESC, created_at)</code> let <code>ORDER BY ... LIMIT 50</code> read 50 rows from the index: 0.18 ms instead of sorting 2 million rows. A sort with <code>LIMIT</code> uses a top-N heap sort that rarely spills anyway; the expensive case is sorting everything.</li>
+    <li><strong>Aggregate less.</strong> Filter by date before grouping, or keep a summary table for dashboards that group the whole history on every refresh.</li>
+    <li><strong>Fix the estimate.</strong> A hash join sized for 1,000 rows that receives 5 million spills because the planner picked the plan for the wrong number of rows. Stale statistics after an upgrade or a bulk load cause this; see <a href="/insights/postgresql-slow-after-major-upgrade">slow after a major upgrade</a>.</li>
+    <li><strong>Cap the damage.</strong> <code>temp_file_limit</code> cancels a query that writes more than the limit, which protects disk space from one bad query.</li>
+  </ul>
+
+  <h2>Checklist</h2>
+  <ol>
+    <li>Rank statements by <code>temp_blks_written</code> in <code>pg_stat_statements</code>; check <code>temp_files</code> and <code>temp_bytes</code> per database.</li>
+    <li>Set <code>log_temp_files</code> to a threshold of a few MB to see the statements and sizes as they happen.</li>
+    <li>For the top statements, read the plan: sort method, batches, temp buffers, and estimated against actual rows.</li>
+    <li>Try an index, a query change or a statistics fix first.</li>
+    <li>If memory is the answer, set it per transaction or per role, and measure the time at both settings on your own platform.</li>
+  </ol>
+  <p>For the full method, from ranking to validation, see <a href="/insights/how-to-profile-slow-postgresql-queries">how to profile slow PostgreSQL queries</a>.</p>
+</ArticleLayout>

@@ -1,0 +1,98 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+---
+<ArticleLayout title="PostgreSQL Autovacuum Not Removing Dead Tuples: Find Why" description="Tested on PostgreSQL 18: autovacuum ran 4 times and removed no dead tuples while one session sat idle in transaction. Find the blocker and reclaim the space." eyebrow="PostgreSQL performance · Lab-tested" published="2026-10-22" updated="2026-10-22" ctaTitle="Tables growing and autovacuum not keeping up?" ctaDescription="A scoped investigation ties bloat to the sessions, replicas and jobs that cause it, and ranks the fixes with their locking risk, rollback and the numbers that should move.">
+  <p>When a table keeps growing, queries slow down and <code>n_dead_tup</code> (the count of dead tuples, old row versions left by updates and deletes) stays high, the first reaction is to tune autovacuum: more workers, a lower scale factor, a higher cost limit. Often autovacuum is already running. It is just not allowed to remove anything, because some transaction might still need the old row versions. No setting fixes that. You have to find the transaction.</p>
+  <p>The lab for this page used PostgreSQL 18.6 in Docker with generated data. The <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/autovacuum-bloat">script and full output</a> are public.</p>
+
+  <h2>What the lab showed</h2>
+  <p>A 200,000-row <code>accounts</code> table, 27 MB. One session, named <code>report-export</code>, opened a <code>REPEATABLE READ</code> transaction, ran one <code>SELECT</code> and then did nothing. Every row was then updated three times. Twenty seconds later:</p>
+<pre><code>{` relname  | n_live_tup | n_dead_tup | autovacuum_count | autovacuumed | table_size
+----------+------------+------------+------------------+--------------+------------
+ accounts |     200000 |     600000 |                4 | t            | 108 MB`}</code></pre>
+  <p>Autovacuum had run four times. The table had quadrupled. The autovacuum log (with <code>log_autovacuum_min_duration = 0</code>) says why:</p>
+<pre><code>{`LOG:  automatic vacuum of table "postgres.public.accounts": index scans: 0
+	pages: 0 removed, 13794 remain, 13794 scanned (100.00% of total), 0 eagerly scanned
+	tuples: 0 removed, 800000 remain, 600000 are dead but not yet removable
+	removable cutoff: 756, which was 15 XIDs old when operation ended`}</code></pre>
+  <p><strong>"dead but not yet removable"</strong> is the line to look for. Vacuum scanned every page, did the I/O, and could remove nothing, because the oldest snapshot still open in the cluster (the <em>xmin horizon</em>) was older than all 600,000 dead versions. A manual <code>VACUUM</code> printed the same line. In production this is worse than in the lab: autovacuum keeps returning to the same table, spending I/O each time, while the table and its indexes keep growing.</p>
+
+  <h2>Find what holds the horizon</h2>
+  <p>Four things can hold the xmin horizon back. Check all four, oldest first:</p>
+<pre><code>{`-- 1. Open transactions and sessions idle in transaction
+SELECT pid, usename, application_name, state, age(backend_xmin) AS xmin_age,
+       now() - xact_start AS xact_open_for, left(query, 60) AS last_query
+FROM pg_stat_activity
+WHERE backend_xmin IS NOT NULL AND pid <> pg_backend_pid()
+ORDER BY age(backend_xmin) DESC;
+
+-- 2. Forgotten prepared transactions
+SELECT gid, owner, prepared, age(transaction) AS xmin_age FROM pg_prepared_xacts;
+
+-- 3. Replication slots (physical slots with hot_standby_feedback, logical slots for CDC)
+SELECT slot_name, slot_type, active, age(xmin) AS xmin_age, age(catalog_xmin) AS catalog_xmin_age
+FROM pg_replication_slots;
+
+-- 4. Standbys sending hot_standby_feedback
+SELECT application_name, client_addr, age(backend_xmin) AS xmin_age FROM pg_stat_replication;`}</code></pre>
+  <p>In the lab, the first query found it straight away:</p>
+<pre><code>{` pid | application_name |        state        | xmin_age |  xact_open_for  |           last_query
+-----+------------------+---------------------+----------+-----------------+--------------------------------
+  71 | report-export    | idle in transaction |       15 | 00:00:24.102925 | SELECT count(*) FROM accounts;`}</code></pre>
+  <p>The <code>xmin_age</code> is small in a quiet lab. On a busy system it is the number of transactions since that snapshot was taken, and <code>xact_open_for</code> is often hours. <code>last_query</code> is the last statement the session ran, not what it is doing now; for an idle session that is usually enough to find the owning code path. The usual culprits:</p>
+  <ul>
+    <li><strong>Idle in transaction:</strong> an application that opens a transaction, then waits on an HTTP call, a queue or a user, or an ORM session that is never closed. Also a person with a SQL client in manual-commit mode.</li>
+    <li><strong>Long reports and exports</strong> on the primary, especially with <code>REPEATABLE READ</code> for a consistent export.</li>
+    <li><strong>Replicas with <code>hot_standby_feedback = on</code>:</strong> a long query on the replica holds back vacuum on the primary. It appears in <code>pg_stat_replication.backend_xmin</code>, not in the primary's <code>pg_stat_activity</code>.</li>
+    <li><strong>Abandoned slots:</strong> a logical slot for a CDC tool that was turned off holds <code>catalog_xmin</code>, which blocks cleanup of the system catalogs.</li>
+  </ul>
+
+  <ArticleOffer offer="investigation" title="Bloat keeps coming back and nobody owns the session?" text="An investigation matches the xmin horizon to the application, replica or job that holds it, measures what the bloat costs in I/O and latency, and ranks the fixes with their locking risk." />
+
+  <h2>End it, then let vacuum work</h2>
+  <p>Confirm with the owner first; terminating a session rolls back its open transaction. Then:</p>
+<pre><code>{`SELECT pg_terminate_backend(71);`}</code></pre>
+  <p>On RDS and Aurora, <code>rds_superuser</code> members can terminate other users' sessions. The next autovacuum run in the lab removed everything:</p>
+<pre><code>{`	tuples: 600000 removed, 200000 remain, 0 are dead but not yet removable
+	removable cutoff: 771, which was 0 XIDs old when operation ended`}</code></pre>
+  <p>To stop it happening again, set a timeout for the roles that should never sit idle in a transaction, rather than for the whole cluster:</p>
+<pre><code>{`ALTER ROLE app_user SET idle_in_transaction_session_timeout = '5min';`}</code></pre>
+  <p>Choose the value from the application's real transaction lengths, and tell the team first: when it fires, the session is terminated and the application sees a closed connection.</p>
+
+  <h2>Why the table is still 108 MB</h2>
+  <p>After the dead rows were removed, the table was the same size:</p>
+<pre><code>{` n_live_tup | n_dead_tup | table_size
+------------+------------+------------
+     200000 |          0 | 108 MB
+
+ tuple_count | dead_tuple_count | free_percent
+-------------+------------------+--------------
+      200000 |                0 |         74.9`}</code></pre>
+  <p>That is normal. <code>VACUUM</code> marks the space as free for new rows in the same table; it returns space to the operating system only when pages at the end of the table become completely empty. Three more full-table updates, each followed by a vacuum, stayed at 108 MB: the free space was reused. So a bloated table is not always a problem. If the workload refills it, the free space is working space.</p>
+  <p>It becomes a problem when the bloat is permanent and large: sequential scans read 4 times the pages, fewer useful rows fit in cache, and backups and replicas carry the empty space. Then the options are:</p>
+  <ul>
+    <li><strong><code>VACUUM FULL</code></strong> rewrote the lab table back to 27 MB in 0.9 seconds. It holds an <code>ACCESS EXCLUSIVE</code> lock for the whole rewrite, blocking reads as well as writes, and needs disk space for a full copy. On a large production table that is an outage.</li>
+    <li><strong><code>pg_repack</code></strong> rebuilds the table online and takes the exclusive lock only briefly at the start and end. It is available on RDS and Aurora. It still needs space for a full copy and generates WAL for the whole table, which replicas and CDC consumers have to process.</li>
+  </ul>
+  <p>Measure before choosing. <code>pgstattuple</code> gives exact free space but reads the whole table; <code>pgstattuple_approx</code> is cheaper on large tables.</p>
+
+  <h2>When autovacuum is just too slow</h2>
+  <p>If nothing is holding the horizon and <code>n_dead_tup</code> still climbs, autovacuum is not starting often enough or not finishing fast enough. By default a table is vacuumed after 50 rows plus 20% of its rows change:</p>
+<pre><code>{` relname  | reltuples | dead_rows_to_trigger
+----------+-----------+----------------------
+ accounts |    200000 |                40050`}</code></pre>
+  <p>For a 500-million-row table that is 100 million dead rows before autovacuum starts. PostgreSQL 18 caps the trigger at <code>autovacuum_vacuum_max_threshold</code>, 100 million by default; earlier versions have no cap. For large, busy tables set the threshold per table instead of changing it everywhere:</p>
+<pre><code>{`ALTER TABLE accounts SET (autovacuum_vacuum_scale_factor = 0.01, autovacuum_vacuum_threshold = 1000);`}</code></pre>
+  <p>If autovacuum starts on time but runs for hours, look at cost throttling (<code>autovacuum_vacuum_cost_limit</code> and <code>autovacuum_vacuum_cost_delay</code>) and at <code>autovacuum_work_mem</code> for tables with many indexes. Check what is running now in <code>pg_stat_progress_vacuum</code>.</p>
+
+  <h2>Checklist</h2>
+  <ol>
+    <li>Turn on autovacuum logging: <code>log_autovacuum_min_duration</code>, in a custom parameter group on RDS and Aurora.</li>
+    <li>Look for "dead but not yet removable" in the log or in <code>VACUUM (VERBOSE)</code>.</li>
+    <li>If present, run the four horizon queries and find the owner of the oldest entry.</li>
+    <li>If absent, compare the trigger point with the table's size and the time each autovacuum takes.</li>
+    <li>Rewrite a table only if the bloat stays and you have measured what it costs.</li>
+  </ol>
+  <p>The same blockers also stop vacuum from freezing old rows, which is how a database gets close to <a href="/insights/postgresql-transaction-id-wraparound">transaction ID wraparound</a>. To see which statements suffer from bloat, rank them with <a href="/insights/postgresql-slow-queries-pg-stat-statements">pg_stat_statements</a>.</p>
+</ArticleLayout>

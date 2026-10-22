@@ -1,0 +1,216 @@
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+
+==== Version and memory settings ====
+                                                         version                                                          
+--------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+              name               | setting | unit 
+---------------------------------+---------+------
+ hash_mem_multiplier             | 2       | 
+ log_temp_files                  | 0       | kB
+ max_parallel_workers_per_gather | 0       | 
+ work_mem                        | 4096    | kB
+(4 rows)
+
+
+==== Build orders (2,000,000 rows) and customers (500,000 rows) ====
+  relname  | pg_size_pretty 
+-----------+----------------
+ customers | 29 MB
+ orders    | 115 MB
+(2 rows)
+
+ reset 
+-------
+ t
+(1 row)
+
+ reset 
+-------
+ t
+(1 row)
+
+
+==== Default work_mem (4MB) ====
+--- Q1 sort
+                                   QUERY PLAN                                    
+---------------------------------------------------------------------------------
+ Sort (actual rows=2000000.00 loops=1)
+   Sort Key: amount DESC, created_at
+   Sort Method: external merge  Disk: 82280kB
+   Buffers: shared hit=11965 read=2747 written=90, temp read=20560 written=20595
+   ->  Seq Scan on orders (actual rows=2000000.00 loops=1)
+         Buffers: shared hit=11959 read=2747 written=90
+ Planning:
+   Buffers: shared hit=90 read=8
+ Planning Time: 0.167 ms
+ Execution Time: 756.715 ms
+(10 rows)
+
+--- Q2 hash aggregate
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ HashAggregate (actual rows=500000.00 loops=1)
+   Group Key: customer_id
+   Batches: 33  Memory Usage: 8209kB  Disk Usage: 63296kB
+   Buffers: shared hit=12053 read=2653, temp read=7302 written=14921
+   ->  Seq Scan on orders (actual rows=2000000.00 loops=1)
+         Buffers: shared hit=12053 read=2653
+ Planning:
+   Buffers: shared hit=22 read=2
+ Planning Time: 0.071 ms
+ Execution Time: 399.256 ms
+(10 rows)
+
+--- Q3 hash join
+                                   QUERY PLAN                                   
+--------------------------------------------------------------------------------
+ Hash Join (actual rows=1979980.00 loops=1)
+   Hash Cond: (o.customer_id = c.id)
+   Buffers: shared hit=9920 read=8463 written=3298, temp read=7454 written=7454
+   ->  Seq Scan on orders o (actual rows=1979980.00 loops=1)
+         Filter: (amount > '10'::numeric)
+         Rows Removed by Filter: 20020
+         Buffers: shared hit=9920 read=4786 written=91
+   ->  Hash (actual rows=500000.00 loops=1)
+         Buckets: 262144  Batches: 4  Memory Usage: 7904kB
+         Buffers: shared read=3677 written=3207, temp written=1647
+         ->  Seq Scan on customers c (actual rows=500000.00 loops=1)
+               Buffers: shared read=3677 written=3207
+ Planning:
+   Buffers: shared hit=49 read=5
+ Planning Time: 0.157 ms
+ Execution Time: 314.539 ms
+(16 rows)
+
+
+==== Server log with log_temp_files = 0 ====
+2026-10-22 03:54:52.585 UTC [63] LOG:  temporary file: path "base/pgsql_tmp/pgsql_tmp63.0", size 84254720
+2026-10-22 03:54:52.585 UTC [63] STATEMENT:  EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF)
+2026-10-22 03:54:52.985 UTC [63] LOG:  temporary file: path "base/pgsql_tmp/pgsql_tmp63.1", size 64815104
+2026-10-22 03:54:52.985 UTC [63] STATEMENT:  EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF)
+2026-10-22 03:54:53.198 UTC [63] LOG:  temporary file: path "base/pgsql_tmp/pgsql_tmp63.3", size 4491288
+2026-10-22 03:54:53.198 UTC [63] STATEMENT:  EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF)
+2026-10-22 03:54:53.230 UTC [63] LOG:  temporary file: path "base/pgsql_tmp/pgsql_tmp63.7", size 15814912
+2026-10-22 03:54:53.230 UTC [63] STATEMENT:  EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF)
+...
+temp file log lines: 8
+
+==== pg_stat_statements and pg_stat_database ====
+                            query                             | calls | temp_blks_written | temp_written | mean_ms 
+--------------------------------------------------------------+-------+-------------------+--------------+---------
+ EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF) SELECT id, customer |     1 |             20595 | 161 MB       |     757
+ EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF) SELECT customer_id, |     1 |             14921 | 117 MB       |     399
+ EXPLAIN (ANALYZE, COSTS OFF, TIMING OFF) SELECT c.region, o. |     1 |              7454 | 58 MB        |     315
+(3 rows)
+
+ datname  | temp_files | temp_bytes 
+----------+------------+------------
+ postgres |          8 | 200 MB
+(1 row)
+
+
+==== Same queries with SET LOCAL work_mem = '256MB' ====
+--- Q1 sort
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ Sort (actual rows=2000000.00 loops=1)
+   Sort Key: amount DESC, created_at
+   Sort Method: quicksort  Memory: 142902kB
+   Buffers: shared hit=10020 read=4692
+   ->  Seq Scan on orders (actual rows=2000000.00 loops=1)
+         Buffers: shared hit=10014 read=4692
+ Planning:
+   Buffers: shared hit=98
+ Planning Time: 0.090 ms
+ Execution Time: 656.527 ms
+(10 rows)
+
+--- Q2 hash aggregate
+                        QUERY PLAN                         
+-----------------------------------------------------------
+ HashAggregate (actual rows=500000.00 loops=1)
+   Group Key: customer_id
+   Batches: 1  Memory Usage: 204817kB
+   Buffers: shared hit=10108 read=4598
+   ->  Seq Scan on orders (actual rows=2000000.00 loops=1)
+         Buffers: shared hit=10108 read=4598
+ Planning:
+   Buffers: shared hit=23 read=1
+ Planning Time: 0.151 ms
+ Execution Time: 447.007 ms
+(10 rows)
+
+--- Q3 hash join
+                             QUERY PLAN                              
+---------------------------------------------------------------------
+ Hash Join (actual rows=1979980.00 loops=1)
+   Hash Cond: (o.customer_id = c.id)
+   Buffers: shared hit=9952 read=8431 written=159
+   ->  Seq Scan on orders o (actual rows=1979980.00 loops=1)
+         Filter: (amount > '10'::numeric)
+         Rows Removed by Filter: 20020
+         Buffers: shared hit=9952 read=4754 written=91
+   ->  Hash (actual rows=500000.00 loops=1)
+         Buckets: 524288  Batches: 1  Memory Usage: 27534kB
+         Buffers: shared read=3677 written=68
+         ->  Seq Scan on customers c (actual rows=500000.00 loops=1)
+               Buffers: shared read=3677 written=68
+ Planning:
+   Buffers: shared hit=50 read=4
+ Planning Time: 0.163 ms
+ Execution Time: 342.104 ms
+(16 rows)
+
+
+==== Smallest work_mem that keeps the hash aggregate in memory ====
+--- work_mem = 16MB
+   Batches: 9  Memory Usage: 32849kB  Disk Usage: 56032kB
+ Execution Time: 417.196 ms
+--- work_mem = 32MB
+   Batches: 5  Memory Usage: 65585kB  Disk Usage: 43856kB
+ Execution Time: 452.727 ms
+--- work_mem = 64MB
+   Batches: 5  Memory Usage: 131121kB  Disk Usage: 23576kB
+ Execution Time: 387.545 ms
+
+==== Per-role setting instead of a global change ====
+  rolname  |    rolconfig    
+-----------+-----------------
+ reporting | {work_mem=64MB}
+(1 row)
+
+ work_mem 
+----------
+ 64MB
+(1 row)
+
+
+==== Index that removes the sort instead of feeding it more memory ====
+                                       QUERY PLAN                                       
+----------------------------------------------------------------------------------------
+ Limit (actual rows=50.00 loops=1)
+   Buffers: shared hit=33 read=20
+   ->  Index Scan using orders_amount_created_idx on orders (actual rows=50.00 loops=1)
+         Index Searches: 1
+         Buffers: shared hit=33 read=20
+ Planning:
+   Buffers: shared hit=87 read=1
+ Planning Time: 0.222 ms
+ Execution Time: 0.371 ms
+(9 rows)
+
+
+==== Repeat timing: 5 runs each at 4MB and 256MB (Execution Time, ms) ====
+--- SELECT id, customer_id, amount FROM orders ORDER BY amount DESC, created_at
+work_mem 4MB: 434 310 328 370 316
+work_mem 256MB: 310 306 307 308 325
+--- SELECT customer_id, count(*), sum(amount) FROM orders GROUP BY customer_id
+work_mem 4MB: 575 475 524 463 413
+work_mem 256MB: 801 410 619 543 386
+--- SELECT c.region, o.amount FROM orders o JOIN customers c ON c.id = o.customer_id WHERE o.amount > 10
+work_mem 4MB: 372 387 359 374 353
+work_mem 256MB: 351 342 340 339 345

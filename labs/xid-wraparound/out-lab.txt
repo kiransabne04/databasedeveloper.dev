@@ -1,0 +1,114 @@
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+
+==== Version and freeze settings ====
+                                                         version                                                          
+--------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+                name                 |  setting   
+-------------------------------------+------------
+ autovacuum_freeze_max_age           | 200000000
+ autovacuum_multixact_freeze_max_age | 400000000
+ vacuum_failsafe_age                 | 1600000000
+ vacuum_freeze_min_age               | 50000000
+ vacuum_freeze_table_age             | 150000000
+(5 rows)
+
+
+==== Data, and a prepared transaction that nobody resolves ====
+     gid      | transaction |           prepared            
+--------------+-------------+-------------------------------
+ xa-ledger-42 |         756 | 2026-10-22 03:58:05.207363+00
+(1 row)
+
+  datname  | datfrozenxid | age 
+-----------+--------------+-----
+ postgres  |          744 |  13
+ template0 |          744 |  13
+ template1 |          744 |  13
+(3 rows)
+
+
+==== Lab only: pg_resetwal moves the next XID to 2,120,000,000 ====
+Write-ahead log reset
+
+==== Ages now ====
+  datname  |  xid_age   | pct_to_wraparound 
+-----------+------------+-------------------
+ postgres  | 2119999256 |              98.7
+ template1 | 2119999256 |              98.7
+ template0 | 2119999256 |              98.7
+(3 rows)
+
+
+==== Any write now warns ====
+WARNING:  database "template1" must be vacuumed within 27484391 transactions
+HINT:  To avoid transaction ID assignment failures, execute a database-wide VACUUM in that database.
+You might also need to commit or roll back old prepared transactions, or drop stale replication slots.
+
+==== Wait for anti-wraparound autovacuum, then check again ====
+2026-10-22 03:58:14.589 UTC [92] WARNING:  bypassing nonessential maintenance of table "postgres.public.events" as a failsafe after 0 index scans
+2026-10-22 03:58:14.616 UTC [92] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.public.events": index scans: 0
+	removable cutoff: 756, which was 2119999245 XIDs old when operation ended
+	new relfrozenxid: 756, which is 4 XIDs ahead of previous value
+	index scan bypassed by failsafe: 0 pages from table (0.00% of total) have 0 dead item identifiers
+2026-10-22 03:58:14.650 UTC [92] WARNING:  bypassing nonessential maintenance of table "postgres.public.ledger" as a failsafe after 0 index scans
+2026-10-22 03:58:14.650 UTC [92] LOG:  automatic aggressive vacuum to prevent wraparound of table "postgres.public.ledger": index scans: 0
+	removable cutoff: 756, which was 2119999246 XIDs old when operation ended
+  datname  |  xid_age   
+-----------+------------
+ postgres  | 2119999257
+ template1 | 2119999257
+ template0 | 2119999257
+(3 rows)
+
+ relname |  xid_age   
+---------+------------
+ events  | 2119999257
+ ledger  | 2119999257
+(2 rows)
+
+
+==== Manual VACUUM (FREEZE, VERBOSE) does not help either ====
+WARNING:  cutoff for removing and freezing tuples is far in the past
+HINT:  Close open transactions soon to avoid wraparound problems.
+WARNING:  bypassing nonessential maintenance of table "postgres.public.events" as a failsafe after 0 index scans
+HINT:  Consider increasing configuration parameter "maintenance_work_mem" or "autovacuum_work_mem".
+removable cutoff: 756, which was 2119999257 XIDs old when operation ended
+index scan bypassed by failsafe: 0 pages from table (0.00% of total) have 0 dead item identifiers
+
+==== Find what holds the horizon ====
+     kind      |     name     |  xid_age   
+---------------+--------------+------------
+ prepared xact | xa-ledger-42 | 2119999257
+(1 row)
+
+
+==== Lab only: let it get to the stop limit (next XID 2,145,000,000) ====
+Write-ahead log reset
+ERROR:  database is not accepting commands that assign new transaction IDs to avoid wraparound data loss in database "postgres"
+HINT:  Execute a database-wide VACUUM in that database.
+You might also need to commit or roll back old prepared transactions, or drop stale replication slots.
+ count  
+--------
+ 100001
+(1 row)
+
+
+==== Recovery in normal mode: resolve the prepared transaction, then VACUUM ====
+removable cutoff: 2145000000, which was 0 XIDs old when operation ended
+new relfrozenxid: 2120000000, which is 2119999244 XIDs ahead of previous value
+removable cutoff: 2145000000, which was 0 XIDs old when operation ended
+new relfrozenxid: 2145000000, which is 2144999244 XIDs ahead of previous value
+Time: 0.406 ms
+vacuumdb --all exit code: 0, warnings: 128
+  datname  | xid_age  
+-----------+----------
+ postgres  | 25000000
+ template1 | 24999997
+ template0 | 24999987
+(3 rows)
+
+insert ok
