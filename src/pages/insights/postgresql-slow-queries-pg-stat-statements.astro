@@ -1,6 +1,7 @@
 ---
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
 import ArticleOffer from '../../components/ArticleOffer.astro';
+import { site } from '../../config/site';
 ---
 <ArticleLayout title="Find Slow PostgreSQL Queries with pg_stat_statements" description="Rank PostgreSQL statements by total time, not the slowest run. Tested pg_stat_statements queries, snapshot diffs, buffer and temp-file signals, RDS setup." eyebrow="PostgreSQL performance · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Not sure which queries are costing you?" ctaDescription="Send pg_stat_statements output from a normal period and from the slow window. A scoped investigation ranks the statements, explains the cause and gives a validated change plan.">
   <p>When a PostgreSQL database feels slow, the first instinct is to look for the slowest query. That is usually the wrong list. The statement that hurts the system most is often a fast query that runs thousands of times, not a slow report that runs twice a day. <code>pg_stat_statements</code> answers the right question: which normalized statements consume the most database time, and why.</p>
@@ -82,7 +83,7 @@ FROM orders
 WHERE customer_id = 4242
 ORDER BY created_at DESC
 LIMIT 20;`}</code></pre>
-  <p>In the lab this showed a parallel sequential scan in which each of three processes discarded about 666,662 rows, to find 14 matching rows in total, reading 15,596 buffers in 23.4 ms. <code>EXPLAIN ANALYZE</code> executes the statement, so never run it on a write without wrapping it in a transaction you roll back.</p>
+  <p>In the lab this showed a parallel sequential scan in which each of three processes discarded about 666,662 rows, to find 14 matching rows in total, reading 15,596 buffers in 23.4 ms. <code>EXPLAIN ANALYZE</code> executes the statement, so never run it on a write without wrapping it in a transaction you roll back. For larger plans, paste the output into <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a>, which runs in the browser and flags estimate errors, spills and expensive scans.</p>
 
   <h2>Make the change and prove it</h2>
   <p>The fix for this statement was a composite index, built without blocking writes:</p>

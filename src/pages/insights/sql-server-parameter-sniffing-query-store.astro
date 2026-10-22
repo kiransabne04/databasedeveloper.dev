@@ -1,6 +1,7 @@
 ---
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
 import ArticleOffer from '../../components/ArticleOffer.astro';
+import { site } from '../../config/site';
 ---
 <ArticleLayout offer="sqlserver" title="SQL Server Parameter Sniffing: Diagnose and Fix It" description="SQL Server 2022 lab: one cached plan read 9 pages for one customer and 900,524 for another. Find it in Query Store; compare PSP, RECOMPILE and indexes." eyebrow="SQL Server · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Have a SQL Server query that is fast one minute and slow the next?" ctaDescription="Share the Query Store evidence for the affected statement. A scoped review identifies the plan variance, its cause and the lowest-risk fix.">
   <p>A stored procedure runs in milliseconds most of the day and then takes seconds for no visible reason. Restarting the service or clearing the plan cache "fixes" it until it comes back. That pattern is usually parameter sniffing: SQL Server compiles a plan for the first parameter value it sees and reuses it for every later value, including ones that need a completely different plan.</p>
@@ -48,7 +49,7 @@ CROSS APPLY sys.dm_exec_query_plan(ps.plan_handle) AS qp
 CROSS APPLY qp.query_plan.nodes('declare namespace sp="http://schemas.microsoft.com/sqlserver/2004/07/showplan";
   //sp:ParameterList/sp:ColumnReference') AS x(p)
 WHERE ps.object_id = OBJECT_ID('dbo.CustomerSummary');`}</code></pre>
-  <p>Then compare the compiled value's row count with the values that run slowly. Check the column's skew directly: <code>SELECT TOP (20) CustomerId, COUNT(*) FROM dbo.Orders GROUP BY CustomerId ORDER BY COUNT(*) DESC;</code></p>
+  <p>Then compare the compiled value's row count with the values that run slowly. Check the column's skew directly: <code>SELECT TOP (20) CustomerId, COUNT(*) FROM dbo.Orders GROUP BY CustomerId ORDER BY COUNT(*) DESC;</code> To read the two actual plans node by node, save each as <code>.sqlplan</code> and open it in <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a>, which flags where estimated and actual rows diverge.</p>
 
   <h2>Fixes, measured</h2>
   <div class="table-wrap"><table>

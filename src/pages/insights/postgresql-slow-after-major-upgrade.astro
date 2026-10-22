@@ -1,6 +1,7 @@
 ---
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
 import ArticleOffer from '../../components/ArticleOffer.astro';
+import { site } from '../../config/site';
 ---
 <ArticleLayout offer="upgrade" title="PostgreSQL Slow After an Upgrade? Check Statistics First" description="A tested PG14 to PG17 pg_upgrade lost optimizer statistics and a join went from 222 ms to 904 ms. Detect it, fix it and plan upgrades on RDS and Aurora." eyebrow="PostgreSQL upgrades · Lab-tested" published="2026-10-14" updated="2026-10-14" ctaTitle="Planning a PostgreSQL major upgrade?" ctaDescription="An upgrade-readiness review captures a performance baseline, checks extensions and risky queries, and gives you a validation plan for the hours after the cutover.">
   <p>A major PostgreSQL upgrade can finish cleanly and still leave the application slower the next morning. The most common cause is not the new version's planner. It is that the upgraded cluster starts with no optimizer statistics, so the planner guesses row counts until <code>ANALYZE</code> runs. This guide reproduces that on a real <code>pg_upgrade</code> from PostgreSQL 14 to 17, shows how to detect it, and lists the checks to run before and after an upgrade.</p>
@@ -89,7 +90,7 @@ ALTER EXTENSION pg_stat_statements UPDATE;`}</code></pre>
   <h3>Validation</h3>
   <ul>
     <li>Compare the top statements by total time and the baseline plans with the pre-upgrade capture.</li>
-    <li>Watch for plans that changed shape, not just time: a nested loop where there was a hash join is the signature of a missing or stale estimate.</li>
+    <li>Watch for plans that changed shape, not just time: a nested loop where there was a hash join is the signature of a missing or stale estimate. <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a> flags estimate errors per node if you paste in the before and after plans.</li>
     <li>Keep the rollback path documented: on RDS the pre-upgrade snapshot; self-managed with <code>--link</code>, the old cluster cannot be started once the new one has run, so take a backup first.</li>
   </ul>
 

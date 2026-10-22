@@ -79,7 +79,7 @@ SELECT subname, subenabled FROM pg_subscription;`}</code></pre></li>
       <h2 id="baseline">4. Capture a baseline</h2>
       <ul class="checklist">
         <li>Save the top statements by total execution time from <code>pg_stat_statements</code> over a normal busy period. The new cluster starts with empty cumulative statistics, so this is the only comparison point. <a href="/insights/postgresql-slow-queries-pg-stat-statements">How to rank them</a>.</li>
-        <li>Save <code>EXPLAIN (ANALYZE, BUFFERS)</code> for the 10–20 queries that matter most to users, with real parameter values.</li>
+        <li>Save <code>EXPLAIN (ANALYZE, BUFFERS)</code> for the 10–20 queries that matter most to users, with real parameter values. <code>FORMAT JSON</code> keeps them machine-readable; <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a> opens either format and flags estimate errors and spills.</li>
         <li>Record p95 latency, CPU, connections and error rate for the same window.</li>
       </ul>
 
