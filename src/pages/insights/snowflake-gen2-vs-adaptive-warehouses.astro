@@ -1,0 +1,100 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+
+const faq = [
+  { q: "What is a Snowflake Gen2 warehouse?", a: "Snowflake describes it as the next generation of the standard virtual warehouse. You still choose a size and multi-cluster settings, and it consumes credits at its own rate listed in Snowflake's Service Consumption Table. New warehouses default to Gen2 where it is available." },
+  { q: "What is a Snowflake Adaptive warehouse?", a: "A warehouse type that chooses resources for each query, with no size, multi-cluster, Query Acceleration or suspend settings to manage, and query-based billing. It requires Enterprise Edition or higher and is available in selected Regions." },
+  { q: "Is Gen2 cheaper than Gen1?", a: "Only if your queries finish enough faster to offset the different credit rate. Snowflake's documentation advises testing on your own workload. Note that new Gen2 warehouses also enable Query Acceleration Service by default." },
+  { q: "Is an Adaptive warehouse cheaper than a standard warehouse?", a: "It tends to suit bursty, uneven workloads and warehouses with many idle credits, because idle time is not billed. Steady sequential batch with little idle time and little queuing is the pattern most likely to cost more." },
+  { q: "How do I convert a warehouse to Gen2 or Adaptive?", a: "ALTER WAREHOUSE name SET RESOURCE_CONSTRAINT = STANDARD_GEN_2 for Gen2, or ALTER WAREHOUSE name SET WAREHOUSE_TYPE = 'ADAPTIVE' for Adaptive. Both can be reversed. Convert while the warehouse is suspended, because converting a running one bills old and new compute until running queries finish." },
+  { q: "Can I cap spend on an Adaptive warehouse?", a: "Snowflake documents no credit cap parameter on the warehouse itself. Use budgets and resource monitors. MAX_QUERY_PERFORMANCE_LEVEL limits the compute for a single statement, and QUERY_THROUGHPUT_MULTIPLIER trades queuing against how much can run at once." },
+  { q: "How do I see per-query cost on an Adaptive warehouse?", a: "Use the QUERY_METERING_HISTORY view for per-query credits and WAREHOUSE_METERING_HISTORY for the warehouse total. Snowflake notes QUERY_METERING_HISTORY can lag by up to an hour." },
+  { q: "What should I fix before changing warehouse type?", a: "Queries that spill to remote storage and queries that scan most partitions of large tables. Neither is fixed by a different warehouse type, and both will distort any before-and-after comparison." }
+];
+---
+<ArticleLayout title="Snowflake Gen2 vs Adaptive Warehouses: Decide From Your Query History" description="Snowflake now offers Gen1, Gen2 and Adaptive warehouses, each billed differently. Which one costs less depends on spills, queuing and idle time in your own workload. The ACCOUNT_USAGE queries to check before converting." eyebrow="Snowflake · Cost and performance" offer="snowflake" published="2026-10-27" updated="2026-10-27" faq={faq} ctaTitle="Snowflake bill rising and not sure whether a warehouse change will help?" ctaDescription="A review reads your query and metering history, ranks the warehouses and statements behind the credits, and tests one change at a time with a before-and-after measure.">
+  <p><strong>Short answer:</strong> neither is cheaper by default. Gen2 standard warehouses keep the same sizing model on Snowflake's next-generation compute at a different credit rate, so they save money only when queries finish enough faster to offset it. Adaptive warehouses drop sizing, multi-cluster and suspend settings and bill per query, so they suit bursty, uneven workloads better than a steady batch. Your <code>ACCOUNT_USAGE</code> history can tell you which pattern you have before you convert anything.</p>
+  <p>Facts here are from Snowflake's documentation for <a href="https://docs.snowflake.com/en/user-guide/warehouses-gen2">Gen2 standard warehouses</a> and <a href="https://docs.snowflake.com/en/user-guide/warehouses-adaptive">Adaptive warehouses</a>, checked 27 October 2026. This is a method, not a lab: I have no benchmark of your workload, and vendor and third-party benchmarks of either option use workloads that are not yours.</p>
+
+  <h2>What each option changes</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th></th><th>Gen1 / Gen2 standard</th><th>Adaptive</th></tr></thead>
+    <tbody>
+      <tr><td>You choose</td><td>Size, multi-cluster min/max, auto-suspend</td><td><code>MAX_QUERY_PERFORMANCE_LEVEL</code> (default XLARGE) and <code>QUERY_THROUGHPUT_MULTIPLIER</code> (default 2)</td></tr>
+      <tr><td>Billing</td><td>Per second while running (60-second minimum on each resume), at the size and generation's credit rate</td><td>Per query, by the compute each query used</td></tr>
+      <tr><td>Idle time</td><td>Charged until auto-suspend</td><td>Not charged; no suspend policy to set</td></tr>
+      <tr><td>Concurrency</td><td>Queues, or adds clusters if multi-cluster</td><td>Admission control against a throughput budget; queues if the multiplier is too low</td></tr>
+      <tr><td>Requirements</td><td>Gen2 not available in some Regions or at X5LARGE/X6LARGE</td><td>Enterprise Edition or higher; selected Regions</td></tr>
+    </tbody>
+  </table></div>
+  <p>New warehouses default to Gen2 where it is available. Gen2 consumes credits at its own rate, listed in Snowflake's Service Consumption Table. New Gen2 warehouses also have Query Acceleration Service on by default with a scale factor of 2, which can add credits on its own.</p>
+
+  <h2>Four checks before you convert</h2>
+  <p>Run these against <code>SNOWFLAKE.ACCOUNT_USAGE</code> for the last 30 days. Views can lag by up to a few hours.</p>
+  <h3>1. Where the credits go</h3>
+<pre><code>{`SELECT warehouse_name,
+       SUM(credits_used_compute) AS compute_credits
+FROM snowflake.account_usage.warehouse_metering_history
+WHERE start_time >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+GROUP BY 1 ORDER BY 2 DESC;`}</code></pre>
+  <p>Start with the two or three warehouses that make up most of the spend. A warehouse that costs little is not worth a migration.</p>
+  <h3>2. Idle time you pay for</h3>
+<pre><code>{`WITH metered AS (
+  SELECT warehouse_name, SUM(credits_used_compute) AS metered
+  FROM snowflake.account_usage.warehouse_metering_history
+  WHERE start_time >= DATEADD(day, -30, CURRENT_TIMESTAMP()) GROUP BY 1
+), attributed AS (
+  SELECT warehouse_name, SUM(credits_attributed_compute) AS attributed
+  FROM snowflake.account_usage.query_attribution_history
+  WHERE start_time >= DATEADD(day, -30, CURRENT_TIMESTAMP()) GROUP BY 1
+)
+SELECT m.warehouse_name, m.metered, a.attributed,
+       ROUND(100 * (1 - a.attributed / NULLIF(m.metered, 0)), 1) AS pct_not_attributed
+FROM metered m LEFT JOIN attributed a USING (warehouse_name)
+ORDER BY m.metered DESC;`}</code></pre>
+  <p>Credits not attributed to any query are mostly a warehouse running with nothing to do: waiting for auto-suspend, or kept warm between sparse queries. A high share is the clearest signal that per-query billing could help. Before switching, try a shorter <code>AUTO_SUSPEND</code>, which is free to test and easy to undo.</p>
+  <h3>3. Spills and pruning</h3>
+<pre><code>{`SELECT warehouse_name, warehouse_size,
+       COUNT(*) AS queries,
+       SUM(IFF(bytes_spilled_to_remote_storage > 0, 1, 0)) AS remote_spills,
+       SUM(IFF(bytes_spilled_to_local_storage > 0, 1, 0)) AS local_spills,
+       ROUND(AVG(partitions_scanned / NULLIF(partitions_total, 0)), 2) AS avg_scan_ratio,
+       ROUND(MEDIAN(execution_time) / 1000, 1) AS median_exec_s
+FROM snowflake.account_usage.query_history
+WHERE start_time >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+  AND warehouse_name IS NOT NULL
+GROUP BY 1, 2 ORDER BY queries DESC;`}</code></pre>
+  <p>Remote spills mean a query ran out of memory and local disk; it will be slow on any warehouse type until the query or the size changes. A scan ratio near 1 on large tables means pruning is not working, and no compute option fixes reading every partition. Fix those queries first, or the comparison you run next will mostly measure them.</p>
+  <h3>4. Queuing</h3>
+<pre><code>{`SELECT warehouse_name,
+       ROUND(SUM(queued_overload_time) / 1000 / 60, 1) AS queued_minutes,
+       ROUND(SUM(execution_time) / 1000 / 60, 1) AS exec_minutes
+FROM snowflake.account_usage.query_history
+WHERE start_time >= DATEADD(day, -30, CURRENT_TIMESTAMP())
+GROUP BY 1 ORDER BY queued_minutes DESC;`}</code></pre>
+  <p>Queuing during peaks on a single-cluster warehouse is the case multi-cluster and Adaptive were both built for. If you already run multi-cluster with a high maximum and short peaks, Adaptive may cover the same peaks with less idle capacity. Steady, sequential batch with little queuing and little idle time is the pattern most likely to cost more on per-query billing.</p>
+
+  <ArticleOffer offer="snowflake" title="A few warehouses drive most of the bill and no one knows which queries?" text="A Snowflake review ranks warehouses and statements by credits, separates idle, spill and pruning waste, and tests the warehouse change that fits, with a measured before and after." />
+
+  <h2>Test one warehouse, not the account</h2>
+  <ol>
+    <li>Pick one warehouse with a clear pattern from the checks above.</li>
+    <li>Record a week of baseline: credits from <code>WAREHOUSE_METERING_HISTORY</code>, and median and p95 execution and queued time from <code>QUERY_HISTORY</code>.</li>
+    <li>Convert while the warehouse is suspended. Converting a running warehouse charges for old and new compute while running queries finish.</li>
+    <li>For Gen2: <code>ALTER WAREHOUSE wh SET RESOURCE_CONSTRAINT = STANDARD_GEN_2;</code>. For Adaptive: <code>ALTER WAREHOUSE wh SET WAREHOUSE_TYPE = 'ADAPTIVE';</code>, then read per-query credits in <code>QUERY_METERING_HISTORY</code>.</li>
+    <li>Compare the same week shape: credits per day and the same latency percentiles. Both conversions can be reversed with the same command.</li>
+  </ol>
+  <p>On Adaptive, set a budget or resource monitor before the test. Snowflake documents no credit cap parameter on the warehouse itself, and a higher <code>QUERY_THROUGHPUT_MULTIPLIER</code> reduces queuing by allowing more spend at once.</p>
+  <p>For the broader Snowflake picture (clustering, workload isolation, concurrency), see the <a href="/snowflake-performance">Snowflake performance page</a>. The same evidence-first method applies to analytical workloads on other engines; see <a href="/olap-analytical-performance">OLAP and analytical performance</a>.</p>
+
+  <section class="faq" aria-labelledby="faq-heading">
+    <h2 id="faq-heading">Frequently asked questions</h2>
+    {faq.map((item) => (
+      <>
+        <h3>{item.q}</h3>
+        <p>{item.a}</p>
+      </>
+    ))}
+  </section>
+</ArticleLayout>

@@ -1,0 +1,251 @@
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+
+==== Version and I/O settings ====
+                                                         version                                                          
+--------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+            name            | setting | unit 
+----------------------------+---------+------
+ effective_io_concurrency   | 16      | 
+ io_combine_limit           | 16      | 8kB
+ io_method                  | worker  | 
+ io_workers                 | 3       | 
+ maintenance_io_concurrency | 16      | 
+ shared_buffers             | 32768   | 8kB
+(6 rows)
+
+
+==== Build events (8,000,000 rows) with an index on account_id ====
+ table_size | index_size 
+------------+------------
+ 1202 MB    | 52 MB
+(1 row)
+
+
+==== io_method = sync: one full plan per query (cold cache) ====
+ io_method 
+-----------
+ sync
+(1 row)
+
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Aggregate (actual rows=1.00 loops=1)
+   Buffers: shared read=153847
+   I/O Timings: shared read=160.178
+   ->  Seq Scan on events (actual rows=0.00 loops=1)
+         Filter: (payload ~~ 'zzz%'::text)
+         Rows Removed by Filter: 8000000
+         Buffers: shared read=153847
+         I/O Timings: shared read=160.178
+ Planning:
+   Buffers: shared hit=76 read=17
+   I/O Timings: shared read=0.632
+ Planning Time: 1.230 ms
+ Execution Time: 392.861 ms
+(13 rows)
+
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Aggregate (actual rows=1.00 loops=1)
+   Buffers: shared read=151644
+   I/O Timings: shared read=184.557
+   ->  Bitmap Heap Scan on events (actual rows=160400.00 loops=1)
+         Recheck Cond: ((account_id >= 1000) AND (account_id <= 1400))
+         Heap Blocks: exact=151507
+         Buffers: shared read=151644
+         I/O Timings: shared read=184.557
+         ->  Bitmap Index Scan on events_account_idx (actual rows=160400.00 loops=1)
+               Index Cond: ((account_id >= 1000) AND (account_id <= 1400))
+               Index Searches: 1
+               Buffers: shared read=137
+               I/O Timings: shared read=0.544
+ Planning:
+   Buffers: shared hit=69 read=22
+   I/O Timings: shared read=0.903
+ Planning Time: 1.442 ms
+ Execution Time: 350.437 ms
+(18 rows)
+
+
+==== io_method = sync: five cold runs, execution time in ms ====
+seq: 402.454 403.802 377.911 374.738 464.874
+bitmap: 348.206 345.178 345.830 514.233 459.314
+
+==== io_method = worker: one full plan per query (cold cache) ====
+ io_method 
+-----------
+ worker
+(1 row)
+
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Aggregate (actual rows=1.00 loops=1)
+   Buffers: shared read=153847
+   I/O Timings: shared read=24.159
+   ->  Seq Scan on events (actual rows=0.00 loops=1)
+         Filter: (payload ~~ 'zzz%'::text)
+         Rows Removed by Filter: 8000000
+         Buffers: shared read=153847
+         I/O Timings: shared read=24.159
+ Planning:
+   Buffers: shared hit=76 read=17
+   I/O Timings: shared read=1.023
+ Planning Time: 1.589 ms
+ Execution Time: 254.596 ms
+(13 rows)
+
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Aggregate (actual rows=1.00 loops=1)
+   Buffers: shared read=151644
+   I/O Timings: shared read=218.860
+   ->  Bitmap Heap Scan on events (actual rows=160400.00 loops=1)
+         Recheck Cond: ((account_id >= 1000) AND (account_id <= 1400))
+         Heap Blocks: exact=151507
+         Buffers: shared read=151644
+         I/O Timings: shared read=218.860
+         ->  Bitmap Index Scan on events_account_idx (actual rows=160400.00 loops=1)
+               Index Cond: ((account_id >= 1000) AND (account_id <= 1400))
+               Index Searches: 1
+               Buffers: shared read=137
+               I/O Timings: shared read=0.709
+ Planning:
+   Buffers: shared hit=69 read=22
+   I/O Timings: shared read=0.740
+ Planning Time: 1.235 ms
+ Execution Time: 336.057 ms
+(18 rows)
+
+
+==== io_method = worker: five cold runs, execution time in ms ====
+seq: 262.505 286.740 266.978 267.300 259.048
+bitmap: 365.008 344.819 325.056 330.104 334.305
+
+==== io_method = io_uring: one full plan per query (cold cache) ====
+ io_method 
+-----------
+ io_uring
+(1 row)
+
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Aggregate (actual rows=1.00 loops=1)
+   Buffers: shared read=153847
+   I/O Timings: shared read=36.071
+   ->  Seq Scan on events (actual rows=0.00 loops=1)
+         Filter: (payload ~~ 'zzz%'::text)
+         Rows Removed by Filter: 8000000
+         Buffers: shared read=153847
+         I/O Timings: shared read=36.071
+ Planning:
+   Buffers: shared hit=76 read=17
+   I/O Timings: shared read=0.607
+ Planning Time: 1.101 ms
+ Execution Time: 328.108 ms
+(13 rows)
+
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Aggregate (actual rows=1.00 loops=1)
+   Buffers: shared read=151644
+   I/O Timings: shared read=86.969
+   ->  Bitmap Heap Scan on events (actual rows=160400.00 loops=1)
+         Recheck Cond: ((account_id >= 1000) AND (account_id <= 1400))
+         Heap Blocks: exact=151507
+         Buffers: shared read=151644
+         I/O Timings: shared read=86.969
+         ->  Bitmap Index Scan on events_account_idx (actual rows=160400.00 loops=1)
+               Index Cond: ((account_id >= 1000) AND (account_id <= 1400))
+               Index Searches: 1
+               Buffers: shared read=137
+               I/O Timings: shared read=0.536
+ Planning:
+   Buffers: shared hit=69 read=22
+   I/O Timings: shared read=0.768
+ Planning Time: 1.231 ms
+ Execution Time: 285.155 ms
+(18 rows)
+
+
+==== io_method = io_uring: five cold runs, execution time in ms ====
+seq: 328.921 329.645 327.506 397.618 327.240
+bitmap: 270.976 258.838 268.473 291.768 258.938
+
+==== io_method = sync_again: one full plan per query (cold cache) ====
+ io_method 
+-----------
+ sync
+(1 row)
+
+                     QUERY PLAN                      
+-----------------------------------------------------
+ Aggregate (actual rows=1.00 loops=1)
+   Buffers: shared read=153847
+   I/O Timings: shared read=210.260
+   ->  Seq Scan on events (actual rows=0.00 loops=1)
+         Filter: (payload ~~ 'zzz%'::text)
+         Rows Removed by Filter: 8000000
+         Buffers: shared read=153847
+         I/O Timings: shared read=210.260
+ Planning:
+   Buffers: shared hit=76 read=17
+   I/O Timings: shared read=0.562
+ Planning Time: 0.988 ms
+ Execution Time: 446.427 ms
+(13 rows)
+
+                                     QUERY PLAN                                      
+-------------------------------------------------------------------------------------
+ Aggregate (actual rows=1.00 loops=1)
+   Buffers: shared read=151644
+   I/O Timings: shared read=201.670
+   ->  Bitmap Heap Scan on events (actual rows=160400.00 loops=1)
+         Recheck Cond: ((account_id >= 1000) AND (account_id <= 1400))
+         Heap Blocks: exact=151507
+         Buffers: shared read=151644
+         I/O Timings: shared read=201.670
+         ->  Bitmap Index Scan on events_account_idx (actual rows=160400.00 loops=1)
+               Index Cond: ((account_id >= 1000) AND (account_id <= 1400))
+               Index Searches: 1
+               Buffers: shared read=137
+               I/O Timings: shared read=0.550
+ Planning:
+   Buffers: shared hit=69 read=22
+   I/O Timings: shared read=0.809
+ Planning Time: 1.284 ms
+ Execution Time: 381.677 ms
+(18 rows)
+
+
+==== io_method = sync_again: five cold runs, execution time in ms ====
+seq: 445.100 496.037 383.163 372.670 465.974
+bitmap: 338.451 366.255 332.660 346.028 339.084
+
+==== effective_io_concurrency on the bitmap scan, io_method = io_uring, cold ====
+eic=1: 364.957 378.171 423.742
+eic=16: 417.238 336.119 336.142
+eic=64: 345.337 395.671 341.904
+eic=256: 345.669 337.455 345.789
+
+==== pg_aios while a cold scan runs (io_method = worker) ====
+11|readv/COMPLETED_SHARED, readv/SUBMITTED
+10|readv/COMPLETED_SHARED, readv/SUBMITTED
+10|readv/SUBMITTED
+11|readv/COMPLETED_SHARED, readv/SUBMITTED
+10|readv/COMPLETED_SHARED, readv/SUBMITTED
+11|readv/COMPLETED_SHARED, readv/SUBMITTED
+         backend_type         | count 
+------------------------------+-------
+ autovacuum launcher          |     1
+ background writer            |     1
+ checkpointer                 |     1
+ client backend               |     1
+ io worker                    |     3
+ logical replication launcher |     1
+ walwriter                    |     1
+(7 rows)
+

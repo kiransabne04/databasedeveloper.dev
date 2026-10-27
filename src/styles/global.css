@@ -180,6 +180,11 @@ section { padding:76px 0; border-top:1px solid var(--line); }
 .article-offer { margin:2rem 0; padding:1rem 1.2rem; border:1px solid rgba(156,246,198,.22); border-left:3px solid var(--accent); border-radius:0 12px 12px 0; background:linear-gradient(135deg, rgba(156,246,198,.08), rgba(94,230,165,.02)); }
 .article-offer p { margin:.35rem 0; }
 .article-offer-title { color:var(--text); }
+.key-points { margin:1.5rem 0 2rem; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:14px; }
+.key-points h2 { margin-top:0; font-size:1.25rem; }
+.key-points ol { margin:.5rem 0 0; padding-left:1.3rem; }
+.key-points li { margin:.45rem 0; }
+.faq h3 { margin-top:1.6rem; font-size:1.08rem; }
 .article-close-list { margin:.8rem 0; padding-left:1.2rem; color:var(--soft); }
 .article-close-list li { margin:.25rem 0; }
 .author-box { margin-top:1.5rem; padding:1.1rem 1.3rem; border:1px solid var(--line); border-radius:14px; color:var(--soft); max-width:var(--content); }

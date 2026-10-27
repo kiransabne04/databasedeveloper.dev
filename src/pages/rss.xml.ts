@@ -2,6 +2,10 @@ import type { APIRoute } from 'astro';
 import { site } from '../config/site';
 
 const posts = [
+  { title: 'PostgreSQL 18 Async I/O: Does io_method Make Queries Faster?', path: '/insights/postgresql-18-async-io-io-method', date: 'Tue, 27 Oct 2026 00:00:00 GMT', description: 'Lab-tested on PostgreSQL 18.6: sync, worker and io_uring on cold sequential and bitmap heap scans.' },
+  { title: 'RDS and Aurora PostgreSQL 14 Extended Support: What It Will Cost', path: '/insights/rds-aurora-postgresql-14-extended-support-cost', date: 'Tue, 27 Oct 2026 00:00:00 GMT', description: 'Dates, per-vCPU billing on primaries, standbys and replicas, and how to list affected instances.' },
+  { title: 'pgvector 0.8.7 Security Fix: Check Your Version and Upgrade Safely', path: '/insights/pgvector-087-cve-upgrade', date: 'Tue, 27 Oct 2026 00:00:00 GMT', description: 'CVE-2026-103484 in IVFFlat index builds: version checks, privileges and a tested extension upgrade.' },
+  { title: 'Snowflake Gen2 vs Adaptive Warehouses: Decide From Your Query History', path: '/insights/snowflake-gen2-vs-adaptive-warehouses', date: 'Tue, 27 Oct 2026 00:00:00 GMT', description: 'ACCOUNT_USAGE checks for idle credits, spills, pruning and queuing before converting a warehouse.' },
   { title: 'Find Slow PostgreSQL Queries with pg_stat_statements', path: '/insights/postgresql-slow-queries-pg-stat-statements', date: 'Wed, 14 Oct 2026 00:00:00 GMT', description: 'Rank statements by total time, diff snapshots and read buffer and temp-file signals. Lab-tested on PostgreSQL 17.' },
   { title: 'PostgreSQL Slow After an Upgrade? Check Statistics First', path: '/insights/postgresql-slow-after-major-upgrade', date: 'Wed, 14 Oct 2026 00:00:00 GMT', description: 'A tested pg_upgrade lost optimizer statistics; how to detect and fix it on self-managed PostgreSQL and RDS.' },
   { title: 'pgvector Filtered Search Returns Too Few Results: Fixes', path: '/insights/pgvector-filtered-search-missing-results', date: 'Wed, 14 Oct 2026 00:00:00 GMT', description: 'Measured iterative scans, exact search and partial indexes for filtered HNSW queries.' },

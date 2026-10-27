@@ -1,0 +1,148 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+import { pg14Facts } from '../../data/facts';
+
+// Illustrative fleets at the US East rates on AWS's pricing page: $0.100 per vCPU-hour in
+// years 1–2 and $0.200 from year 3, 8,760 hours a year.
+const fleets = [
+  { name: 'Small', setup: 'One db.m6g.large, Single-AZ, no replicas', vcpus: 2 },
+  { name: 'Medium', setup: 'One db.r6g.2xlarge, Multi-AZ, one read replica', vcpus: 24 },
+  { name: 'Large', setup: 'Three Aurora clusters, each a db.r6g.4xlarge writer and two readers', vcpus: 144 }
+].map((fleet) => ({ ...fleet, month: fleet.vcpus * 0.1 * 730, year: fleet.vcpus * 0.1 * 8760, year3: fleet.vcpus * 0.2 * 8760 }));
+const usd = (value: number) => `$${Math.round(value).toLocaleString('en-US')}`;
+
+const faq = [
+  {
+    q: 'When does RDS Extended Support for PostgreSQL 14 start charging?',
+    a: `On ${pg14Facts.rdsExtendedSupportYear1Start}, for RDS for PostgreSQL and Aurora PostgreSQL alike. Standard support ends on ${pg14Facts.rdsStandardSupportEnd}, and any instance still on major version 14 is enrolled automatically unless enrollment was disabled.`
+  },
+  {
+    q: 'How much does RDS Extended Support cost for PostgreSQL 14?',
+    a: 'It is charged per vCPU-hour on provisioned instances, on top of the normal instance price. AWS’s US East example is $0.100 per vCPU-hour in years one and two and $0.200 from year three, which is about $876 per vCPU per year, then about $1,752. Rates vary by Region.'
+  },
+  {
+    q: 'Can I opt out of RDS Extended Support?',
+    a: `You can set EngineLifecycleSupport to open-source-rds-extended-support-disabled, but AWS documents that disabling enrollment on a resource already past end of standard support upgrades it automatically to the next supported major version. The only opt-out without an unplanned upgrade is to upgrade before ${pg14Facts.rdsStandardSupportEnd}.`
+  },
+  {
+    q: 'Are Multi-AZ standbys and read replicas charged?',
+    a: 'Yes. AWS charges Extended Support on the primary and on each standby in a Multi-AZ deployment, and on read replicas running a version past end of standard support. On Aurora, budget for every provisioned writer and reader.'
+  },
+  {
+    q: 'Do Reserved Instances reduce the Extended Support charge?',
+    a: 'No. Reserved Instance discounts apply to the instance price only, not to the Extended Support charge.'
+  },
+  {
+    q: 'Does Aurora Serverless v2 pay Extended Support?',
+    a: 'Yes. For Aurora Serverless, AWS prices Extended Support per Aurora Capacity Unit (ACU) hour consumed. The Aurora pricing page did not show the ACU rate when checked, so use the AWS Pricing Calculator for your Region.'
+  },
+  {
+    q: 'What changes on 12 November 2026?',
+    a: `The PostgreSQL community releases its final PostgreSQL 14 update and stops fixing it. RDS and Aurora keep major version 14 in standard support until ${pg14Facts.rdsStandardSupportEnd}, so there is no charge change on that date.`
+  },
+  {
+    q: 'What does Extended Support actually give you?',
+    a: 'Security fixes for critical and high CVEs, fixes for critical bugs, and the ability to open support cases. It does not include new features or performance improvements.'
+  },
+  {
+    q: 'Which version should I upgrade PostgreSQL 14 to?',
+    a: 'On RDS and Aurora today you can choose 15 to 18. PostgreSQL 15 reaches community end of life in November 2027, so 17 or 18 avoids planning another upgrade within a year. Test extensions, client drivers and replication or CDC tools against the target first.'
+  },
+  {
+    q: 'Is paying for Extended Support cheaper than upgrading?',
+    a: 'Only for a short time, or when something genuinely blocks the upgrade, such as an unsupported vendor application or CDC that must be rebuilt. For most teams, a planned upgrade costs less than a few months of the charge, and the charge doubles in year three.'
+  },
+  {
+    q: 'What happens when Extended Support ends?',
+    a: `Extended Support for PostgreSQL 14 ends on ${pg14Facts.rdsExtendedSupportEnd}. AWS then upgrades any remaining instances to a supported major version automatically.`
+  }
+];
+---
+<ArticleLayout title="RDS and Aurora PostgreSQL 14 Extended Support: What It Will Cost" description="PostgreSQL 14 reaches community end of life on 12 November 2026; RDS and Aurora start charging Extended Support on 1 March 2027. Points to remember, cost examples, how to list affected instances, and answers to common questions." eyebrow="Upgrades · RDS · Aurora" offer="upgrade" published="2026-10-27" updated="2026-10-27" faq={faq} ctaTitle="PostgreSQL 14 still in production and the Extended Support bill is coming?" ctaDescription="An upgrade readiness review finds the blockers for your target version, sets a performance baseline, and gives you a go/no-go and rollback plan, for less than half of one month's Extended Support on the medium example in this guide.">
+  <p><strong>Short answer:</strong> on RDS for PostgreSQL and Aurora PostgreSQL, version 14 stays in standard support until {pg14Facts.rdsStandardSupportEnd}. From {pg14Facts.rdsExtendedSupportYear1Start}, every instance still on 14 is enrolled in RDS Extended Support and billed per vCPU-hour on top of its normal price: $0.100 per vCPU-hour in years one and two and $0.200 from {pg14Facts.rdsExtendedSupportYear3Start} in the US East example AWS publishes. Primaries, Multi-AZ standbys and read replicas are all charged. The community stops releasing PostgreSQL 14 fixes on {pg14Facts.communityEol}.</p>
+  <p>Dates are from the <a href="https://docs.aws.amazon.com/AmazonRDS/latest/PostgreSQLReleaseNotes/postgresql-release-calendar.html">RDS</a> and <a href="https://docs.aws.amazon.com/AmazonRDS/latest/AuroraPostgreSQLReleaseNotes/aurorapostgresql-release-calendar.html">Aurora</a> release calendars and the <a href="https://www.postgresql.org/support/versioning/">PostgreSQL versioning policy</a>; billing rules from the <a href="https://aws.amazon.com/rds/postgresql/pricing/">RDS for PostgreSQL pricing page</a> and the <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support.html">Extended Support guide</a>. Checked 27 October 2026. Rates vary by Region, so confirm yours on the pricing page.</p>
+
+  <section class="key-points" aria-labelledby="points-to-remember">
+    <h2 id="points-to-remember">Points to remember</h2>
+    <ol>
+      <li><strong>Billing is automatic.</strong> Nothing to sign up for: instances still on 14 on {pg14Facts.rdsExtendedSupportYear1Start} are enrolled and charged.</li>
+      <li><strong>It is per vCPU-hour, on top of the instance price.</strong> Per ACU-hour on Aurora Serverless. About $876 per vCPU per year at the US East year 1 rate.</li>
+      <li><strong>Every copy pays.</strong> Primary, each Multi-AZ standby, each read replica, each Aurora reader. Staging and dev copies on 14 count too.</li>
+      <li><strong>Reserved Instances do not help.</strong> RI discounts do not apply to the Extended Support charge.</li>
+      <li><strong>The rate doubles in year 3.</strong> From {pg14Facts.rdsExtendedSupportYear3Start}, $0.200 per vCPU-hour in AWS's US East example.</li>
+      <li><strong>Minor versions run out first.</strong> RDS {pg14Facts.rdsEarlyMinorEnds}. Aurora {pg14Facts.auroraEarlyMinorEnds}. Extended Support also requires the latest eligible minor version.</li>
+      <li><strong>Turning it off is not an exit.</strong> Disabling enrollment after the deadline triggers an automatic major-version upgrade, with no baseline and no rehearsal.</li>
+      <li><strong>Restores count.</strong> Snapshots are free to keep, but restoring one onto 14 after the deadline creates a billed instance.</li>
+      <li><strong>It buys security, not speed.</strong> Critical and high CVE fixes and critical bug fixes; no features or performance work.</li>
+      <li><strong>It ends.</strong> On {pg14Facts.rdsExtendedSupportEnd}, AWS upgrades whatever is left automatically.</li>
+      <li><strong>Charges stop on upgrade or delete,</strong> per instance, so every cluster you move early saves money from that day.</li>
+    </ol>
+  </section>
+
+  <h2>The dates that matter</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Date</th><th>What happens</th></tr></thead>
+    <tbody>
+      <tr><td>31 Oct 2026</td><td>RDS minor versions 14.18 and 14.19 leave standard support. See <a href="/insights/postgresql-14-minor-version-deadlines">minor-version deadlines</a>.</td></tr>
+      <tr><td>{pg14Facts.communityEol}</td><td>Community end of life for PostgreSQL 14: its final community release.</td></tr>
+      <tr><td>30 Nov 2026</td><td>Aurora PostgreSQL 14.17 leaves standard support; 14.18 follows on 31 Dec 2026.</td></tr>
+      <tr><td>{pg14Facts.rdsStandardSupportEnd}</td><td>End of RDS and Aurora standard support for major version 14.</td></tr>
+      <tr><td>{pg14Facts.rdsExtendedSupportYear1Start}</td><td>Extended Support year 1 pricing starts.</td></tr>
+      <tr><td>{pg14Facts.rdsExtendedSupportYear3Start}</td><td>Year 3 pricing starts, double the year 1 rate in AWS's US East example.</td></tr>
+      <tr><td>{pg14Facts.rdsExtendedSupportEnd}</td><td>Extended Support ends. AWS then upgrades remaining instances automatically.</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>What it costs: three example fleets</h2>
+  <p>Extended Support charge only, at the US East rates, before instance, storage and I/O costs. These are illustrations, not quotes; use your own vCPU count and Region.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Fleet</th><th>Setup</th><th>vCPUs billed</th><th>Per month</th><th>Per year (years 1–2)</th><th>Per year (year 3)</th></tr></thead>
+    <tbody>
+      {fleets.map((fleet) => (
+        <tr><td>{fleet.name}</td><td>{fleet.setup}</td><td>{fleet.vcpus}</td><td>{usd(fleet.month)}</td><td>{usd(fleet.year)}</td><td>{usd(fleet.year3)}</td></tr>
+      ))}
+    </tbody>
+  </table></div>
+  <p>The medium example is 8 vCPUs on the primary, 8 on the Multi-AZ standby and 8 on the replica. Count only the primary and the estimate is a third of the real bill.</p>
+
+  <h2>List what you will pay for</h2>
+  <p>Instances still on 14, with their class and enrollment status. Run it in every Region you use; forgotten replicas and dev copies in a second Region are common.</p>
+<pre><code>{`# RDS instances (includes Aurora cluster members)
+aws rds describe-db-instances \\
+  --query "DBInstances[?Engine=='postgres' || Engine=='aurora-postgresql'] \\
+    | [?starts_with(EngineVersion, '14.')] \\
+    .[DBInstanceIdentifier, Engine, EngineVersion, DBInstanceClass, MultiAZ, EngineLifecycleSupport]" \\
+  --output table
+
+# Support dates as AWS reports them for your account
+aws rds describe-db-major-engine-versions --engine postgres \\
+  --query "DBMajorEngineVersions[?MajorEngineVersion=='14'].SupportedEngineLifecycles"`}</code></pre>
+  <p>For vCPUs per class, the EC2 instance type without the <code>db.</code> prefix usually matches (<code>aws ec2 describe-instance-types --instance-types r6g.2xlarge</code>), but check burstable and memory-optimized RDS classes on the RDS instance class page. A <code>MultiAZ</code> value of <code>True</code> means at least one more billed standby.</p>
+
+  <ArticleOffer offer="upgrade" title="More than a handful of PostgreSQL 14 instances, and no upgrade date yet?" text="A readiness review ranks the blockers per cluster (extensions, replication slots, CDC, reg* columns, parameter changes), sets the performance baseline, and gives you a dated plan to be off 14 before March." />
+
+  <h2>When paying for Extended Support is reasonable</h2>
+  <p>It is a fair bridge when a vendor application does not support a newer version yet, when CDC or logical replication needs re-engineering first, or when a move to a different platform is already scheduled. It is a poor default when nothing blocks the upgrade except time.</p>
+  <p>What usually delays these upgrades is not the upgrade command but the unknowns: whether <a href="/insights/pg-upgrade-check-failures"><code>pg_upgrade --check</code> will pass</a>, what happens to <a href="/insights/postgresql-upgrade-logical-replication-slots">logical replication slots</a>, how long the <a href="/insights/rds-aurora-postgresql-14-to-18-blue-green">Blue/Green switchover</a> takes, and whether queries <a href="/insights/postgresql-slow-after-major-upgrade">get slower after the upgrade</a>. Each of those can be answered on a snapshot restore before the change window.</p>
+
+  <h2>What to do this month</h2>
+  <ol>
+    <li>Run the inventory in every Region and write down vCPUs per instance, including standbys and replicas.</li>
+    <li>Multiply by your Region's rate to put a monthly number on staying.</li>
+    <li>Pick the target version, 17 or 18 unless something rules them out.</li>
+    <li>Restore a snapshot, upgrade it, and record the blockers and the time it took.</li>
+    <li>Baseline <code>pg_stat_statements</code> on production so you can compare after the upgrade.</li>
+  </ol>
+  <p>The <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a> covers each step in order.</p>
+
+  <section class="faq" aria-labelledby="faq-heading">
+    <h2 id="faq-heading">Frequently asked questions</h2>
+    {faq.map((item) => (
+      <>
+        <h3>{item.q}</h3>
+        <p>{item.a}</p>
+      </>
+    ))}
+  </section>
+</ArticleLayout>

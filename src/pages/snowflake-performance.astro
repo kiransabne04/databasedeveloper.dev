@@ -32,6 +32,7 @@ import CTA from '../components/CTA.astro';
       <li><strong>Separate warehouses by workload</strong> when the patterns have different latency needs or schedules. Each can then be sized, suspended and attributed on its own.</li>
       <li><strong>Size versus clusters.</strong> A larger warehouse helps individual heavy queries and spills. Multi-cluster warehouses (Enterprise Edition) add clusters for concurrency; Snowflake's documentation describes them as less useful for speeding up a single slow query. The Standard scaling policy favors avoiding queues, Economy favors credits.</li>
       <li><strong>Check before scaling.</strong> If <code>queued_overload_time</code> is low and the slow pattern scans most partitions, more compute will cost more without fixing the cause.</li>
+      <li><strong>Gen2 or Adaptive?</strong> Decide from idle credits, spills, pruning and queuing in your own history; see <a href="/insights/snowflake-gen2-vs-adaptive-warehouses">Snowflake Gen2 vs Adaptive warehouses</a>.</li>
     </ul>
     <p class="small muted">From Snowflake's documentation for <a href="https://docs.snowflake.com/en/sql-reference/account-usage/query_history">QUERY_HISTORY</a> and <a href="https://docs.snowflake.com/en/user-guide/warehouses-multicluster">multi-cluster warehouses</a>, checked 13 October 2026.</p>
   </div></section>

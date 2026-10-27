@@ -11,6 +11,7 @@ const groups = [
     related: { label: 'PostgreSQL performance investigation', href: '/postgresql-performance-investigation' },
     items: [
       { href: '/insights/how-to-profile-slow-postgresql-queries', kicker: 'Method · New', title: 'How to profile slow PostgreSQL queries', text: 'pg_stat_statements to rank, auto_explain to capture the real plan, EXPLAIN ANALYZE to measure, then validate.' },
+      { href: '/insights/postgresql-18-async-io-io-method', kicker: 'Lab-tested · New', title: 'PostgreSQL 18 async I/O: does io_method help?', text: 'worker cut a cold sequential scan by a third; io_uring won on a bitmap scan. How to measure it on your storage.' },
       { href: '/insights/postgresql-slow-queries-pg-stat-statements', kicker: 'Lab-tested', title: 'Find slow queries with pg_stat_statements', text: 'Rank statements by total time, diff snapshots and read buffer and temp signals before changing anything.' },
       { href: '/insights/postgresql-autovacuum-not-removing-dead-tuples', kicker: 'Lab-tested · New', title: 'Autovacuum not removing dead tuples', text: 'Autovacuum ran four times and removed nothing while one session sat idle in transaction. Find the xmin blocker.' },
       { href: '/insights/postgresql-work-mem-temp-file-spills', kicker: 'Lab-tested · New', title: 'work_mem and temp file spills', text: 'Raising work_mem 64 times removed every spill and saved at most 8%. Measure the spill cost before changing memory.' },
@@ -30,6 +31,7 @@ const groups = [
     related: { label: 'PostgreSQL upgrade readiness', href: '/postgresql-upgrade-readiness' },
     items: [
       { href: '/postgresql-14-upgrade-checklist', kicker: 'Checklist · New', title: 'PostgreSQL 14 upgrade checklist', text: 'Inventory, blockers, baseline, rehearsal, cutover and validation for RDS, Aurora and self-managed PG14.' },
+      { href: '/insights/rds-aurora-postgresql-14-extended-support-cost', kicker: 'RDS · Aurora · New', title: 'PostgreSQL 14 Extended Support: what it will cost', text: 'Billing from 1 March 2027 per vCPU-hour on every primary, standby and replica. How to list and price yours.' },
       { href: '/insights/pg-upgrade-check-failures', kicker: 'Lab-tested · New', title: 'pg_upgrade --check failures and fixes', text: 'Real PG14 to PG18 output: checksum mismatch, prepared transactions and reg* columns, and what the check misses.' },
       { href: '/insights/postgresql-upgrade-logical-replication-slots', kicker: 'Lab-tested · New', title: 'pg_upgrade from 14 drops logical replication slots', text: 'The check passed with a CDC slot present; after the upgrade it was gone. RDS and Aurora block instead.' },
       { href: '/insights/rds-aurora-postgresql-14-to-18-blue-green', kicker: 'RDS · Aurora', title: 'RDS and Aurora 14 to 18: downtime and Blue/Green', text: 'In-place versus Blue/Green, and the logical replication limits that invalidate a green environment.' },
@@ -44,6 +46,7 @@ const groups = [
     intro: 'Recall, latency, filtering and memory trade-offs when vector search runs inside PostgreSQL.',
     related: { label: 'pgvector performance review', href: '/pgvector-performance' },
     items: [
+      { href: '/insights/pgvector-087-cve-upgrade', kicker: 'Security · Lab-tested · New', title: 'pgvector 0.8.7 security fix: check and upgrade', text: 'IVFFlat build overflow in 0.8.6 and earlier. Version checks, who could trigger it, and what the upgrade did to indexes.' },
       { href: '/insights/pgvector-filtered-search-missing-results', kicker: 'Lab-tested · New', title: 'Filtered vector search returns too few rows', text: 'Why HNSW plus a WHERE filter returned 0 of 10 rows, and measured fixes from iterative scans to partial indexes.' },
       { href: '/insights/pgvector-hnsw-vs-ivfflat', kicker: 'Indexing', title: 'HNSW vs IVFFlat is a workload decision', text: 'Recall, latency, memory, build cost and filtering trade-offs.' },
       { href: '/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector', kicker: 'Architecture', title: 'Semantic search API with FastAPI and pgvector', text: 'From a FastAPI demo to measured recall, tenant filtering and latency.' }
@@ -56,6 +59,7 @@ const groups = [
     related: { label: 'All capabilities', href: '/capabilities' },
     items: [
       { href: '/insights/sql-server-parameter-sniffing-query-store', kicker: 'SQL Server · Lab-tested', title: 'SQL Server parameter sniffing', text: 'One cached plan read 9 pages for one customer and 900,524 for another. Query Store diagnosis and measured fixes.' },
+      { href: '/insights/snowflake-gen2-vs-adaptive-warehouses', kicker: 'Snowflake · New', title: 'Snowflake Gen2 vs Adaptive warehouses', text: 'Idle credits, spills, pruning and queuing from ACCOUNT_USAGE decide which one costs less for your workload.' },
       { href: 'https://mssqlserver.dev', kicker: 'SQL Server · MSSQLServer.dev ↗', title: 'SQL Server tutorials', text: 'Window functions, CTEs, isolation levels, row versioning, temporal tables and change tracking, on Kiran\'s SQL Server blog.' },
       { href: '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive', kicker: 'MongoDB', title: 'MongoDB locking and concurrency', text: 'WiredTiger lock modes, versioning, expiring lock fields and transaction retries.' },
       { href: '/sql-server-performance', kicker: 'SQL Server', title: 'SQL Server performance review', text: 'Query Store, plan regressions, blocking chains and ORM implicit conversions.' },

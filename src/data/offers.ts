@@ -5,7 +5,7 @@ import { site } from '../config/site';
  * `offer` prop so the header line, in-article box and closing panel all match
  * the problem the reader came with.
  */
-export type OfferKey = 'investigation' | 'upgrade' | 'pgvector' | 'sqlserver';
+export type OfferKey = 'investigation' | 'upgrade' | 'pgvector' | 'sqlserver' | 'snowflake';
 
 export interface Offer {
   name: string;
@@ -77,6 +77,20 @@ export const offers: Record<OfferKey, Offer> = {
     ],
     send: 'SQL Server version, the slow query or Query Store export, and when it started',
     askLabel: 'Ask about a SQL Server review',
+    magnet: { label: 'See a sample report', href: '/sample-report', track: 'sample_report_click' }
+  },
+  snowflake: {
+    name: 'Snowflake performance and cost review',
+    href: '/snowflake-performance',
+    price: 'Fixed price agreed after a free fit review',
+    terms: 'Read-only evidence from ACCOUNT_USAGE views',
+    receive: [
+      'The warehouses and statements behind the credits, ranked by cost',
+      'Sizing, generation and isolation changes with their expected effect',
+      'A before-and-after measure for each change, from the same views'
+    ],
+    send: 'the warehouses involved, the cost or latency symptom, and when it started',
+    askLabel: 'Ask about a Snowflake review',
     magnet: { label: 'See a sample report', href: '/sample-report', track: 'sample_report_click' }
   }
 };

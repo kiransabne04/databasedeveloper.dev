@@ -1,0 +1,106 @@
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+
+==== pgvector 0.8.6 installed: build a table with IVFFlat and HNSW indexes ====
+                                                             version                                                              
+----------------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+(1 row)
+
+NOTICE:  hnsw graph no longer fits into maintenance_work_mem after 67050 tuples
+DETAIL:  Building will take significantly more time.
+HINT:  Increase maintenance_work_mem to speed up builds.
+ extname | extversion 
+---------+------------
+ vector  | 0.8.6
+(1 row)
+
+
+==== Which pgvector versions this server can install ====
+  name  | default_version | installed_version 
+--------+-----------------+-------------------
+ vector | 0.8.6           | 0.8.6
+(1 row)
+
+
+==== Same data directory, server now has the pgvector 0.8.7 package ====
+  name  | default_version | installed_version 
+--------+-----------------+-------------------
+ vector | 0.8.7           | 0.8.6
+(1 row)
+
+ version 
+---------
+ 0.8.7
+(1 row)
+
+
+==== Index checks before ALTER EXTENSION (new library, old catalog version) ====
+                      QUERY PLAN                      
+------------------------------------------------------
+ Limit
+   InitPlan 1
+     ->  Index Scan using items_pkey on items items_1
+           Index Cond: (id = 42)
+   ->  Index Scan using items_ivf on items
+         Order By: (embedding <-> (InitPlan 1).col1)
+(6 rows)
+
+  id   
+-------
+    42
+ 69157
+ 31458
+ 37741
+ 62874
+(5 rows)
+
+
+==== ALTER EXTENSION vector UPDATE ====
+Time: 1.792 ms
+ extname | extversion 
+---------+------------
+ vector  | 0.8.7
+(1 row)
+
+   index    | indisvalid | indisready 
+------------+------------+------------
+ items_pkey | t          | t
+ items_ivf  | t          | t
+ items_hnsw | t          | t
+(3 rows)
+
+  id   
+-------
+    42
+ 69157
+ 31458
+ 37741
+ 62874
+(5 rows)
+
+  id   
+-------
+    42
+ 69157
+ 31458
+ 37741
+ 62874
+(5 rows)
+
+
+==== Who could build an IVFFlat index: roles that can create tables somewhere ====
+ rolname  | rolsuper | can_create_in | owns_vector_tables 
+----------+----------+---------------+--------------------
+ analyst  | f        |               | 
+ app_rw   | f        |               | 
+ postgres | t        | public        | items
+(3 rows)
+
+
+==== public schema ACL on a new PostgreSQL 18 cluster: no CREATE for PUBLIC ====
+ nspname |                                                        nspacl                                                        
+---------+----------------------------------------------------------------------------------------------------------------------
+ public  | {pg_database_owner=UC/pg_database_owner,=U/pg_database_owner,analyst=U/pg_database_owner,app_rw=U/pg_database_owner}
+(1 row)
+
