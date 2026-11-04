@@ -1,0 +1,256 @@
+initdb: warning: enabling "trust" authentication for local connections
+initdb: hint: You can change this by editing pg_hba.conf or using the option -A, or --auth-local and --auth-host, the next time you run initdb.
+
+==== Version ====
+PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+
+==== Build customers (100,000), orders (2,000,000), order_items (4,000,000) ====
+   relname   |  size   
+-------------+---------
+ audit_notes | 25 MB
+ customers   | 5136 kB
+ order_items | 230 MB
+ orders      | 115 MB
+(4 rows)
+
+
+==== Find foreign keys with no index whose leading columns match ====
+ child_table |       constraint_name        | parent_table |  fk_columns   | child_size 
+-------------+------------------------------+--------------+---------------+------------
+ order_items | order_items_order_id_fkey    | orders       | {order_id}    | 230 MB
+ orders      | orders_customer_id_fkey      | customers    | {customer_id} | 115 MB
+ audit_notes | audit_notes_customer_id_fkey | customers    | {customer_id} | 25 MB
+(3 rows)
+
+
+==== Delete one customer with no index on orders.customer_id or order_items.order_id ====
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Delete on customers (actual time=0.612..0.613 rows=0.00 loops=1)
+   Buffers: shared hit=9 read=2 dirtied=1
+   ->  Index Scan using customers_pkey on customers (actual time=0.029..0.029 rows=1.00 loops=1)
+         Index Cond: (id = 42)
+         Index Searches: 1
+         Buffers: shared hit=1 read=2
+ Planning:
+   Buffers: shared hit=64
+ Planning Time: 0.119 ms
+ Trigger for constraint orders_customer_id_fkey on customers: time=41.537 calls=1
+ Trigger for constraint audit_notes_customer_id_fkey on customers: time=15.128 calls=1
+ Trigger for constraint order_items_order_id_fkey on orders: time=1567.066 calls=20
+ Execution Time: 1624.427 ms
+(13 rows)
+
+
+==== Delete 10 customers (one batch of offboarding) ====
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
+ Delete on customers (actual time=0.043..0.044 rows=0.00 loops=1)
+   Buffers: shared hit=27 read=2 dirtied=1
+   ->  Index Scan using customers_pkey on customers (actual time=0.012..0.012 rows=10.00 loops=1)
+         Index Cond: ((id >= 1001) AND (id <= 1010))
+         Index Searches: 1
+         Buffers: shared hit=1 read=2
+ Planning:
+   Buffers: shared hit=76
+ Planning Time: 0.101 ms
+ Trigger for constraint orders_customer_id_fkey on customers: time=395.193 calls=10
+ Trigger for constraint audit_notes_customer_id_fkey on customers: time=90.610 calls=10
+ Trigger for constraint order_items_order_id_fkey on orders: time=15923.683 calls=200
+ Execution Time: 16409.663 ms
+(13 rows)
+
+
+==== Delete one customer that has no orders and no audit notes ====
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Delete on customers (actual time=0.044..0.044 rows=0.00 loops=1)
+   Buffers: shared hit=8 read=2
+   ->  Index Scan using customers_pkey on customers (actual time=0.003..0.003 rows=1.00 loops=1)
+         Index Cond: (id = 100001)
+         Index Searches: 1
+         Buffers: shared hit=3
+ Planning:
+   Buffers: shared hit=16 read=17
+ Planning Time: 0.286 ms
+ Trigger for constraint orders_customer_id_fkey: time=65.859 calls=1
+ Trigger for constraint audit_notes_customer_id_fkey: time=14.767 calls=1
+ Execution Time: 80.748 ms
+(12 rows)
+
+
+==== Sequential scan counters on the child tables ====
+ pg_stat_force_next_flush 
+--------------------------
+ 
+(1 row)
+
+   relname   | seq_scan | seq_tup_read | idx_scan 
+-------------+----------+--------------+----------
+ audit_notes |       12 |      6000000 |        0
+ order_items |      220 |    879959820 |        0
+ orders      |       12 |     23999100 |        0
+(3 rows)
+
+
+==== pg_stat_statements with default track = top ====
+                                 query                                  | calls | total_ms 
+------------------------------------------------------------------------+-------+----------
+ EXPLAIN (ANALYZE, COSTS OFF) DELETE FROM customers WHERE id BETWEEN $1 |     1 |    16410
+ EXPLAIN (ANALYZE, COSTS OFF) DELETE FROM customers WHERE id = $1       |     2 |     1706
+(2 rows)
+
+
+==== Same delete with pg_stat_statements.track = all ====
+                                           query                                            | calls | total_ms 
+--------------------------------------------------------------------------------------------+-------+----------
+ DELETE FROM customers WHERE id = $1                                                        |     1 |     1617
+ DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id"         |    20 |     1562
+ DELETE FROM ONLY "public"."orders" WHERE $1 OPERATOR(pg_catalog.=) "customer_id"           |     1 |       44
+ SELECT $2 FROM ONLY "public"."audit_notes" x WHERE $1 OPERATOR(pg_catalog.=) "customer_id" |     1 |       10
+ SELECT $2 FROM ONLY "public"."customers" x WHERE "id" OPERATOR(pg_catalog.=) $1 FOR KEY SH |     1 |        0
+ ROLLBACK                                                                                   |     1 |        0
+(6 rows)
+
+
+==== auto_explain with log_nested_statements = on ====
+2026-11-04 03:30:51.260 UTC [96] LOG:  duration: 75.079 ms  plan:
+	Query Text: DELETE FROM ONLY "public"."orders" WHERE $1 OPERATOR(pg_catalog.=) "customer_id"
+	Query Parameters: $1 = '44'
+	Delete on orders  (cost=0.00..39706.00 rows=0 width=0) (actual time=75.078..75.078 rows=0.00 loops=1)
+	  ->  Seq Scan on orders  (cost=0.00..39706.00 rows=20 width=6) (actual time=2.484..75.025 rows=20.00 loops=1)
+	        Filter: (44 = customer_id)
+	        Rows Removed by Filter: 1999980
+2026-11-04 03:30:51.260 UTC [96] CONTEXT:  SQL statement "DELETE FROM ONLY "public"."orders" WHERE $1 OPERATOR(pg_catalog.=) "customer_id""
+2026-11-04 03:30:51.349 UTC [96] LOG:  duration: 78.015 ms  plan:
+	Query Text: DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id"
+	Query Parameters: $1 = '60197'
+	Delete on order_items  (cost=0.00..79412.00 rows=0 width=0) (actual time=78.014..78.014 rows=0.00 loops=1)
+	  ->  Seq Scan on order_items  (cost=0.00..79412.00 rows=2 width=6) (actual time=2.682..78.003 rows=2.00 loops=1)
+	        Filter: ('60197'::bigint = order_id)
+	        Rows Removed by Filter: 3999998
+2026-11-04 03:30:51.349 UTC [96] CONTEXT:  SQL statement "DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id""
+2026-11-04 03:30:51.427 UTC [96] LOG:  duration: 77.973 ms  plan:
+	Query Text: DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id"
+	Query Parameters: $1 = '160197'
+	Delete on order_items  (cost=0.00..79412.00 rows=0 width=0) (actual time=77.972..77.972 rows=0.00 loops=1)
+	  ->  Seq Scan on order_items  (cost=0.00..79412.00 rows=2 width=6) (actual time=7.249..77.969 rows=2.00 loops=1)
+	        Filter: ('160197'::bigint = order_id)
+	        Rows Removed by Filter: 3999996
+2026-11-04 03:30:51.427 UTC [96] CONTEXT:  SQL statement "DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id""
+2026-11-04 03:30:51.505 UTC [96] LOG:  duration: 77.768 ms  plan:
+	Query Text: DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id"
+	Query Parameters: $1 = '260197'
+	Delete on order_items  (cost=0.00..79412.00 rows=0 width=0) (actual time=77.767..77.767 rows=0.00 loops=1)
+	  ->  Seq Scan on order_items  (cost=0.00..79412.00 rows=2 width=6) (actual time=11.334..77.762 rows=2.00 loops=1)
+	        Filter: ('260197'::bigint = order_id)
+	        Rows Removed by Filter: 3999994
+2026-11-04 03:30:51.505 UTC [96] CONTEXT:  SQL statement "DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id""
+2026-11-04 03:30:51.585 UTC [96] LOG:  duration: 79.355 ms  plan:
+	Query Text: DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id"
+	Query Parameters: $1 = '360197'
+	Delete on order_items  (cost=0.00..79412.00 rows=0 width=0) (actual time=79.353..79.354 rows=0.00 loops=1)
+	  ->  Seq Scan on order_items  (cost=0.00..79412.00 rows=2 width=6) (actual time=14.590..79.348 rows=2.00 loops=1)
+	        Filter: ('360197'::bigint = order_id)
+	        Rows Removed by Filter: 3999992
+2026-11-04 03:30:51.585 UTC [96] CONTEXT:  SQL statement "DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id""
+
+==== Lock held while the slow delete runs ====
+               rel                |       mode       | granted 
+----------------------------------+------------------+---------
+ customers                        | RowExclusiveLock | t
+ customers                        | RowShareLock     | t
+ customers_pkey                   | RowExclusiveLock | t
+ customers_pkey                   | RowShareLock     | t
+ orders                           | RowExclusiveLock | t
+ orders_pkey                      | RowExclusiveLock | t
+ order_items                      | RowExclusiveLock | t
+ order_items_pkey                 | RowExclusiveLock | t
+ audit_notes                      | RowShareLock     | t
+ audit_notes_pkey                 | RowShareLock     | t
+ audit_notes_created_customer_idx | RowShareLock     | t
+(11 rows)
+
+ pg_sleep 
+----------
+ 
+(1 row)
+
+
+==== Index the referencing columns ====
+Time: 516.534 ms
+Time: 1035.545 ms (00:01.036)
+Time: 87.928 ms
+            index            |  size   
+-----------------------------+---------
+ orders_customer_id_idx      | 15 MB
+ order_items_order_id_idx    | 77 MB
+ audit_notes_customer_id_idx | 3512 kB
+(3 rows)
+
+
+==== Unindexed foreign keys after the fix ====
+ child_table | constraint_name | parent_table | fk_columns | child_size 
+-------------+-----------------+--------------+------------+------------
+(0 rows)
+
+
+==== Delete one customer after the fix ====
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Delete on customers (actual time=0.108..0.109 rows=0.00 loops=1)
+   Buffers: shared hit=6 read=4 dirtied=1
+   ->  Index Scan using customers_pkey on customers (actual time=0.046..0.047 rows=1.00 loops=1)
+         Index Cond: (id = 42)
+         Index Searches: 1
+         Buffers: shared read=3 dirtied=1
+ Planning:
+   Buffers: shared hit=61 read=3
+ Planning Time: 0.126 ms
+ Trigger for constraint orders_customer_id_fkey on customers: time=0.334 calls=1
+ Trigger for constraint audit_notes_customer_id_fkey on customers: time=0.148 calls=1
+ Trigger for constraint order_items_order_id_fkey on orders: time=0.399 calls=20
+ Execution Time: 1.066 ms
+(13 rows)
+
+
+==== Delete 10 customers after the fix ====
+                                            QUERY PLAN                                            
+--------------------------------------------------------------------------------------------------
+ Delete on customers (actual time=0.070..0.071 rows=0.00 loops=1)
+   Buffers: shared hit=26 read=2 dirtied=1
+   ->  Index Scan using customers_pkey on customers (actual time=0.033..0.034 rows=10.00 loops=1)
+         Index Cond: ((id >= 1001) AND (id <= 1010))
+         Index Searches: 1
+         Buffers: shared hit=1 read=2 dirtied=1
+ Planning:
+   Buffers: shared hit=75 read=1
+ Planning Time: 0.105 ms
+ Trigger for constraint orders_customer_id_fkey on customers: time=2.108 calls=10
+ Trigger for constraint audit_notes_customer_id_fkey on customers: time=0.221 calls=10
+ Trigger for constraint order_items_order_id_fkey on orders: time=2.087 calls=200
+ Execution Time: 4.515 ms
+(13 rows)
+
+
+==== Delete the customer with no orders and no audit notes after the fix ====
+                                           QUERY PLAN                                            
+-------------------------------------------------------------------------------------------------
+ Delete on customers (actual time=0.079..0.080 rows=0.00 loops=1)
+   Buffers: shared hit=8 read=2 dirtied=1
+   ->  Index Scan using customers_pkey on customers (actual time=0.050..0.050 rows=1.00 loops=1)
+         Index Cond: (id = 100001)
+         Index Searches: 1
+         Buffers: shared hit=1 read=2 dirtied=1
+ Planning:
+   Buffers: shared hit=64
+ Planning Time: 0.104 ms
+ Trigger for constraint orders_customer_id_fkey: time=0.107 calls=1
+ Trigger for constraint audit_notes_customer_id_fkey: time=0.091 calls=1
+ Execution Time: 0.303 ms
+(12 rows)
+
+
+==== Repeat timing: 5 runs of deleting one customer, before and after (ms) ====
+with indexes: 0.8 0.8 0.8 1.1 0.9
+without indexes: 1680.9 1662.6 1672.4 1774.2 1818.3

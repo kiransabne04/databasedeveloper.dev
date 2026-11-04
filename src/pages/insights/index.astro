@@ -11,6 +11,7 @@ const groups = [
     related: { label: 'PostgreSQL performance investigation', href: '/postgresql-performance-investigation' },
     items: [
       { href: '/insights/how-to-profile-slow-postgresql-queries', kicker: 'Method · New', title: 'How to profile slow PostgreSQL queries', text: 'pg_stat_statements to rank, auto_explain to capture the real plan, EXPLAIN ANALYZE to measure, then validate.' },
+      { href: '/insights/postgresql-foreign-key-index-slow-delete', kicker: 'Lab-tested · New', title: 'Slow DELETE? Check for unindexed foreign keys', text: 'Deleting one customer took 1.7 seconds and 22 sequential scans. Find the foreign keys behind it and why pg_stat_statements hides them.' },
       { href: '/insights/postgresql-18-async-io-io-method', kicker: 'Lab-tested · New', title: 'PostgreSQL 18 async I/O: does io_method help?', text: 'worker cut a cold sequential scan by a third; io_uring won on a bitmap scan. How to measure it on your storage.' },
       { href: '/insights/postgresql-slow-queries-pg-stat-statements', kicker: 'Lab-tested', title: 'Find slow queries with pg_stat_statements', text: 'Rank statements by total time, diff snapshots and read buffer and temp signals before changing anything.' },
       { href: '/insights/postgresql-autovacuum-not-removing-dead-tuples', kicker: 'Lab-tested · New', title: 'Autovacuum not removing dead tuples', text: 'Autovacuum ran four times and removed nothing while one session sat idle in transaction. Find the xmin blocker.' },

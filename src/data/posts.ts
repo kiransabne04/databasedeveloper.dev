@@ -14,6 +14,7 @@ export interface FeedPost {
 const legacyDate = 'Tue, 13 Oct 2026 00:00:00 GMT';
 
 export const posts: FeedPost[] = [
+  { title: 'PostgreSQL DELETE Slow? Check for Unindexed Foreign Keys', path: '/insights/postgresql-foreign-key-index-slow-delete', date: 'Wed, 04 Nov 2026 00:00:00 GMT', postgresql: true, description: 'Tested on PostgreSQL 18: deleting one customer took 1.7 seconds and ran 22 sequential scans because two foreign keys had no index. Find them, and why pg_stat_statements hides the cost.' },
   { title: 'PostgreSQL 18 Async I/O: Does io_method Make Queries Faster?', path: '/insights/postgresql-18-async-io-io-method', date: 'Tue, 27 Oct 2026 00:00:00 GMT', postgresql: true, description: 'Lab-tested on PostgreSQL 18.6: sync, worker and io_uring on cold sequential and bitmap heap scans.' },
   { title: 'RDS and Aurora PostgreSQL 14 Extended Support: What It Will Cost', path: '/insights/rds-aurora-postgresql-14-extended-support-cost', date: 'Tue, 27 Oct 2026 00:00:00 GMT', postgresql: true, description: 'Dates, per-vCPU billing on primaries, standbys and replicas, and how to list affected instances.' },
   { title: 'pgvector 0.8.7 Security Fix: Check Your Version and Upgrade Safely', path: '/insights/pgvector-087-cve-upgrade', date: 'Tue, 27 Oct 2026 00:00:00 GMT', postgresql: true, description: 'CVE-2026-103484 in IVFFlat index builds: version checks, privileges and a tested extension upgrade.' },

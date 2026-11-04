@@ -1,0 +1,154 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+
+const faq = [
+  { q: "Does PostgreSQL create an index on a foreign key automatically?", a: "No. The referenced column on the parent table must have a primary key or unique constraint, so it is always indexed. The referencing column on the child table is not indexed unless you create one." },
+  { q: "Why is a DELETE on the parent table slow?", a: "For each deleted parent row, PostgreSQL runs a query against every child table to find rows that reference it: a DELETE for ON DELETE CASCADE, an UPDATE for SET NULL or SET DEFAULT, or a check for NO ACTION and RESTRICT. Without an index on the referencing column, each of those queries is a sequential scan of the child table." },
+  { q: "Why does the slow query not appear in pg_stat_statements?", a: "The foreign-key queries run inside triggers, as nested statements. With the default pg_stat_statements.track = top, their time is added to the parent DELETE and they are not listed. With track = all they appear as separate entries such as DELETE FROM ONLY \"public\".\"orders\" WHERE $1 OPERATOR(pg_catalog.=) \"customer_id\"." },
+  { q: "How do I see which foreign key is slow?", a: "Run the DELETE under EXPLAIN ANALYZE inside a transaction and roll it back. The output ends with one line per foreign-key trigger, with its total time and number of calls. In the lab, Trigger for constraint order_items_order_id_fkey showed 1,567 ms over 20 calls." },
+  { q: "Does deleting in smaller batches help?", a: "Not with the cost itself. The child-table scans run once per parent row, so the total work is the same. Smaller batches shorten each transaction and its locks, but only an index on the referencing column removes the scans." },
+  { q: "Does every foreign key need an index?", a: "No. The index matters when parent rows are deleted, parent key values are updated, or queries join or filter on the referencing column. A foreign key to a lookup table whose rows are never deleted can go without one; the index would only add write cost to the child table." },
+  { q: "Will an existing multi-column index serve the foreign key?", a: "Only if the foreign-key columns are its leading columns. In the lab, an index on (created_at, customer_id) did not help the customer_id foreign key, and every check still scanned the whole table." }
+];
+---
+<ArticleLayout title="PostgreSQL DELETE Slow? Check for Unindexed Foreign Keys" description="Tested on PostgreSQL 18: deleting one customer took 1.7 seconds and ran 22 sequential scans because two foreign keys had no index. Find them, and why pg_stat_statements hides the cost." eyebrow="PostgreSQL performance · Lab-tested" published="2026-11-04" updated="2026-11-04" faq={faq} ctaTitle="Deletes, offboarding jobs or retention purges slower than they should be?" ctaDescription="A scoped investigation finds the statements and the nested foreign-key work behind them, ranks the missing indexes by what they cost you, and plans safe builds on the live tables.">
+  <p>PostgreSQL requires an index on the column a foreign key points to, but not on the column that holds the reference. So a child table can have a foreign key and no index on it. Nothing goes wrong on insert. The cost appears when a parent row is deleted: PostgreSQL has to find the child rows that reference it, and without an index, it reads the whole child table, once for every parent row.</p>
+  <p>The usual symptom is a delete that should touch a few rows and takes seconds: removing a customer, offboarding a tenant, a retention job. In this lab, deleting one customer took 1.7 seconds. With the right indexes it took under 1.1 milliseconds. The lab used PostgreSQL 18.6 in Docker on a laptop, with all tables in memory; the <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/fk-missing-index">script and full output</a> are public.</p>
+
+  <h2>The schema</h2>
+<pre><code>{`customers    100,000 rows
+orders       2,000,000 rows, 115 MB  customer_id REFERENCES customers ON DELETE CASCADE
+order_items  4,000,000 rows, 230 MB  order_id    REFERENCES orders    ON DELETE CASCADE
+audit_notes    500,000 rows,  25 MB  customer_id REFERENCES customers   (NO ACTION)
+                                     index on (created_at, customer_id)`}</code></pre>
+  <p>Each customer has 20 orders and each order has 2 items. No referencing column is indexed. <code>audit_notes</code> has an index that contains <code>customer_id</code>, but as its second column.</p>
+
+  <h2>Deleting one customer</h2>
+<pre><code>{`BEGIN;
+EXPLAIN (ANALYZE, COSTS OFF) DELETE FROM customers WHERE id = 42;
+ROLLBACK;
+
+ Delete on customers (actual time=0.612..0.613 rows=0.00 loops=1)
+   ->  Index Scan using customers_pkey on customers (actual time=0.029..0.029 rows=1.00 loops=1)
+         Index Cond: (id = 42)
+ Planning Time: 0.119 ms
+ Trigger for constraint orders_customer_id_fkey on customers: time=41.537 calls=1
+ Trigger for constraint audit_notes_customer_id_fkey on customers: time=15.128 calls=1
+ Trigger for constraint order_items_order_id_fkey on orders: time=1567.066 calls=20
+ Execution Time: 1624.427 ms`}</code></pre>
+  <p>The plan itself took 0.6 ms. The rest is in the <code>Trigger for constraint</code> lines at the bottom, which are easy to miss. Foreign keys are enforced by internal row-level triggers, and each line gives one constraint's total time and number of calls:</p>
+  <ul>
+    <li><strong>orders_customer_id_fkey, 1 call:</strong> the cascade deleted the customer's 20 orders with one scan of <code>orders</code>.</li>
+    <li><strong>order_items_order_id_fkey, 20 calls:</strong> each of those 20 deleted orders cascaded into <code>order_items</code>, and each cascade scanned all 4 million rows. That is 1.57 of the 1.62 seconds.</li>
+    <li><strong>audit_notes_customer_id_fkey, 1 call:</strong> a check that no note still references the customer, which scanned all of <code>audit_notes</code> even though this customer had none.</li>
+  </ul>
+  <p>The cost multiplies down the chain. Deleting 10 customers took 16.4 seconds, with 200 calls to the <code>order_items</code> trigger. A delete of a customer with no orders and no notes still took 81 ms, because both checks have to read the child tables to learn there is nothing there.</p>
+  <p>Because <code>EXPLAIN ANALYZE</code> really runs the delete, run it inside <code>BEGIN</code> and <code>ROLLBACK</code>, and on a copy of production rather than production itself when the delete is large.</p>
+
+  <h2>Why it is hard to see in production</h2>
+  <p>On a live system you rarely have the <code>EXPLAIN</code> output. You have monitoring, and there the cost is hidden in three ways.</p>
+  <p><strong>pg_stat_statements shows only the parent statement.</strong> With the default <code>pg_stat_statements.track = top</code>, the lab showed one entry for the delete and nothing for the scans inside it. With <code>track = all</code>, the nested statements appear:</p>
+<pre><code>{`                                 query                                       | calls | total_ms
+-----------------------------------------------------------------------------+-------+---------
+ DELETE FROM customers WHERE id = $1                                         |     1 |     1617
+ DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) ... |    20 |     1562
+ DELETE FROM ONLY "public"."orders" WHERE $1 OPERATOR(pg_catalog.=) "cust... |     1 |       44
+ SELECT $2 FROM ONLY "public"."audit_notes" x WHERE $1 OPERATOR(pg_catalog... |     1 |       10`}</code></pre>
+  <p>The <code>FROM ONLY ... OPERATOR(pg_catalog.=)</code> form is how the foreign-key triggers write their queries, so it is easy to search for. <code>track</code> can only be changed by a superuser; on RDS and Aurora, change it in the parameter group. Nested statements add entries, so turn it on for the investigation rather than leaving it on by default.</p>
+  <p><strong>auto_explain logs only the parent, unless told otherwise.</strong> With <code>auto_explain.log_nested_statements = on</code>, each slow cascade is logged with its plan:</p>
+<pre><code>{`LOG:  duration: 78.015 ms  plan:
+  Query Text: DELETE FROM ONLY "public"."order_items" WHERE $1 OPERATOR(pg_catalog.=) "order_id"
+  Query Parameters: $1 = '60197'
+  Delete on order_items (actual time=78.014..78.014 rows=0.00 loops=1)
+    ->  Seq Scan on order_items (actual time=2.682..78.003 rows=2.00 loops=1)
+          Filter: ('60197'::bigint = order_id)
+          Rows Removed by Filter: 3999998`}</code></pre>
+  <p>Two rows deleted, four million read. The 15 ms <code>audit_notes</code> check was under the 50 ms threshold and was not logged; a small child table can be scanned thousands of times without any single scan crossing the threshold.</p>
+  <p><strong>The table statistics do show it.</strong> After one 1-customer delete, one 10-customer delete and one delete of a customer with no children:</p>
+<pre><code>{`SELECT relname, seq_scan, seq_tup_read, idx_scan
+FROM pg_stat_user_tables WHERE relname IN ('orders','order_items','audit_notes');
+
+   relname   | seq_scan | seq_tup_read | idx_scan
+-------------+----------+--------------+----------
+ audit_notes |       12 |      6000000 |        0
+ order_items |      220 |    879959820 |        0
+ orders      |       12 |     23999100 |        0`}</code></pre>
+  <p>880 million <code>order_items</code> rows read to find 440. A large child table with a growing <code>seq_scan</code> count and no application query that should scan it is worth checking against its foreign keys.</p>
+
+  <ArticleOffer offer="investigation" title="A delete or purge job that takes minutes and no one can say why?" text="An investigation traces the nested foreign-key work behind it from your statistics and logs, ranks the missing indexes by the time they cost, and plans builds that do not lock the tables." />
+
+  <h2>Find unindexed foreign keys</h2>
+  <p>This query lists foreign keys with no index whose leading columns are exactly the key's columns, in any order. It skips partial indexes, which may not cover every row:</p>
+<pre><code>{`SELECT c.conrelid::regclass AS child_table,
+       c.conname AS constraint_name,
+       c.confrelid::regclass AS parent_table,
+       array_agg(a.attname ORDER BY k.n) AS fk_columns,
+       pg_size_pretty(pg_relation_size(c.conrelid)) AS child_size
+FROM pg_constraint c
+CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS k(attnum, n)
+JOIN pg_attribute a ON a.attrelid = c.conrelid AND a.attnum = k.attnum
+WHERE c.contype = 'f'
+  AND NOT EXISTS (
+    SELECT 1 FROM pg_index i
+    WHERE i.indrelid = c.conrelid
+      AND i.indpred IS NULL
+      AND (i.indkey::int2[])[0:cardinality(c.conkey) - 1] @> c.conkey
+      AND (i.indkey::int2[])[0:cardinality(c.conkey) - 1] <@ c.conkey)
+GROUP BY c.conrelid, c.conname, c.confrelid
+ORDER BY pg_relation_size(c.conrelid) DESC;
+
+ child_table |       constraint_name        | parent_table |  fk_columns   | child_size
+-------------+------------------------------+--------------+---------------+-----------
+ order_items | order_items_order_id_fkey    | orders       | {order_id}    | 230 MB
+ orders      | orders_customer_id_fkey      | customers    | {customer_id} | 115 MB
+ audit_notes | audit_notes_customer_id_fkey | customers    | {customer_id} | 25 MB`}</code></pre>
+  <p>It flagged <code>audit_notes</code> despite the index on <code>(created_at, customer_id)</code>. A B-tree index helps a lookup on <code>customer_id</code> only when <code>customer_id</code> leads it, and the lab's checks on that table were all sequential scans. In a multi-tenant schema with composite keys such as <code>(tenant_id, customer_id)</code>, the same rule applies to the pair.</p>
+
+  <h2>Which ones to index</h2>
+  <p>The list is a starting point, not a to-do list. Each index adds write cost and storage to the child table: the one on <code>order_items</code> was 77 MB on a 230 MB table. Index a foreign key when:</p>
+  <ul>
+    <li><strong>Parent rows are deleted:</strong> customer deletion, tenant offboarding, retention purges, test-data cleanup.</li>
+    <li><strong>Parent key values are updated.</strong> That fires the same triggers as a delete. Rare with surrogate keys, common with natural ones.</li>
+    <li><strong>Queries join or filter on the column,</strong> for example loading a customer's orders. Then it was needed regardless.</li>
+  </ul>
+  <p>A foreign key to a lookup table of statuses or countries that are never deleted can usually go without one. Put the large child tables of frequently deleted parents first; the <code>pg_stat_user_tables</code> counters and <code>track = all</code> show which ones the workload actually hits.</p>
+
+  <h2>Build the index without blocking writes</h2>
+<pre><code>{`CREATE INDEX CONCURRENTLY orders_customer_id_idx ON orders (customer_id);
+CREATE INDEX CONCURRENTLY order_items_order_id_idx ON order_items (order_id);`}</code></pre>
+  <p>A plain <code>CREATE INDEX</code> blocks inserts, updates and deletes on the table for the whole build. <code>CONCURRENTLY</code> does not, but it takes longer, waits for transactions already running, and cannot run inside a transaction block, which matters for migration tools that wrap each migration in one. If it fails, it leaves an <code>INVALID</code> index that still adds write cost; drop it and run it again. In the lab the builds took 0.5 s, 1.0 s and 0.09 s on tables in memory; on a production table, measure it on a copy first.</p>
+
+  <h2>After the indexes</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Delete</th><th>Without indexes</th><th>With indexes</th></tr></thead>
+    <tbody>
+      <tr><td>1 customer (5 runs)</td><td>1,681 1,663 1,672 1,774 1,818 ms</td><td>0.8 0.8 0.8 1.1 0.9 ms</td></tr>
+      <tr><td>10 customers</td><td>16,410 ms</td><td>4.5 ms</td></tr>
+      <tr><td>1 customer, no orders or notes</td><td>81 ms</td><td>0.3 ms</td></tr>
+    </tbody>
+  </table></div>
+  <p>The trigger lines told the same story: the <code>order_items</code> cascade went from 1,567 ms to 0.4 ms for the same 20 calls. Absolute times come from a laptop with every table in memory. On larger tables, or when the scans read from network storage, each sequential scan costs more, so the gap is usually wider, not narrower.</p>
+  <p>The duration also matters for locking. While the delete runs, it holds row locks on every row it deletes, in every child table, until the transaction ends. Other sessions that update those rows wait. A schema change on any of these tables waits too, and every query behind it queues; see the <a href="/case-studies/lab-lock-queue">lock queue lab</a>. Splitting the delete into smaller transactions shortens each one but does not reduce the scans, because they run once per parent row.</p>
+
+  <h2>Checklist</h2>
+  <ol>
+    <li>Run the unindexed foreign key query and sort by child table size.</li>
+    <li>Find the slow deletes or purge jobs in <code>pg_stat_statements</code>; for the investigation, set <code>track = all</code> to see the nested foreign-key statements.</li>
+    <li>Check <code>seq_scan</code> and <code>seq_tup_read</code> on the large child tables.</li>
+    <li>Confirm with <code>EXPLAIN ANALYZE</code> inside a rolled-back transaction, on a copy: read the <code>Trigger for constraint</code> lines.</li>
+    <li>Index the foreign keys whose parents are deleted or updated, with <code>CREATE INDEX CONCURRENTLY</code>, then check for <code>INVALID</code> indexes.</li>
+    <li>Run the same delete again and compare the trigger times.</li>
+  </ol>
+  <p>For the general method, from ranking statements to validating a fix, see <a href="/insights/how-to-profile-slow-postgresql-queries">how to profile slow PostgreSQL queries</a>. Delete-heavy tables also leave dead tuples behind; if they are not being cleaned up, see <a href="/insights/postgresql-autovacuum-not-removing-dead-tuples">autovacuum not removing dead tuples</a>.</p>
+
+  <section class="faq" aria-labelledby="faq-heading">
+    <h2 id="faq-heading">Frequently asked questions</h2>
+    {faq.map((item) => (
+      <>
+        <h3>{item.q}</h3>
+        <p>{item.a}</p>
+      </>
+    ))}
+  </section>
+</ArticleLayout>
