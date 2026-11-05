@@ -1,5 +1,5 @@
--- DatabaseDeveloper PostgreSQL evidence collector, v1
--- https://databasedeveloper.dev/evidence-collection
+-- WalStack PostgreSQL evidence collector, v1
+-- https://walstack.io/evidence-collection
 --
 -- Read-only. Runs catalog and statistics queries only; it changes no data or settings
 -- outside this session. Supports PostgreSQL 13 and later, including Amazon RDS and Aurora.
@@ -20,7 +20,7 @@
 SET default_transaction_read_only = on;
 SET statement_timeout = '30s';
 SET lock_timeout = '1s';
-SET application_name = 'dd-evidence-collector';
+SET application_name = 'walstack-evidence-collector';
 
 SELECT current_setting('server_version_num')::int >= 140000 AS pg14,
        current_setting('server_version_num')::int >= 170000 AS pg17,

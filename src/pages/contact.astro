@@ -5,7 +5,7 @@ import { site } from '../config/site';
 const endpoint = site.contactEndpoint;
 const action = endpoint || `mailto:${site.email}`;
 ---
-<BaseLayout title="Request a Database Investigation — DatabaseDeveloper" description="Tell DatabaseDeveloper what is happening in production, which database/platform you run and what evidence is available.">
+<BaseLayout title="Request a Database Investigation — WalStack" description="Tell WalStack what is happening in production, which database/platform you run and what evidence is available.">
   <PageHero eyebrow="Contact" title="Tell me what PostgreSQL is doing in production." description="A short description is enough to start. I will tell you whether a bounded investigation fits, then we agree on scope and timing before any paid work." primaryLabel="Email me directly" primaryHref={`mailto:${site.email}?subject=${encodeURIComponent('Database investigation request')}`} secondaryLabel="How it works" secondaryHref="/how-it-works" />
   <section>
     <div class="container grid two">

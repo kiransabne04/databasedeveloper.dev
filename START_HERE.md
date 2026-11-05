@@ -1,6 +1,6 @@
 # Start here
 
-This is the local `databasedeveloper.dev` site. The previous site source is backed up at `/tmp/databasedeveloper-before-final.tar.gz`.
+This is the local `walstack.io` site.
 
 ## 1. Install and run
 
@@ -17,8 +17,8 @@ Open:
 
 `src/config/site.ts`
 
-The working contact address is `kiran@databasedeveloper.dev`.
-Verify it still receives mail before publishing a new deployment.
+The configured contact address is `hello@walstack.io`.
+Verify that it receives mail before publishing a new deployment.
 
 ## 3. Build
 
@@ -28,7 +28,7 @@ npm run build
 
 ## 4. Connect source control
 
-The repository is public at github.com/kiransabne04/databasedeveloper.dev (branch `main`). Agent instructions and business strategy (`AGENTS.md`, `CLAUDE.md`, `docs/business/`) are local-only and gitignored; never commit them. Confirm the remote and branch before pushing.
+The public GitHub repository still uses its original URL; confirm the remote and branch before pushing or changing repository links. Agent instructions and business strategy (`AGENTS.md`, `CLAUDE.md`, `docs/business/`) are local-only and gitignored; never commit them.
 
 ## 5. Vercel
 

@@ -1,6 +1,6 @@
 # Hashnode migration inventory
 
-Checked against the live `databasedeveloper.dev` Hashnode publication on 13 October 2026. It listed eight posts. The new site retains seven original paths. Each page uses the original Hashnode text (extracted 14 October 2026, stored in `src/originals/`) with technical errors corrected in place, plus a production-notes section and permanently redirects the short interview pointer to its full article on `kiransabne.dev`.
+Checked against the former Hashnode publication on 13 October 2026, before the WalStack rebrand. It listed eight posts. The new site retains seven original paths. Each page uses the original Hashnode text (extracted 14 October 2026, stored in `src/originals/`) with technical errors corrected in place, plus a production-notes section and permanently redirects the short interview pointer to its full article on `kiransabne.dev`.
 
 The public Hashnode sitemap was checked as well. It contained those eight posts plus `/archive` and `/recommendations`; both listing routes redirect to `/insights`. The old `/rss.xml` feed path is retained with a new feed, and `/sitemap.xml` redirects to the new `/sitemap-index.xml`.
 
@@ -28,4 +28,4 @@ Run `npm run build` and `npm run audit:content` before a preview deploy. The aud
 3. Check that revised pages have self-canonicals, appear in the sitemap, and link to related service or problem pages.
 4. After the switch, monitor 404s, indexing, traffic and backlinks in Search Console. Do not redirect unrelated old URLs to the homepage.
 
-The live `kiransabne.dev` Hashnode publication listed 15 posts on 13 October 2026. Export and migrate that publication separately before deleting a shared Hashnode account; these eight DatabaseDeveloper URLs do not cover it. Hashnode says account deletion removes its content from public view. Its dashboard offers a JSON article export.
+The live `kiransabne.dev` Hashnode publication listed 15 posts on 13 October 2026. Export and migrate that publication separately before deleting a shared Hashnode account; these eight WalStack article paths do not cover it. Hashnode says account deletion removes its content from public view. Its dashboard offers a JSON article export.

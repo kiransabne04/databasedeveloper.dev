@@ -6,7 +6,7 @@ export const GET: APIRoute = () => {
   const feed = rssFeed({
     siteUrl: site.url,
     feedPath: '/rss.xml',
-    title: 'DatabaseDeveloper insights',
+    title: 'WalStack insights',
     link: `${site.url}/insights`,
     description: site.description,
     author: site.personName,

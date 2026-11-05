@@ -49,7 +49,7 @@ const faqSchema = faq?.length ? {
   mainEntity: faq.map((item) => ({ '@type': 'Question', name: item.q, acceptedAnswer: { '@type': 'Answer', text: item.a } }))
 } : undefined;
 ---
-<BaseLayout title={`${title} — DatabaseDeveloper`} description={description} schema={faqSchema ? [articleSchema, breadcrumbSchema, faqSchema] : [articleSchema, breadcrumbSchema]} ogType="article" published={published} updated={updated}>
+<BaseLayout title={`${title} — WalStack`} description={description} schema={faqSchema ? [articleSchema, breadcrumbSchema, faqSchema] : [articleSchema, breadcrumbSchema]} ogType="article" published={published} updated={updated}>
   <article>
     <header class="container article-header">
       <nav class="article-breadcrumb small muted" aria-label="Breadcrumb"><a href="/insights">Guides</a><span aria-hidden="true"> / </span><span aria-current="page">{title}</span></nav>

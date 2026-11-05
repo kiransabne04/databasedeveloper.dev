@@ -4,7 +4,7 @@ Updated 27 October 2026.
 
 ## Planet PostgreSQL
 
-Feed to register: `https://databasedeveloper.dev/rss/postgresql.xml`. It lists only guides marked `postgresql: true` in `src/data/posts.ts` (PostgreSQL and pgvector); SQL Server, Snowflake and MongoDB posts stay out. Mark every new guide there.
+Feed to register: `https://walstack.io/rss/postgresql.xml`. It lists only guides marked `postgresql: true` in `src/data/posts.ts` (PostgreSQL and pgvector); SQL Server, Snowflake and MongoDB posts stay out. Mark every new guide there.
 
 Steps, from [Adding your blog to Planet PostgreSQL](https://planet.postgresql.org/add.html):
 
@@ -26,7 +26,7 @@ Draft:
 >
 > A reproducible PostgreSQL 18.6 lab comparing io_method settings on cold sequential and bitmap heap scans. worker cut the sequential scan by about a third; io_uring won on the bitmap scan instead, and effective_io_concurrency above 16 changed nothing on that shape. It covers how to see async reads in pg_aios and why laptop numbers understate network storage.
 >
-> https://databasedeveloper.dev/insights/postgresql-18-async-io-io-method
+> https://walstack.io/insights/postgresql-18-async-io-io-method
 > Script and full output: https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/pg18-async-io
 >
 > Kiran Sabne

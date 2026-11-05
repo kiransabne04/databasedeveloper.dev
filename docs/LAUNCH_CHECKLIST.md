@@ -1,6 +1,7 @@
 # Launch checklist
 
-- [x] Use the verified `kiran@databasedeveloper.dev` in `src/config/site.ts`
+- [x] Set `hello@walstack.io` in `src/config/site.ts`
+- [ ] Verify that `hello@walstack.io` receives mail and the existing Formspree endpoint routes to the intended inbox
 - [ ] Send a fresh test inquiry to confirm delivery before launch
 - [ ] Confirm the advertised 3-business-day report turnaround is operationally sustainable
 - [ ] Confirm how many of the first three founding-price places remain and update `src/config/site.ts` when they are filled
@@ -16,8 +17,8 @@
 - [x] 20-minute triage event live at https://cal.com/kiransabne13/triage-call (default in `src/config/site.ts`; `PUBLIC_BOOKING_URL` overrides it)
 - [ ] In GA4, mark `booking_click` as a key event
 - [x] Analytics provider chosen: Google Analytics 4 (free). Loads only after consent via the built-in banner; ad features off; privacy page updated
-- [ ] Create a GA4 property and web data stream for `https://databasedeveloper.dev`; set data retention to 14 months; leave Google signals off
-- [x] GA4 measurement ID `G-4YXPCMHXYD` set in `src/config/site.ts`; it loads only on databasedeveloper.dev and www, after consent (`PUBLIC_GA_ID` overrides it)
+- [ ] Create a GA4 property and web data stream for `https://walstack.io`; set data retention to 14 months; leave Google signals off
+- [ ] Confirm the existing GA4 measurement ID `G-4YXPCMHXYD` is the intended stream for WalStack; `src/config/site.ts` loads it only on walstack.io and www, after consent (`PUBLIC_GA_ID` overrides it)
 - [ ] In GA4, mark `contact_submit`, `contact_draft_open` and `email_click` as key events; `page_not_found` lists broken old URLs after the domain switch
 - [x] Verify `robots.txt` and sitemap generation locally
 - [x] Verify canonical URLs locally
@@ -26,6 +27,7 @@
 - [x] Run `npm run audit:content` against the built archive pages and redirect configuration
 - [x] Retain the old `/rss.xml` feed path
 - [ ] Test all old URLs and redirects on the deployment preview before switching DNS
+- [ ] Configure permanent, path-preserving redirects from the former site hostname to `https://walstack.io` at the hosting or domain layer
 - [ ] Export both Hashnode publications as JSON; migrate and verify the 15 `kiransabne.dev` posts separately before deleting the account
 - [ ] Compare Search Console's indexed URL report with the sitemap inventory for any additional old paths
 - [ ] Add Search Console as a Domain property (DNS TXT record at the registrar), submit `/sitemap-index.xml`, and link it to GA4

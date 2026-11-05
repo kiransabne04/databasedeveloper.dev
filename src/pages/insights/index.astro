@@ -77,7 +77,7 @@ const schema = {
   hasPart: groups.flatMap((group) => group.items.filter((item) => item.href.startsWith('/')).map((item) => ({ '@type': 'WebPage', name: item.title, url: `${site.url}${item.href}` })))
 };
 ---
-<BaseLayout title="PostgreSQL Performance Guides — DatabaseDeveloper" description="Practical guides to PostgreSQL locking, indexing, partitioning, upgrades and pgvector, grounded in production evidence and safe-change judgment." schema={schema}>
+<BaseLayout title="PostgreSQL Performance Guides — WalStack" description="Practical guides to PostgreSQL locking, indexing, partitioning, upgrades and pgvector, grounded in production evidence and safe-change judgment." schema={schema}>
   <PageHero eyebrow="Guides" title="Database performance guides grounded in workload decisions." description="Use these guides to frame the evidence and trade-offs behind a production change. Each one ends with the checks to run on your own system." />
   {groups.map((group, groupIndex) => (
     <section id={group.id}><div class="container">

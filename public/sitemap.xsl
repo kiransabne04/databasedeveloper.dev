@@ -8,7 +8,7 @@
       <head>
         <meta charset="UTF-8"/>
         <meta name="robots" content="noindex"/>
-        <title>Sitemap — DatabaseDeveloper</title>
+        <title>Sitemap — WalStack</title>
         <style>
           body { font-family: system-ui, -apple-system, sans-serif; background: #0b1110; color: #e6efe9; margin: 2rem; line-height: 1.5; }
           h1 { font-size: 1.4rem; margin: 0 0 .25rem; }
@@ -21,7 +21,7 @@
         </style>
       </head>
       <body>
-        <h1>DatabaseDeveloper sitemap</h1>
+        <h1>WalStack sitemap</h1>
         <xsl:choose>
           <xsl:when test="s:sitemapindex">
             <p>This index lists <xsl:value-of select="count(s:sitemapindex/s:sitemap)"/> sitemap file(s). Search engines read this XML; the table is only for people.</p>
