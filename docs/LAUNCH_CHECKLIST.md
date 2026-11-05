@@ -3,12 +3,12 @@
 - [x] Set `hello@walstack.io` in `src/config/site.ts`
 - [ ] Verify that `hello@walstack.io` receives mail and the existing Formspree endpoint routes to the intended inbox
 - [ ] Send a fresh test inquiry to confirm delivery before launch
-- [ ] Confirm the advertised 3-business-day report turnaround is operationally sustainable
+- [ ] Confirm the advertised 5-business-day report turnaround is operationally sustainable
 - [ ] Confirm how many of the first three founding-price places remain and update `src/config/site.ts` when they are filled
 - [ ] `npm install`
 - [x] `npm run build` (local validation; run again before deploying)
 - [ ] Choose Vercel Pro or another host that permits commercial sites; Hobby is for personal, non-commercial use
-- [ ] Deploy preview
+- [x] Deploy preview
 - [ ] Check mobile navigation
 - [ ] Check all CTA links
 - [x] Provide a functional email-draft fallback for the contact form
@@ -27,7 +27,8 @@
 - [x] Run `npm run audit:content` against the built archive pages and redirect configuration
 - [x] Retain the old `/rss.xml` feed path
 - [ ] Test all old URLs and redirects on the deployment preview before switching DNS
-- [ ] Configure permanent, path-preserving redirects from the former site hostname to `https://walstack.io` at the hosting or domain layer
+- [x] Configure permanent, path-preserving redirects from the former site hostname to `https://walstack.io` at the hosting or domain layer
+- [x] Confirm `www.walstack.io` permanently redirects to the canonical apex domain
 - [ ] Export both Hashnode publications as JSON; migrate and verify the 15 `kiransabne.dev` posts separately before deleting the account
 - [ ] Compare Search Console's indexed URL report with the sitemap inventory for any additional old paths
 - [ ] Add Search Console as a Domain property (DNS TXT record at the registrar), submit `/sitemap-index.xml`, and link it to GA4

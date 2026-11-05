@@ -95,14 +95,14 @@ const schemas = [
         <nav class="desktop-nav" aria-label="Primary navigation">
           {nav.map((item) => <a href={item.href}>{item.label}</a>)}
           <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-          <a class="nav-cta" data-track="primary_cta_click" href="/contact">Request investigation</a>
+          <a class="nav-cta" data-track="primary_cta_click" href="/contact">Request an Investigation</a>
         </nav>
         <details class="mobile-menu">
           <summary>Menu</summary>
           <div class="mobile-menu-panel">
             {nav.map((item) => <a href={item.href}>{item.label}</a>)}
             <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-            <a href="/contact">Request investigation</a>
+            <a href="/contact" data-track="primary_cta_click">Request an Investigation</a>
           </div>
         </details>
       </div>

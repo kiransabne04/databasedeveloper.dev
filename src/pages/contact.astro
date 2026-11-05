@@ -6,7 +6,7 @@ const endpoint = site.contactEndpoint;
 const action = endpoint || `mailto:${site.email}`;
 ---
 <BaseLayout title="Request a Database Investigation — WalStack" description="Tell WalStack what is happening in production, which database/platform you run and what evidence is available.">
-  <PageHero eyebrow="Contact" title="Tell me what PostgreSQL is doing in production." description="A short description is enough to start. I will tell you whether a bounded investigation fits, then we agree on scope and timing before any paid work." primaryLabel="Email me directly" primaryHref={`mailto:${site.email}?subject=${encodeURIComponent('Database investigation request')}`} secondaryLabel="How it works" secondaryHref="/how-it-works" />
+  <PageHero eyebrow="Contact" title="Tell me what PostgreSQL is doing in production." description="A short description is enough to start. I will tell you whether a bounded investigation fits, then we agree on scope and timing before any paid work." primaryLabel="Request an Investigation" primaryHref="#inquiry-form" secondaryLabel="How it works" secondaryHref="/how-it-works" />
   <section>
     <div class="container grid two">
       <form id="inquiry-form" class="card" action={action} method="POST" enctype={endpoint ? undefined : "text/plain"} data-email={site.email} data-mailto-fallback={endpoint ? "false" : "true"}>
@@ -37,7 +37,7 @@ const action = endpoint || `mailto:${site.email}`;
             </div>
           </details>
         </div>
-        <div class="actions"><button class="button primary" type="submit">{endpoint ? 'Send request' : 'Open email draft'}</button></div>
+        <div class="actions"><button class="button primary" type="submit">{endpoint ? 'Send investigation request' : 'Open email draft'}</button></div>
         {!endpoint && <p class="small muted">Your email app will open with these details filled in. Review and send the draft there.</p>}
         <p id="form-status" class="small" role="status" aria-live="polite"></p>
       </form>
@@ -80,7 +80,15 @@ const action = endpoint || `mailto:${site.email}`;
       // Guides link here with ?offer=…&from=… so the inquiry shows which page produced it.
       const params = new URLSearchParams(location.search);
       const offer = (params.get('offer') || '').slice(0, 40);
-      const fromPage = (params.get('from') || '').slice(0, 200);
+      let fromPage = (params.get('from') || '').slice(0, 200);
+      if (!fromPage.startsWith('/') && document.referrer) {
+        try {
+          const referrer = new URL(document.referrer);
+          if (referrer.origin === location.origin && referrer.pathname !== location.pathname) {
+            fromPage = referrer.pathname.slice(0, 200);
+          }
+        } catch { /* A missing or invalid referrer does not block the form. */ }
+      }
       const offerInput = form.elements.namedItem('offer');
       const fromInput = form.elements.namedItem('from_page');
       if (offerInput instanceof HTMLInputElement && /^[a-z]+$/.test(offer)) offerInput.value = offer;
