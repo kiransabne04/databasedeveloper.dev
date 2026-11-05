@@ -258,7 +258,7 @@ textarea { min-height:145px; resize:vertical; }
 .footer-links strong { color:var(--soft); font-size:.9rem; }
 .footer-links a, .footer-links .link-button { display:block; margin-top:.4rem; font-size:.9rem; }
 
-@media (max-width: 950px) {
+@media (max-width: 1050px) {
   .desktop-nav { display:none; }
   .mobile-menu { display:block; position:relative; }
   .hero-grid { grid-template-columns:1fr; }

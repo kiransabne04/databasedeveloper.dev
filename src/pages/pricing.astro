@@ -4,7 +4,7 @@ import PageHero from '../components/PageHero.astro';
 import { site } from '../config/site';
 ---
 <BaseLayout title="Pricing — WalStack" description="Fixed prices in USD: PostgreSQL performance investigation from $450, upgrade readiness $750–900, remediation sprints and monthly advisory.">
-  <PageHero eyebrow="Pricing" title="Start with a bounded scope." description="Transparent starting prices help both sides decide whether the problem is worth investigating before a long sales process." primaryLabel="Request fit review" primaryHref="/contact" />
+  <PageHero eyebrow="Pricing" title="Start with a bounded scope." description="Transparent starting prices help both sides decide whether the problem is worth investigating before a long sales process." primaryLabel="Request an Investigation" primaryHref="/contact" />
   <section>
     <div class="container grid two">
       <div class="card price-card">
@@ -12,7 +12,8 @@ import { site } from '../config/site';
         <div class="price">{site.foundingOffer.international} <small>founding</small></div>
         <p class="muted">First three suitable engagements. Founding scope: {site.foundingOffer.scope}. Standard price after founding engagements: {site.standardOffer.international}, covering {site.standardOffer.scope}.</p>
         <ul><li>One cluster</li><li>One primary workload</li><li>Evidence-linked findings</li><li>Report in {site.investigationTurnaround}</li><li>Review call</li></ul>
-        <a class="button primary" href="/postgresql-performance-investigation">View scope</a>
+        <a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/pricing">Request an Investigation</a>
+        <p class="small"><a href="/postgresql-performance-investigation">See full scope →</a></p>
       </div>
       <div class="card price-card">
         <span class="kicker">Deadline track</span><h3>PostgreSQL Upgrade Readiness</h3>
