@@ -2,6 +2,18 @@
   "cleanUrls": true,
   "redirects": [
     {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "databasedeveloper.dev" }],
+      "destination": "https://walstack.io/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.databasedeveloper.dev" }],
+      "destination": "https://walstack.io/:path*",
+      "permanent": true
+    },
+    {
       "source": "/crack-sql-interviews-with-these-postgresql-internals-and-real-questions",
       "destination": "https://kiransabne.dev/cracking-the-sql-interview-real-questions-and-postgresql-internals-you-should-know",
       "permanent": true
