@@ -2,6 +2,18 @@
   "cleanUrls": true,
   "redirects": [
     {
+      "source": "/",
+      "has": [{ "type": "host", "value": "databasedeveloper.dev" }],
+      "destination": "https://walstack.io/",
+      "permanent": true
+    },
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "www.databasedeveloper.dev" }],
+      "destination": "https://walstack.io/",
+      "permanent": true
+    },
+    {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "databasedeveloper.dev" }],
       "destination": "https://walstack.io/:path*",
