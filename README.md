@@ -1,6 +1,6 @@
-# databasedeveloper.dev — final starter
+# WalStack — walstack.io
 
-Astro site for the DatabaseDeveloper v3.1 strategy. The site builds locally; review the preview, contact path and old Hashnode URLs before changing the live domain.
+Astro site for WalStack. The site builds locally; review the preview, contact path and old Hashnode URLs before changing the live domain.
 
 ## Positioning
 
@@ -32,7 +32,7 @@ npm run build
 
 ## Before launch
 
-1. Confirm `kiran@databasedeveloper.dev` still receives inquiries.
+1. Confirm `hello@walstack.io` receives inquiries and the form endpoint delivers to the intended inbox.
 2. Optionally set `PUBLIC_CONTACT_ENDPOINT`.
 3. Optionally set analytics env vars.
 4. Deploy to a Vercel Pro preview or another host that permits commercial sites. Vercel Hobby is limited to personal, non-commercial use.

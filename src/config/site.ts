@@ -1,10 +1,10 @@
 export const site = {
-  brand: 'DatabaseDeveloper',
-  legalName: 'DatabaseDeveloper',
-  url: 'https://databasedeveloper.dev',
+  brand: 'WalStack',
+  legalName: 'WalStack',
+  url: 'https://walstack.io',
   description:
-    'Evidence-first PostgreSQL performance investigations for SaaS engineering teams, with specialist capability across SQL Server, pgvector, Snowflake and OLAP workloads.',
-  email: 'kiran@databasedeveloper.dev',
+    'WalStack provides evidence-first PostgreSQL performance investigations for SaaS engineering teams, with specialist capability across SQL Server, pgvector, Snowflake and OLAP workloads.',
+  email: 'hello@walstack.io',
   personName: 'Kiran Sabne',
   linkedinUrl: 'https://www.linkedin.com/in/kiransabne/',
   githubUrl: 'https://github.com/kiransabne04',
@@ -13,7 +13,7 @@ export const site = {
   sqlServerBlogUrl: 'https://mssqlserver.dev',
   // GA4 measurement ID (public). Loads only on the production hostnames below, after consent.
   gaId: import.meta.env.PUBLIC_GA_ID || 'G-4YXPCMHXYD',
-  analyticsHosts: ['databasedeveloper.dev', 'www.databasedeveloper.dev'],
+  analyticsHosts: ['walstack.io', 'www.walstack.io'],
   // Public scheduling page (Cal.com, Calendly, Google Calendar booking page…).
   // Empty hides every "book a call" link, so no page points at a dead booking URL.
   bookingUrl: import.meta.env.PUBLIC_BOOKING_URL || 'https://cal.com/kiransabne13/triage-call',

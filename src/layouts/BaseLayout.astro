@@ -29,9 +29,6 @@ const {
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site.url).toString();
 const gaEnabled = Boolean(site.gaId);
 const isNotFound = Astro.url.pathname.replace(/\/$/, '') === '/404';
-// Search results truncate titles around 60 characters; drop the brand suffix rather than the topic.
-const brandSuffix = ` — ${site.brand}`;
-const pageTitle = title.length > 60 && title.endsWith(brandSuffix) ? title.slice(0, -brandSuffix.length) : title;
 const schemas = [
   {
     '@context': 'https://schema.org',
@@ -64,10 +61,10 @@ const schemas = [
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
     <meta name="generator" content={Astro.generator} />
-    <title>{pageTitle}</title>
+    <title>{title}</title>
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
-    <link rel="alternate" type="application/rss+xml" title="DatabaseDeveloper insights" href={`${site.url}/rss.xml`} />
+    <link rel="alternate" type="application/rss+xml" title="WalStack insights" href={`${site.url}/rss.xml`} />
     <link rel="alternate" type="application/rss+xml" title="PostgreSQL guides" href={`${site.url}/rss/postgresql.xml`} />
     {noindex && <meta name="robots" content="noindex,nofollow" />}
     <meta property="og:title" content={title} />
@@ -80,6 +77,8 @@ const schemas = [
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={image} />
     <meta name="theme-color" content="#07100e" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
@@ -89,9 +88,9 @@ const schemas = [
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="container nav-shell">
-        <a class="brand" href="/" aria-label="DatabaseDeveloper home">
-          <span class="brand-mark" aria-hidden="true">DD</span>
-          <span>DatabaseDeveloper</span>
+        <a class="brand" href="/" aria-label="WalStack home">
+          <span class="brand-mark" aria-hidden="true">W</span>
+          <span>{site.brand}</span>
         </a>
         <nav class="desktop-nav" aria-label="Primary navigation">
           {nav.map((item) => <a href={item.href}>{item.label}</a>)}
@@ -117,11 +116,12 @@ const schemas = [
       <div class="container footer-grid">
         <div>
           <a class="brand" href="/">
-            <span class="brand-mark" aria-hidden="true">DD</span>
-            <span>DatabaseDeveloper</span>
+            <span class="brand-mark" aria-hidden="true">W</span>
+            <span>{site.brand}</span>
           </a>
           <p>Evidence-first database performance investigations by <a href="/about">{site.personName}</a>.</p>
           <p class="small">PostgreSQL first. Specialist capability across SQL Server, pgvector, Snowflake and analytical/OLAP workloads.</p>
+          <p class="small">© 2026 {site.legalName}</p>
         </div>
         <div class="footer-links">
           <div>

@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = new URL('..', import.meta.url).pathname;
-const origin = 'https://databasedeveloper.dev';
+const origin = 'https://walstack.io';
 const legacyArticles = [
   '/postgresql-indexing-when-brin-beats-b-tree',
   '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive',

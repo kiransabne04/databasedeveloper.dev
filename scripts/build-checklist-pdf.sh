@@ -9,7 +9,7 @@ CHROME="${CHROME:-/Applications/Google Chrome.app/Contents/MacOS/Google Chrome}"
 TMP=dist/print-checklist
 
 mkdir -p "$TMP" public/downloads
-sed -E 's#(<a [^>]*href=")/#\1https://databasedeveloper.dev/#g' dist/postgresql-14-upgrade-checklist/index.html > "$TMP/index.html"
+sed -E 's#(<a [^>]*href=")/#\1https://walstack.io/#g' dist/postgresql-14-upgrade-checklist/index.html > "$TMP/index.html"
 trap 'rm -rf "$TMP"' EXIT
 "$CHROME" --headless=new --disable-gpu --no-pdf-header-footer \
   --print-to-pdf=public/downloads/postgresql-14-upgrade-checklist.pdf "$PREVIEW/print-checklist" 2>/dev/null
