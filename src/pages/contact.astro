@@ -6,7 +6,7 @@ const endpoint = site.contactEndpoint;
 const action = endpoint || `mailto:${site.email}`;
 ---
 <BaseLayout title="Request a Database Investigation — WalStack" description="Tell WalStack what is happening in production, which database/platform you run and what evidence is available.">
-  <PageHero eyebrow="Contact" title="Tell me what PostgreSQL is doing in production." description="A short description is enough to start. I will tell you whether a bounded investigation fits, then we agree on scope and timing before any paid work." primaryLabel="Request an Investigation" primaryHref="#inquiry-form" secondaryLabel="How it works" secondaryHref="/how-it-works" />
+  <PageHero eyebrow="Contact" title="Tell me what PostgreSQL is doing in production." description="A short description is enough to start. I will tell you whether a bounded investigation fits, then we agree on scope and timing before any paid work." primaryLabel="Request an Investigation" primaryHref="#inquiry-form" secondaryLabel="See Sample Report" secondaryHref="/sample-report" />
   <section>
     <div class="container grid two">
       <form id="inquiry-form" class="card" action={action} method="POST" enctype={endpoint ? undefined : "text/plain"} data-email={site.email} data-mailto-fallback={endpoint ? "false" : "true"}>
