@@ -5,25 +5,25 @@
       "source": "/",
       "has": [{ "type": "host", "value": "databasedeveloper.dev" }],
       "destination": "https://walstack.io/",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/",
       "has": [{ "type": "host", "value": "www.databasedeveloper.dev" }],
       "destination": "https://walstack.io/",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "databasedeveloper.dev" }],
       "destination": "https://walstack.io/:path*",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "www.databasedeveloper.dev" }],
       "destination": "https://walstack.io/:path*",
-      "permanent": true
+      "statusCode": 301
     },
     {
       "source": "/crack-sql-interviews-with-these-postgresql-internals-and-real-questions",

@@ -52,6 +52,7 @@ import { pg14Facts } from '../data/facts';
         <li>Compare important plans and latency after upgrade.</li>
         <li>Define rollback criteria before the maintenance window.</li>
       </ol>
+      <p>A clean cutover can still leave queries slower. In a <a href="/insights/postgresql-slow-after-major-upgrade">reproduced PostgreSQL 14-to-17 upgrade</a>, missing optimizer statistics changed a join plan; the guide shows the evidence to capture and how the query recovered after analysis.</p>
 
       <h2>Primary sources</h2>
       <p><a href={pg14Facts.postgresqlSource}>PostgreSQL versioning and support policy ↗</a></p>

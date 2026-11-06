@@ -1,6 +1,30 @@
 # Content distribution
 
-Updated 27 October 2026.
+Updated 6 November 2026.
+
+## Share the measured upgrade guide
+
+Guide: `https://walstack.io/insights/postgresql-slow-after-major-upgrade`
+
+LinkedIn draft for Kiran's profile:
+
+> A PostgreSQL major upgrade can finish cleanly and still leave a query slower the next morning.
+>
+> I reproduced this on generated data in a PostgreSQL 14 → 17 lab. The same join took 222 ms before the upgrade and 904 ms immediately after it. The upgraded cluster had no optimizer statistics, so the planner chose a nested loop with 2.7 million lookups. After staged `ANALYZE`, the query returned to 252 ms.
+>
+> The useful upgrade check is to capture important plans and workload timings before the cutover, then compare them after statistics are rebuilt. The guide includes the read-only checks, the measured plans, and the limitations of the lab: https://walstack.io/insights/postgresql-slow-after-major-upgrade
+
+Keep the generated-data disclosure in every excerpt. This is a technical post, not a client result or a promise about other workloads.
+
+For the PostgreSQL-only feed, the guide is already listed in `src/data/posts.ts`. Register `https://walstack.io/rss/postgresql.xml` with Planet PostgreSQL if it has not been registered yet; feed inclusion alone does not submit it to an external publication.
+
+## Relevant link from MSSQLServer.dev
+
+The Hashnode article `https://mssqlserver.dev/in-memory-oltp-for-faster-sql-server-your-complete-guide` discusses a performance feature. Add this short, clearly separated note near its conclusion after checking the technical content is still accurate:
+
+> **Production performance review:** In-Memory OLTP is one possible response to a measured bottleneck. For a fixed-scope review of Query Store, waits, blocking, plan changes and application SQL before choosing an intervention, see [WalStack's SQL Server performance review](https://walstack.io/sql-server-performance).
+
+Avoid putting this consulting link on unrelated CTE, PIVOT or syntax tutorials. The primary WalStack offer remains PostgreSQL Performance Investigation.
 
 ## Planet PostgreSQL
 
