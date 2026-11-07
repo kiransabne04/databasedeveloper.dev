@@ -2,6 +2,7 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import PageHero from '../../components/PageHero.astro';
 import CTA from '../../components/CTA.astro';
+import { site } from '../../config/site';
 ---
 <BaseLayout title="PostgreSQL Plan Regression — WalStack" description="PostgreSQL plan regression triage: compare plans and row estimates, check statistics and generic plans, and know when to investigate deeper.">
   <PageHero eyebrow="Problem guide" title="PostgreSQL Plan Regression" description="Same SQL. Different plan. Very different production behavior." />
@@ -22,6 +23,7 @@ import CTA from '../../components/CTA.astro';
     </ul>
     <h2>First queries to run</h2>
     <p>Read-only. Run them during the problem window if you can; most of these views show current state, not history.</p>
+    <p>Compare representative before-and-after plans in <a href={site.planReaderPostgresUrl} data-track="planreader_click">PlanReader</a>. Check which nodes changed and where estimated rows diverge from actual rows. Then relate that difference to workload frequency and the change timeline.</p>
 <pre><code>-- Tables with the most changes since their last analyze
 SELECT relname,
        n_live_tup,

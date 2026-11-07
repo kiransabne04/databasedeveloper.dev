@@ -58,7 +58,7 @@ ROLLBACK;`}</code></pre>
     <li><strong>Rows removed by filter</strong> on a scan: the index found rows the query then threw away.</li>
     <li><strong>Buffers:</strong> <code>shared read</code> came from disk or the OS cache; <code>temp</code> means a spill.</li>
   </ul>
-  <p>Large plans are hard to read as text. Paste the JSON or text output into <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a> to see which nodes take the time and where estimates go wrong.</p>
+  <p>Large plans are hard to read as text. Paste the JSON or text output into <a href={site.planReaderPostgresUrl} data-track="planreader_click">PlanReader</a> to see which nodes take the time and where estimates go wrong.</p>
   <p>Run it twice and keep the second result if you want warm-cache numbers, and say which you are comparing. On a primary under load, prefer a recent restore or a replica with the same data and settings.</p>
 
   <ArticleOffer offer="investigation" title="Cannot reproduce the slow plan, or cannot run EXPLAIN ANALYZE on production?" text="That is the usual case on a busy primary. An investigation works from pg_stat_statements snapshots, auto_explain output and wait events collected read-only, and ranks the causes with a validation plan for each." />
