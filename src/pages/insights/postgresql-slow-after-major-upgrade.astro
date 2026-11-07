@@ -90,7 +90,7 @@ ALTER EXTENSION pg_stat_statements UPDATE;`}</code></pre>
   <h3>Validation</h3>
   <ul>
     <li>Compare the top statements by total time and the baseline plans with the pre-upgrade capture.</li>
-    <li>Watch for plans that changed shape, not just time: a nested loop where there was a hash join is the signature of a missing or stale estimate. <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a> flags estimate errors per node if you paste in the before and after plans.</li>
+    <li>Watch for plans that changed shape, not just time: a nested loop where there was a hash join is the signature of a missing or stale estimate. <a href={site.planReaderPostgresUrl} data-track="planreader_click">PlanReader</a> flags estimate errors per node if you paste in the before and after plans.</li>
     <li>Keep the rollback path documented: on RDS the pre-upgrade snapshot; self-managed with <code>--link</code>, the old cluster cannot be started once the new one has run, so take a backup first.</li>
   </ul>
 

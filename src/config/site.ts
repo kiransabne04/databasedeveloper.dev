@@ -9,7 +9,10 @@ export const site = {
   linkedinUrl: 'https://www.linkedin.com/in/kiransabne/',
   githubUrl: 'https://github.com/kiransabne04',
   personalSiteUrl: 'https://kiransabne.dev',
-  planReaderUrl: 'https://planreader.dev',
+  planReaderUrl: 'https://www.planreader.dev/',
+  planReaderPostgresUrl: 'https://www.planreader.dev/postgresql-execution-plan-analyzer',
+  planReaderSqlServerUrl: 'https://www.planreader.dev/sql-server-execution-plan-analyzer',
+  planReaderSnowflakeUrl: 'https://www.planreader.dev/snowflake-query-profile-analyzer',
   sqlServerBlogUrl: 'https://mssqlserver.dev',
   // GA4 measurement ID (public). Loads only on the production hostnames below, after consent.
   gaId: import.meta.env.PUBLIC_GA_ID || 'G-4YXPCMHXYD',
