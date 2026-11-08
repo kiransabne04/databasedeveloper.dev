@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import CTA from '../components/CTA.astro';
+import { site } from '../config/site';
 ---
 <BaseLayout title="Snowflake Query & Workload Performance — WalStack" description="Snowflake query and workload performance capability across query history, warehouse sizing, pruning, spills, clustering, concurrency and cost/performance.">
   <PageHero eyebrow="Analytical capability" title="Snowflake Query & Workload Performance" description="Investigate expensive analytical workloads by connecting query history, pruning, spills, clustering, concurrency and warehouse behavior to cost and latency." />
@@ -12,6 +13,7 @@ import CTA from '../components/CTA.astro';
   </div></section>
   <section><div class="container prose">
     <h2>Start from query history, not one query</h2>
+    <p>For an individual operator profile, <a href={site.planReaderSnowflakeUrl} data-track="planreader_click">inspect it with PlanReader</a>. A workload review also uses query history, warehouse behavior and the cost or latency pattern over time.</p>
     <p><code>SNOWFLAKE.ACCOUNT_USAGE.QUERY_HISTORY</code> keeps a year of queries, with up to 45 minutes of latency. Grouping by <code>query_parameterized_hash</code>, warehouse and <code>query_tag</code> shows which workload patterns account for elapsed time and warehouse use. The columns that usually explain a slow or expensive pattern:</p>
     <div class="table-wrap">
       <table>

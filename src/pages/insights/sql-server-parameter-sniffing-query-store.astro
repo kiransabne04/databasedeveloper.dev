@@ -49,7 +49,7 @@ CROSS APPLY sys.dm_exec_query_plan(ps.plan_handle) AS qp
 CROSS APPLY qp.query_plan.nodes('declare namespace sp="http://schemas.microsoft.com/sqlserver/2004/07/showplan";
   //sp:ParameterList/sp:ColumnReference') AS x(p)
 WHERE ps.object_id = OBJECT_ID('dbo.CustomerSummary');`}</code></pre>
-  <p>Then compare the compiled value's row count with the values that run slowly. Check the column's skew directly: <code>SELECT TOP (20) CustomerId, COUNT(*) FROM dbo.Orders GROUP BY CustomerId ORDER BY COUNT(*) DESC;</code> To read the two actual plans node by node, save each as <code>.sqlplan</code> and open it in <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a>, which flags where estimated and actual rows diverge.</p>
+  <p>Then compare the compiled value's row count with the values that run slowly. Check the column's skew directly: <code>SELECT TOP (20) CustomerId, COUNT(*) FROM dbo.Orders GROUP BY CustomerId ORDER BY COUNT(*) DESC;</code> To read the two actual plans node by node, save each as <code>.sqlplan</code> and open it in <a href={site.planReaderSqlServerUrl} data-track="planreader_click">PlanReader</a>, which flags where estimated and actual rows diverge.</p>
 
   <h2>Fixes, measured</h2>
   <div class="table-wrap"><table>

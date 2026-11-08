@@ -44,6 +44,27 @@ const schema = {
 
   <section>
     <div class="container">
+      <div class="section-head">
+        <div><span class="eyebrow">From plan to decision</span><h2>See the plan, then investigate the workload around it.</h2></div>
+        <p>An execution plan records one query execution. Production symptoms also depend on how often it runs, what sessions wait for, and what changed.</p>
+      </div>
+      <div class="grid two">
+        <div class="card">
+          <h3>Analyze a plan yourself</h3>
+          <p>PlanReader explains PostgreSQL plan nodes and flags issues such as estimate errors, scans and spills. Analysis runs in your browser.</p>
+          <p><a href={site.planReaderPostgresUrl} data-track="planreader_click">Analyze an execution plan with PlanReader ↗</a></p>
+        </div>
+        <div class="card">
+          <h3>Decide what to change in production</h3>
+          <p>I review the dominant workload alongside plans, waits, locks, connection behavior and recent changes. The report ranks findings, trade-offs and a way to validate each proposed change.</p>
+          <p><a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/postgresql-performance-investigation">Request an Investigation</a></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="container">
       <div class="section-head"><div><span class="eyebrow">Process</span><h2>Bounded and async-first.</h2></div><p>Report delivered within {site.investigationTurnaround} of receiving the agreed evidence. No 24×7 incident-response promise and no production write access.</p></div>
       <InvestigationWorkflow />
     </div>
@@ -65,7 +86,7 @@ const schema = {
           <li>Application symptom and recent-change timeline</li>
           <li>On RDS/Aurora: Database Insights, CloudWatch and Enhanced Monitoring exports for the same window (<a href="/aws-rds-aurora-postgresql">what each answers</a>)</li>
         </ul>
-        <p><a href={site.planReaderUrl} data-track="planreader_click">Inspect a PostgreSQL plan with PlanReader ↗</a></p>
+        <p><a href={site.planReaderPostgresUrl} data-track="planreader_click">Analyze an execution plan with PlanReader ↗</a></p>
       </div>
       <div class="card">
         <span class="kicker">You receive</span>
