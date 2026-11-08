@@ -1,0 +1,32 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { site } from '../config/site';
+---
+<BaseLayout title="WalStack Partner Kit | PostgreSQL Specialist" description="Printable one-page WalStack capability statement and partner workflow for scoped PostgreSQL investigations and upgrade validation.">
+  <div class="container hero partner-kit">
+    <span class="eyebrow">Partner capability statement · November 2026</span>
+    <h1>WalStack: PostgreSQL evidence for client decisions</h1>
+    <p class="lede">Founder-led specialist reviews for teams facing latency, contention, regressions, cost, or a risky major-version upgrade on RDS, Aurora or self-managed PostgreSQL.</p>
+    <p class="print-control"><button class="button" type="button" onclick="window.print()">Print or save as PDF</button></p>
+    <div class="grid two">
+      <div><h2>Scoped services</h2><ul>
+        <li>Performance investigation: one cluster and dominant workload; read-only evidence, ranked findings and review call.</li>
+        <li>Upgrade readiness: versions, extensions, representative workload baseline, critical plans, risk register, go/no-go and rollback criteria.</li>
+        <li>Remediation or migration validation: agreed objective, acceptance measures and client-owned production operations.</li>
+      </ul></div>
+      <div><h2>Working model</h2><ul>
+        <li>Referral: partner introduces the client; WalStack scopes and contracts directly.</li>
+        <li>White-label: partner holds the relationship; written subcontract defines confidentiality, deliverables and review permissions.</li>
+        <li>Client runs and reviews collection. No open-ended DBA staffing, 24×7 support or production change authority.</li>
+      </ul></div>
+    </div>
+    <h2>From introduction to delivery</h2>
+    <p>Intro and fit → written scope and ownership → client-reviewed evidence → report and review call → client validation or a separately scoped sprint. Communication is async-first.</p>
+    <h2>Inspect the work</h2>
+    <p><a href="/sample-report">Synthetic performance report</a> · <a href="/sample-upgrade-readiness-report">Synthetic upgrade report</a> · <a href="/case-studies">Reproducible labs</a> · <a href="/evidence-collection">Published evidence collector</a> · <a href={site.planReaderUrl}>PlanReader</a>.</p>
+    <h2>Indicative economics</h2>
+    <p>Direct offer price tests are published on <a href="/pricing">pricing</a>. Partner rates, margins or referral fees are subject to a separate written agreement; none are promised by this kit. Availability is confirmed per engagement.</p>
+    <p><strong>Contact:</strong> <a href="/contact?offer=partnership&amp;from=/partner-kit">Explore a Technical Partnership</a> · <a href={`mailto:${site.email}`}>{site.email}</a></p>
+  </div>
+  <style>@media print { .site-header,.site-footer,.consent-banner,.print-control { display:none !important } .partner-kit { max-width:none; padding:0 !important; font-size:10pt } .partner-kit h1 { font-size:24pt } .partner-kit h2 { font-size:13pt; margin-bottom:0 } .partner-kit a { color:#111; text-decoration:underline } @page { size:A4; margin:13mm } }</style>
+</BaseLayout>

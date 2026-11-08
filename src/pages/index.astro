@@ -8,37 +8,33 @@ import { site } from '../config/site';
 import { pg14Facts } from '../data/facts';
 ---
 <BaseLayout
-  title="PostgreSQL Performance Consulting for RDS & Aurora | WalStack"
-  description={`WalStack offers fixed-scope PostgreSQL performance investigations for SaaS teams on RDS, Aurora or self-managed. Read-only evidence, ranked findings, report in ${site.investigationTurnaround}.`}
+  title="PostgreSQL Performance Investigations & Upgrade Reviews | WalStack"
+  description="Independent PostgreSQL performance investigations and upgrade-readiness reviews for SaaS engineering teams on RDS, Aurora and self-managed PostgreSQL."
 >
   <div class="container hero">
     <div class="hero-grid">
       <div>
         <span class="eyebrow"><span>PostgreSQL performance for <span class="keep-case">SaaS</span> teams</span></span>
-        <h1>WalStack — Production PostgreSQL performance, investigated from evidence—not guesses.</h1>
+        <h1>Find the database bottleneck. Make the next change with confidence.</h1>
         <p class="lede">
-          Find what is slowing production, know which change to make first, and prove it worked.
-          For SaaS engineering teams dealing with rising latency, high database cost, query regressions,
-          locking, connection pressure or risky PostgreSQL upgrades.
+          Independent PostgreSQL performance investigations and upgrade-readiness reviews for SaaS engineering
+          teams on RDS, Aurora and self-managed PostgreSQL.
         </p>
         <p class="notice hero-deadline">
-          <strong>PostgreSQL 14 stops getting fixes on {pg14Facts.communityEol}.</strong>
-          On RDS and Aurora, Extended Support charges start {pg14Facts.rdsExtendedSupportYear1Start}.
+          <strong>PostgreSQL 14 stops getting fixes on {pg14Facts.communityEol}.</strong>{' '}
+          On RDS and Aurora, Extended Support charges start {pg14Facts.rdsExtendedSupportYear1Start}.{' '}
           <a href="/postgresql-14-eol">See the dates →</a>
         </p>
         <div class="actions">
-          <a class="button primary" data-track="primary_cta_click" href="/contact">Request an Investigation</a>
-          <a class="button ghost" data-track="sample_report_click" href="/sample-report">See sample report</a>
+          <a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/">Request an Investigation</a>
+          <a class="button ghost" data-track="sample_report_click" href="/sample-report">See a Sample Report</a>
         </div>
-        <p class="small">Done by me, Kiran Sabne: about 8 years running production PostgreSQL, Aurora/RDS, SQL Server and Snowflake. <a href="/about">More about me →</a></p>
-        {site.foundingOffer.enabled && (
-          <p class="small muted">Founding investigation: {site.foundingOffer.international} USD for the first three suitable engagements, covering {site.foundingOffer.scope}.</p>
-        )}
+        <p class="small">Work directly with Kiran Sabne, a database and backend engineer with about 8 years of experience. <a href="/about">See my background →</a></p>
         <p class="small muted">One cluster and its dominant workload · client-run, read-only evidence · written findings and review call</p>
       </div>
       <aside class="hero-proof">
         <span class="eyebrow">The deliverable</span>
-        <h3>A decision your team can use</h3>
+        <h2>A decision your team can use</h2>
         <ul class="signal-list">
           <li>Ranked findings linked to workload evidence</li>
           <li>Trade-offs across reads, writes and concurrency</li>
@@ -127,5 +123,11 @@ import { pg14Facts } from '../data/facts';
 
   <section>
     <div class="container"><CTA /></div>
+  </section>
+  <section>
+    <div class="container cta-panel">
+      <div><span class="eyebrow">For delivery partners</span><h2>Need a database specialist for a client engagement?</h2><p class="muted">I work with fractional CTOs, cloud and DevOps firms, and software agencies on scoped investigations and upgrade validation.</p></div>
+      <div class="actions"><a class="button" data-track="partner_cta_click" href="/partners">Explore a Technical Partnership</a></div>
+    </div>
   </section>
 </BaseLayout>

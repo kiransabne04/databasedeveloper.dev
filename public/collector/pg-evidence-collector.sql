@@ -2,9 +2,11 @@
 -- https://walstack.io/evidence-collection
 --
 -- Read-only. Runs catalog and statistics queries only; it changes no data or settings
--- outside this session. Supports PostgreSQL 13 and later, including Amazon RDS and Aurora.
+-- outside this session. Designed for PostgreSQL 13 and later. Tested on 14 and 17;
+-- RDS/Aurora operation and permissions need separate review before use.
 --
--- Run as a role with pg_monitor (on RDS/Aurora, the master user can GRANT pg_monitor),
+-- Run as a dedicated role with DBA-reviewed privileges (pg_monitor may expose
+-- more statistics than needed and may not suffice for every optional view),
 -- connected to the application database:
 --
 --   psql "host=... dbname=... user=..." -X -f pg-evidence-collector.sql -o evidence.txt

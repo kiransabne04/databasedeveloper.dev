@@ -1,0 +1,25 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+---
+<BaseLayout title="Technical Partnerships for PostgreSQL Work | WalStack" description="Scoped PostgreSQL performance investigations and upgrade validation for fractional CTOs, cloud and DevOps consultancies, and software agencies.">
+  <PageHero eyebrow="Technical partnerships" title="Bring a database specialist into the work when your client needs one." description="WalStack works with fractional CTOs, cloud and DevOps firms, migration specialists, and software agencies on bounded PostgreSQL investigations and upgrade validation." primaryLabel="Explore a Technical Partnership" primaryHref="/contact?offer=partnership&from=/partners" primaryTrack="partner_cta_click" secondaryLabel="Read the partner kit" secondaryHref="/partner-kit" />
+  <section><div class="container grid three">
+    <div class="card"><h2>Performance investigations</h2><p>One cluster, one dominant workload or problem. Client-run evidence, ranked findings, risk and a validation plan.</p></div>
+    <div class="card"><h2>Upgrade readiness</h2><p>Version and extension inventory, workload baseline, representative plan checks, blockers and go/no-go criteria.</p></div>
+    <div class="card"><h2>Migration validation</h2><p>Agreed before/after measures and acceptance criteria for a specific change. Production operations stay with the client and its delivery owner.</p></div>
+  </div></section>
+  <section><div class="container prose">
+    <h2>How collaboration works</h2>
+    <ol>
+      <li><strong>Fit and ownership.</strong> We agree on the client problem, which team owns the relationship and production operations, and whether referral or white-label delivery fits.</li>
+      <li><strong>Written scope.</strong> We define the cluster, workload, evidence, deliverables, exclusions, price and delivery window before any client work.</li>
+      <li><strong>Client-reviewed evidence.</strong> The client runs agreed read-only collection and reviews/redacts output before sharing it through an agreed private channel. No credentials or dumps through this site.</li>
+      <li><strong>Documented decision.</strong> I provide evidence-linked findings and discuss them with the agreed delivery team. The client approves and executes production changes.</li>
+    </ol>
+    <p>Work is async-first with scheduled calls, confidentiality terms and clear responsibility boundaries. Availability and any referral economics are agreed per engagement; there is no standing emergency or 24×7 commitment.</p>
+    <p>Review the <a href="/sample-report">synthetic performance report</a>, <a href="/sample-upgrade-readiness-report">synthetic upgrade-readiness example</a>, <a href="/case-studies">reproducible lab cases</a>, <a href="/evidence-collection">collector</a>, and <a href="https://github.com/kiransabne04/pg_stat_index_queries">experimental extension</a>.</p>
+    <p><a class="button" href="/partner-kit">Open printable partner kit</a></p>
+    <p><a class="button primary" data-track="partner_cta_click" href="/contact?offer=partnership&amp;from=/partners">Explore a Technical Partnership</a></p>
+  </div></section>
+</BaseLayout>

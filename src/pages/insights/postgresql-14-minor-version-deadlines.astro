@@ -8,14 +8,14 @@ import { site } from '../../config/site';
 const postUrl = `${site.url}/insights/postgresql-14-minor-version-deadlines`;
 const schema = [{
   '@context': 'https://schema.org', '@type': 'BlogPosting',
-  headline: 'RDS PostgreSQL 14.18 and 14.19 lose standard support on 31 October 2026',
-  mainEntityOfPage: postUrl, datePublished: '2026-10-13', dateModified: '2026-10-13',
+  headline: 'RDS PostgreSQL 14.18 and 14.19 reached end of standard support on 31 October 2026',
+  mainEntityOfPage: postUrl, datePublished: '2026-10-13', dateModified: '2026-11-08',
   author: { '@type': 'Person', name: site.personName, url: `${site.url}/about` },
   publisher: { '@type': 'Organization', name: site.brand, url: site.url }
 }];
 ---
-<BaseLayout ogType="article" published="2026-10-13" updated="2026-10-13" schema={schema} title="RDS PostgreSQL 14.18/14.19 Lose Standard Support 31 Oct 2026 — WalStack" description="Some PostgreSQL 14 minor versions on RDS and Aurora lose standard support months before the major version. Dates, what RDS does next, how to check.">
-  <PageHero eyebrow="Time-sensitive · verified 13 October 2026" title="Your PostgreSQL 14 deadline may be 31 October, not February." description="The PG14 dates most teams plan around are 12 November 2026 (community) and 28 February 2027 (RDS and Aurora). Some 14.x minor versions reach end of standard support sooner." primaryLabel="See all PG14 dates" primaryHref="/postgresql-14-eol" secondaryLabel="Upgrade readiness" secondaryHref="/postgresql-upgrade-readiness" />
+<BaseLayout ogType="article" published="2026-10-13" updated="2026-11-08" schema={schema} title="RDS PostgreSQL 14.18/14.19 Standard Support Ended 31 Oct 2026 — WalStack" description="Some PostgreSQL 14 minor versions on RDS and Aurora reach end of standard support months before the major version. Dates, what RDS does next, how to check.">
+  <PageHero eyebrow="Time-sensitive · verified 8 November 2026" title="Some PostgreSQL 14 minor-version deadlines have already passed." description="RDS for PostgreSQL 14.18 and 14.19 reached end of standard support on 31 October 2026. Aurora 14.17 and 14.18 have separate upcoming dates. Check the version actually running before planning the major upgrade." primaryLabel="See all PG14 dates" primaryHref="/postgresql-14-eol" secondaryLabel="Upgrade readiness" secondaryHref="/postgresql-upgrade-readiness" />
 
   <section><div class="container prose">
     <h2>The dates</h2>
@@ -59,7 +59,7 @@ aws rds describe-pending-maintenance-actions</code></pre>
 
     <h2>If you are on an affected version</h2>
     <ol>
-      <li><strong>Upgrade on your schedule, not AWS’s.</strong> Pick a time before the deadline, and move to a current 14.x minor version that the calendar supports until the major-version date.</li>
+      <li><strong>Check pending maintenance now.</strong> If your minor-version date has passed, inspect the running version and pending actions. Where a deadline is still ahead, schedule a supported 14.x minor version on your own tested change window.</li>
       <li><strong>Take a baseline first.</strong> Save a <code>pg_stat_statements</code> snapshot (or run the <a href="/evidence-collection">evidence collector</a>) so you can compare before and after.</li>
       <li><strong>Upgrade a non-production copy first,</strong> including read replicas and extensions, and check that the application reconnects cleanly after the restart.</li>
       <li><strong>Don’t stop at the minor version.</strong> PostgreSQL 14 itself loses standard support on {pg14Facts.rdsStandardSupportEnd}, and Extended Support pricing starts {pg14Facts.rdsExtendedSupportYear1Start}. The minor upgrade buys about four months.</li>

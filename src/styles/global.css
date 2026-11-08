@@ -117,6 +117,7 @@ hr { border:0; border-top:1px solid var(--line); margin:1.8rem 0; }
   background:linear-gradient(180deg, rgba(156,246,198,.06), rgba(255,255,255,.015));
   border-radius:var(--radius); padding:1.35rem;
 }
+.hero-proof h2 { font-size:1.35rem; margin:.1rem 0 .55rem; }
 .signal-list { list-style:none; padding:0; margin:1rem 0 0; display:grid; gap:.72rem; }
 .signal-list li { display:flex; gap:.7rem; color:var(--soft); }
 .signal-list li::before { content:"✓"; color:var(--accent); font-weight:900; }

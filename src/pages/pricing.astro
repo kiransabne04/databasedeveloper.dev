@@ -2,109 +2,25 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import { site } from '../config/site';
-
-const faqs = [
-  {
-    q: 'What do you need from us to start an investigation?',
-    a: `A short description of the symptom, your PostgreSQL version and platform, and output from the published read-only evidence collector, ideally from a normal and a slow window. No production write access or credentials are needed.`
-  },
-  {
-    q: 'How long does an investigation take?',
-    a: `The written report arrives within ${site.investigationTurnaround} of receiving the evidence, followed by a review call with your team.`
-  },
-  {
-    q: 'What does the founding price cover?',
-    a: `${site.foundingOffer.international} USD for the first three suitable engagements, covering ${site.foundingOffer.scope}. The standard price afterwards is ${site.standardOffer.international} USD.`
-  },
-  {
-    q: 'Do you make the changes on our database?',
-    a: 'Your engineering team owns production changes. If you want help implementing and validating the findings, a remediation sprint is scoped separately after the report is reviewed.'
-  },
-  {
-    q: 'Do you work with AWS RDS and Aurora PostgreSQL?',
-    a: 'Yes. RDS and Aurora PostgreSQL are the main focus, along with self-managed PostgreSQL. SQL Server, pgvector and Snowflake reviews are available where the problem fits.'
-  },
-  {
-    q: 'Is our data sent to an AI service?',
-    a: 'No. Your evidence is never sent to an AI service without your written consent, and every finding is verified by hand against your evidence.'
-  },
-  {
-    q: 'Do you offer 24×7 or emergency support?',
-    a: 'No. The work is async-first with scheduled review calls. Advisory has no on-call or emergency SLA.'
-  }
-];
-
-const schema = {
-  '@context': 'https://schema.org',
-  '@type': 'FAQPage',
-  mainEntity: faqs.map(({ q, a }) => ({
-    '@type': 'Question',
-    name: q,
-    acceptedAnswer: { '@type': 'Answer', text: a }
-  }))
-};
 ---
-<BaseLayout title="Pricing — WalStack" description="Fixed prices in USD: PostgreSQL performance investigation from $450, upgrade readiness $750–900, remediation sprints, monthly advisory, a $149 single slow-query fix and $60/hour contract work." schema={schema}>
-  <PageHero eyebrow="Pricing" title="Start with a bounded scope." description="Transparent starting prices help both sides decide whether the problem is worth investigating before a long sales process." primaryLabel="Request an Investigation" primaryHref="/contact" />
-  <section>
-    <div class="container grid two">
-      <div class="card price-card">
-        <span class="kicker">Core</span><h3>PostgreSQL Performance Investigation</h3>
-        <div class="price">{site.foundingOffer.international} <small>USD · founding</small></div>
-        <p class="muted">First three suitable engagements. Founding scope: {site.foundingOffer.scope}. Standard price after founding engagements: {site.standardOffer.international}, covering {site.standardOffer.scope}.</p>
-        <ul><li>One cluster</li><li>One primary workload</li><li>Evidence-linked findings</li><li>Report in {site.investigationTurnaround}</li><li>Review call</li></ul>
-        <a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/pricing">Request an Investigation</a>
-        <p class="small"><a href="/postgresql-performance-investigation">See full scope →</a></p>
-      </div>
-      <div class="card price-card">
-        <span class="kicker">Deadline track</span><h3>PostgreSQL Upgrade Readiness</h3>
-        <div class="price">{site.upgradeOffer.international} <small>USD</small></div>
-        <p class="muted">Version/extensions, application risk, baseline, plan-regression checks and post-upgrade validation.</p>
-        <a class="button" href="/postgresql-upgrade-readiness">View review</a>
-      </div>
-      <div class="card price-card">
-        <span class="kicker">After investigation</span><h3>Remediation Sprint</h3>
-        <div class="price">$2,000–3,000 <small>USD</small></div>
-        <p class="muted">Bounded implementation support and before/after validation with the client engineering team.</p>
-        <a class="button" href="/contact">Discuss scope</a>
-      </div>
-      <div class="card price-card">
-        <span class="kicker">Recurring</span><h3>Database Advisory</h3>
-        <div class="price">~$900+ <small>USD / month</small></div>
-        <p class="muted">Release/schema/query reviews and bounded async advisory. No emergency/on-call SLA.</p>
-        <a class="button" href="/contact">Discuss fit</a>
-      </div>
-      <div class="card price-card">
-        <span class="kicker">Smaller start</span><h3>Slow Query Fix</h3>
-        <div class="price">$149 <small>USD · one query</small></div>
-        <p class="muted">Send one slow query with its execution plan. Within 48 hours you get the cause, the fix (an index, a rewrite or a setting), its risk and rollback, and how to verify it.</p>
-        <ul><li>Query text and <code>EXPLAIN (ANALYZE, BUFFERS)</code> output</li><li>PostgreSQL version and platform</li><li>Reply in 48 hours</li></ul>
-        <p class="small muted">If the cause is workload-wide rather than one query, I will say so and suggest the investigation instead.</p>
-        <a class="button" href="/contact?offer=query&amp;from=/pricing">Send your query</a>
-      </div>
-      <div class="card price-card">
-        <span class="kicker">Contract</span><h3>Hourly and Contract Work</h3>
-        <div class="price">$60 <small>USD / hour</small></div>
-        <p class="muted">A database engineer embedded with your team for a few weeks: PostgreSQL, SQL Server or Snowflake. Contracts from 10 hours a week. Weekly hours, scope and duration agreed in writing before work starts. Business hours, no on-call.</p>
-        <a class="button" href="/contact?offer=contract&amp;from=/pricing">Check availability</a>
-      </div>
-    </div>
-  </section>
-  <section><div class="container prose">
-    <h2>Which one fits?</h2>
-    <ul>
-      <li><strong>Something is slow, expensive or unstable now</strong> and the team is unsure which change is safe: start with the <a href="/postgresql-performance-investigation">performance investigation</a>.</li>
-      <li><strong>Still on PostgreSQL 14</strong> or planning any major-version upgrade: the <a href="/postgresql-upgrade-readiness">upgrade readiness review</a>. See the <a href="/postgresql-14-eol">PG14 dates</a>.</li>
-      <li><strong>Findings are agreed and the team wants help implementing and validating them:</strong> a remediation sprint, scoped after an investigation.</li>
-      <li><strong>One query is slow</strong> and you have its plan: the <strong>slow query fix</strong>.</li>
-      <li><strong>You need extra database hands</strong> for a few weeks: hourly or contract work.</li>
-      <li><strong>Regular schema, release and query reviews</strong> without an on-call commitment: advisory.</li>
-    </ul>
-    <p>Not sure? Describe the symptom on the <a href="/contact">contact page</a>; the reply says which option fits, or that none does.</p>
+<BaseLayout title="Scope and Pricing | PostgreSQL Assessments | WalStack" description="WalStack quotes fixed-scope PostgreSQL performance investigations, upgrade-readiness reviews and validation sprints after a short fit review.">
+  <PageHero eyebrow="Scope and pricing" title="A clear scope and fixed quote before paid work." description="Tell me the cluster, the business problem and the decision you need to make. I will review fit, evidence and timing, then send a written scope and fee. There is no open-ended hourly commitment." primaryLabel="Request an Investigation" primaryHref="/contact?offer=investigation&from=/pricing" />
+  <section><div class="container grid three">
+    <div class="card price-card"><span class="kicker">01 · Core assessment</span><h2>PostgreSQL Performance Investigation</h2><p><strong>{site.investigationOffer.display}</strong></p><p>{site.investigationOffer.scope}. Client-run, read-only evidence; ranked findings, risk, validation plan, written report and review call.</p><p>Target: {site.investigationTurnaround} after usable evidence, subject to availability.</p><a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/pricing">Request an Investigation</a><p><a href="/postgresql-performance-investigation">See full scope →</a></p></div>
+    <div class="card price-card"><span class="kicker">02 · Upgrade decision</span><h2>PostgreSQL Upgrade Readiness Review</h2><p><strong>{site.upgradeOffer.display}</strong></p><p>{site.upgradeOffer.scope}. Version and extension compatibility, representative baseline, critical plan checks, blockers, go/no-go and rollback criteria, written report and review call.</p><a class="button" href="/contact?offer=upgrade&amp;from=/pricing">Ask about upgrade readiness</a><p><a href="/postgresql-upgrade-readiness">See full scope →</a></p></div>
+    <div class="card price-card"><span class="kicker">03 · After qualification</span><h2>Remediation or Migration Validation Sprint</h2><p><strong>{site.sprintOffer.display}</strong></p><p>{site.sprintOffer.scope}. Agreed environments, acceptance criteria and before/after measurement. Client owns production operations. Available only after qualification.</p><a class="button" href="/contact?offer=sprint&amp;from=/pricing">Discuss a sprint</a></div>
   </div></section>
   <section><div class="container prose">
-    <h2>Questions</h2>
-    {faqs.map(({ q, a }) => (<><h3>{q}</h3><p>{a}</p></>))}
+    <h2>Which review fits?</h2>
+    <div class="table-wrap"><table><thead><tr><th>Your decision</th><th>Start here</th><th>What you receive</th></tr></thead><tbody>
+      <tr><td>Why is latency, contention or database cost changing?</td><td><a href="/postgresql-performance-investigation">Performance investigation</a></td><td>Ranked causes, uncertainty and safe validation steps</td></tr>
+      <tr><td>Can we move to a target PostgreSQL version safely?</td><td><a href="/postgresql-upgrade-readiness">Upgrade readiness</a></td><td>Blockers, baseline, go/no-go and rollback criteria</td></tr>
+      <tr><td>Did a specific agreed change meet its target?</td><td>Validation sprint after qualification</td><td>Before/after measures against acceptance criteria</td></tr>
+    </tbody></table></div>
+    <h2>How the quote is set</h2><p>I scope one cluster and one dominant workload or upgrade path first. The quote states evidence required, deliverables, exclusions, review time and the delivery window. Additional clusters, unrelated workloads or implementation need a separate scope. Advisory is available for existing clients or qualified buyers after an assessment.</p>
+    <ol><li>Send the symptom or upgrade decision through <a href="/contact">the inquiry form</a>.</li><li>I review fit, evidence and timing, then send a written scope and fixed fee.</li><li>After acceptance, your team shares reviewed evidence and I deliver the report and review call.</li></ol>
+    <h2>What your team owns</h2><p>Your team reviews and runs evidence collection, approves access and data handling, and executes production changes. WalStack does not include emergency response, 24×7 support or unlimited DBA staffing. A report may conclude that the evidence does not support a clear change; it will name the uncertainty and next test.</p>
+    <h2>Legacy inquiries</h2><p>If you came here for a single-query review or hourly help, <a href="/contact?offer=other&amp;from=/pricing">describe the decision you need to make</a>. I will say whether a bounded assessment fits or suggest another route.</p>
+    <p><a href="/sample-report">See a synthetic performance report</a> or <a href="/sample-upgrade-readiness-report">synthetic upgrade-readiness report</a> before asking for a quote.</p>
   </div></section>
-  <section><div class="container prose"><p class="notice"><strong>Scope note:</strong> Prices are starting points, not a promise for every environment. Final scope depends on evidence, number of workloads, platform complexity and turnaround.</p></div></section>
 </BaseLayout>
