@@ -6,6 +6,8 @@ Run `npm ci`, `npm run build`, then `npm run preview -- --host 127.0.0.1 --port 
 
 Screenshots from the built local preview: [desktop homepage](audits/screenshots/home-desktop.png), [390px homepage](audits/screenshots/home-mobile.png), [desktop partner page](audits/screenshots/partners-desktop.png), [390px partnership inquiry](audits/screenshots/contact-mobile.png). Chrome emulation measured `scrollWidth` equal to viewport width on the tested pages; partnership preselection was `partnership`.
 
+Chrome's print-to-PDF output for `/partner-kit` was verified as one A4 page; that PDF is available at `/downloads/walstack-partner-kit.pdf`.
+
 Local Lighthouse against the static preview, using the installed Chrome on 8 November 2026:
 
 | Mode | Performance | Accessibility | Best practices | SEO | LCP | CLS |
