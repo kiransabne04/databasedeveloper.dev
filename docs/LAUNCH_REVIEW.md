@@ -27,6 +27,8 @@ Public values only. `.env.example` documents `PUBLIC_GA_ID`, `PUBLIC_PLAUSIBLE_D
 
 ## Live checks before publishing
 
+Read-only URL check on 8 November 2026: the Cal.com booking page returned HTTP 200. The Formspree endpoint returned HTTP 405 to GET and 400 to HEAD; it is a POST endpoint, so these requests do not verify submission or inbox delivery. No test inquiry or booking was sent.
+
 1. Confirm the final public copy and fixed-quote approach, availability, and the written employer approval boundaries.
 2. Send a test investigation and partner inquiry. Confirm Formspree dashboard entries and delivery to `hello@walstack.io`; check the selected offer, source page and UTM fields. Test invalid input and the accessible error path on a preview without load testing the live endpoint.
 3. Open the Cal.com triage URL, confirm actual available slots and a confirmation email. No live booking was made by this implementation.

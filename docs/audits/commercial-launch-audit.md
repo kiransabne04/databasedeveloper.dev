@@ -20,7 +20,7 @@ PG14 community final release: 12 November 2026 ([PostgreSQL](https://www.postgre
 
 - The founder confirmed written employer approval with no relevant restrictions, but the exact approval text should still be checked before first client delivery. Availability remains subject to capacity.
 - Proof for detailed personal production claims on About.
-- Formspree inbox delivery, Cal.com availability, GA4/Plausible event receipt, Search Console indexing, real mobile/Lighthouse results, and any indexed legacy URLs beyond the migration inventory.
+- Formspree inbox delivery, actual Cal.com slots/confirmation, GA4/Plausible event receipt, Search Console indexing, and any indexed legacy URLs beyond the migration inventory. Read-only URL checks found Cal.com HTTP 200; Formspree only accepts POST, so GET/HEAD could not verify delivery. Local mobile/Lighthouse results are in `docs/LAUNCH_REVIEW.md`.
 - Client evidence retention, access, deletion and AI-processing terms. These must be agreed before a paid engagement.
 
 ## Priority
