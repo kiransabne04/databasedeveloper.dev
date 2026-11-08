@@ -39,6 +39,7 @@ const action = endpoint || `mailto:${site.email}`;
         </div>
         <div class="actions"><button class="button primary" type="submit">{endpoint ? 'Send investigation request' : 'Open email draft'}</button></div>
         {!endpoint && <p class="small muted">Your email app will open with these details filled in. Review and send the draft there.</p>}
+        <p class="small muted">I reply within one business day.</p>
         <p id="form-status" class="small" role="status" aria-live="polite"></p>
       </form>
 

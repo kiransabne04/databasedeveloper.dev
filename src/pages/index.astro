@@ -8,7 +8,7 @@ import { site } from '../config/site';
 import { pg14Facts } from '../data/facts';
 ---
 <BaseLayout
-  title="WalStack — Production PostgreSQL performance, investigated from evidence—not guesses."
+  title="PostgreSQL Performance Consulting for RDS & Aurora | WalStack"
   description={`WalStack offers fixed-scope PostgreSQL performance investigations for SaaS teams on RDS, Aurora or self-managed. Read-only evidence, ranked findings, report in ${site.investigationTurnaround}.`}
 >
   <div class="container hero">
@@ -17,6 +17,7 @@ import { pg14Facts } from '../data/facts';
         <span class="eyebrow"><span>PostgreSQL performance for <span class="keep-case">SaaS</span> teams</span></span>
         <h1>WalStack — Production PostgreSQL performance, investigated from evidence—not guesses.</h1>
         <p class="lede">
+          Find what is slowing production, know which change to make first, and prove it worked.
           For SaaS engineering teams dealing with rising latency, high database cost, query regressions,
           locking, connection pressure or risky PostgreSQL upgrades.
         </p>
@@ -31,7 +32,7 @@ import { pg14Facts } from '../data/facts';
         </div>
         <p class="small">Done by me, Kiran Sabne: about 8 years running production PostgreSQL, Aurora/RDS, SQL Server and Snowflake. <a href="/about">More about me →</a></p>
         {site.foundingOffer.enabled && (
-          <p class="small muted">Founding investigation: {site.foundingOffer.international} for the first three suitable engagements, covering {site.foundingOffer.scope}.</p>
+          <p class="small muted">Founding investigation: {site.foundingOffer.international} USD for the first three suitable engagements, covering {site.foundingOffer.scope}.</p>
         )}
         <p class="small muted">One cluster and its dominant workload · client-run, read-only evidence · written findings and review call</p>
       </div>
@@ -44,6 +45,7 @@ import { pg14Facts } from '../data/facts';
           <li>Implementation risk and rollback considerations</li>
           <li>Before-and-after checks for meaningful changes</li>
         </ul>
+        <p class="small muted">Want help making the changes? A <a href="/pricing">remediation sprint</a> pairs with your team to implement and validate them.</p>
       </aside>
     </div>
   </div>
@@ -109,6 +111,17 @@ import { pg14Facts } from '../data/facts';
         </a>
       </div>
       <p class="small muted">Both examples are synthetic labs using generated data; their measurements are not client results.</p>
+      <h3>Public tools I built</h3>
+      <div class="grid two">
+        <a class="card card-link" href={site.planReaderUrl} data-track="planreader_click">
+          <span class="kicker">Free tool</span><h3>PlanReader ↗</h3>
+          <p>Execution-plan analyzer for PostgreSQL, SQL Server and Snowflake. Plans are analyzed in the browser and not uploaded.</p>
+        </a>
+        <a class="card card-link" href="https://github.com/kiransabne04/pg_stat_index_queries">
+          <span class="kicker">Open source · experimental</span><h3>pg_stat_index_queries ↗</h3>
+          <p>Which queries use this index? A PostgreSQL extension (C for self-hosted 15–18, SQL edition for RDS/Aurora) with a HypoPG drop-impact check.</p>
+        </a>
+      </div>
     </div>
   </section>
 
