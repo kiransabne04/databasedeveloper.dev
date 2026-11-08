@@ -3,7 +3,7 @@ export const site = {
   legalName: 'WalStack',
   url: 'https://walstack.io',
   description:
-    'WalStack provides evidence-first PostgreSQL performance investigations for SaaS engineering teams, with specialist capability across SQL Server, pgvector, Snowflake and OLAP workloads.',
+    'WalStack helps engineering teams diagnose PostgreSQL performance problems and validate risky database upgrades through independent, evidence-backed assessments.',
   email: 'hello@walstack.io',
   personName: 'Kiran Sabne',
   linkedinUrl: 'https://www.linkedin.com/in/kiransabne/',
@@ -15,28 +15,18 @@ export const site = {
   planReaderSnowflakeUrl: 'https://www.planreader.dev/snowflake-query-profile-analyzer',
   sqlServerBlogUrl: 'https://mssqlserver.dev',
   // GA4 measurement ID (public). Loads only on the production hostnames below, after consent.
-  gaId: import.meta.env.PUBLIC_GA_ID || 'G-4YXPCMHXYD',
+  gaId: import.meta.env.PUBLIC_GA_ID ?? 'G-4YXPCMHXYD',
   analyticsHosts: ['walstack.io', 'www.walstack.io'],
   // Public scheduling page (Cal.com, Calendly, Google Calendar booking page…).
   // Empty hides every "book a call" link, so no page points at a dead booking URL.
-  bookingUrl: import.meta.env.PUBLIC_BOOKING_URL || 'https://cal.com/kiransabne13/triage-call',
+  bookingUrl: import.meta.env.PUBLIC_BOOKING_URL ?? 'https://cal.com/kiransabne13/triage-call',
   triageCallMinutes: 20,
   // Hosted form endpoint (Formspree). Empty falls back to an email draft.
-  contactEndpoint: import.meta.env.PUBLIC_CONTACT_ENDPOINT || 'https://formspree.io/f/maeqleqk',
-  foundingOffer: {
-    enabled: true,
-    international: '$450',
-    label: 'Founding investigation',
-    scope: 'up to 5 dominant statements or problem areas and 7 days of follow-up questions'
-  },
-  investigationTurnaround: '5 business days',
-  standardOffer: {
-    scope: 'up to 10 dominant statements or problem areas and 14 days of follow-up questions',
-    international: '$750+'
-  },
-  upgradeOffer: {
-    international: '$750–900'
-  }
+  contactEndpoint: import.meta.env.PUBLIC_CONTACT_ENDPOINT ?? 'https://formspree.io/f/maeqleqk',
+  investigationTurnaround: '5–7 business days',
+  investigationOffer: { display: 'Fixed quote after fit review', scope: 'one cluster, one dominant workload or bounded problem, up to 10 prioritized query fingerprints or problem areas' },
+  upgradeOffer: { display: 'Fixed quote after fit review', scope: 'one cluster, agreed current and target versions, representative workload and major blockers' },
+  sprintOffer: { display: 'Custom scope and quote', scope: 'a separately agreed remediation or validation objective' }
 } as const;
 
 export const nav = [
@@ -45,5 +35,6 @@ export const nav = [
   { label: 'Problems', href: '/problems' },
   { label: 'Capabilities', href: '/capabilities' },
   { label: 'Guides', href: '/insights' },
-  { label: 'Pricing', href: '/pricing' }
+  { label: 'Pricing', href: '/pricing' },
+  { label: 'Partners', href: '/partners' }
 ] as const;

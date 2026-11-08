@@ -18,16 +18,12 @@ export interface Offer {
   magnet: { label: string; href: string; track: string };
 }
 
-const investigationPrice = site.foundingOffer.enabled
-  ? `${site.foundingOffer.international} founding price for the first three engagements`
-  : `From ${site.standardOffer.international}`;
-
 export const offers: Record<OfferKey, Offer> = {
   investigation: {
     name: 'PostgreSQL performance investigation',
     href: '/postgresql-performance-investigation',
-    price: investigationPrice,
-    terms: `Report in ${site.investigationTurnaround} from read-only evidence`,
+    price: site.investigationOffer.display,
+    terms: `Target report in ${site.investigationTurnaround} after usable evidence, subject to availability`,
     receive: [
       'The statements and causes behind the slowdown, ranked by impact',
       'Evidence, risk and rollback for each recommended change',
@@ -40,7 +36,7 @@ export const offers: Record<OfferKey, Offer> = {
   upgrade: {
     name: 'PostgreSQL upgrade readiness review',
     href: '/postgresql-upgrade-readiness',
-    price: `${site.upgradeOffer.international} for one cluster`,
+    price: site.upgradeOffer.display,
     terms: 'Fixed scope and delivery date agreed before work starts',
     receive: [
       'Blockers and risks for your target version, ranked with evidence',

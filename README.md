@@ -24,11 +24,14 @@ npm install
 npm run dev
 ```
 
-Build:
+Build and audit:
 
 ```bash
 npm run build
+npm run audit:content
 ```
+
+Commercial launch review, preview screenshots, live integration checklist and rollback steps: `docs/LAUNCH_REVIEW.md`. Prospecting and delivery templates live in the separate private `walstack-business-ops` repository; its local checkout is ignored by this public repository.
 
 ## Before launch
 

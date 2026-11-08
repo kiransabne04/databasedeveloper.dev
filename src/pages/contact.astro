@@ -5,8 +5,8 @@ import { site } from '../config/site';
 const endpoint = site.contactEndpoint;
 const action = endpoint || `mailto:${site.email}`;
 ---
-<BaseLayout title="Request a Database Investigation — WalStack" description="Tell WalStack what is happening in production, which database/platform you run and what evidence is available.">
-  <PageHero eyebrow="Contact" title="Tell me what PostgreSQL is doing in production." description="A short description is enough to start. I will tell you whether a bounded investigation fits, then we agree on scope and timing before any paid work." primaryLabel="Request an Investigation" primaryHref="#inquiry-form" secondaryLabel="See Sample Report" secondaryHref="/sample-report" />
+<BaseLayout title="Contact WalStack | Investigation, Upgrade or Partnership" description="Tell WalStack about a PostgreSQL problem, planned upgrade or technical partnership. Agree on scope before paid work.">
+  <PageHero eyebrow="Contact" title="Tell me what decision your team needs to make." description="Describe the symptom, upgrade or partner opportunity. I will review fit and scope before any paid work." primaryLabel="Start an inquiry" primaryHref="#inquiry-form" secondaryLabel="See Sample Report" secondaryHref="/sample-report" />
   <section>
     <div class="container grid two">
       <form id="inquiry-form" class="card" action={action} method="POST" enctype={endpoint ? undefined : "text/plain"} data-email={site.email} data-mailto-fallback={endpoint ? "false" : "true"}>
@@ -14,7 +14,6 @@ const action = endpoint || `mailto:${site.email}`;
         <input type="hidden" name="utm_medium" />
         <input type="hidden" name="utm_campaign" />
         <input type="hidden" name="landing_page" />
-        <input type="hidden" name="offer" />
         <input type="hidden" name="from_page" />
         {endpoint && (
           <>
@@ -23,9 +22,10 @@ const action = endpoint || `mailto:${site.email}`;
           </>
         )}
         <div class="form-grid">
+          <div class="field full"><label for="offer">What are you asking about?</label><select id="offer" name="offer" required><option value="">Choose an option</option><option value="investigation">PostgreSQL Performance Investigation</option><option value="upgrade">PostgreSQL Upgrade Readiness Review</option><option value="sprint">Remediation or migration validation sprint</option><option value="partnership">Technical partnership</option><option value="pgvector">pgvector review</option><option value="sqlserver">SQL Server review</option><option value="snowflake">Snowflake review</option><option value="other">Other or legacy inquiry</option></select></div>
           <div class="field"><label for="name">Name</label><input id="name" name="name" required autocomplete="name" /></div>
           <div class="field"><label for="email">Email</label><input id="email" type="email" name="email" required autocomplete="email" /></div>
-          <div class="field full"><label for="problem">What is happening?</label><textarea id="problem" name="problem" required placeholder="What changed, what users see, and what your team has tried"></textarea></div>
+          <div class="field full"><label for="problem">What is happening or what collaboration do you have in mind?</label><textarea id="problem" name="problem" required minlength="20" placeholder="The decision, business impact, and evidence or context available"></textarea></div>
           <details class="field full optional-fields">
             <summary>Add platform, impact or evidence (optional)</summary>
             <div class="form-grid">
@@ -39,8 +39,8 @@ const action = endpoint || `mailto:${site.email}`;
         </div>
         <div class="actions"><button class="button primary" type="submit">{endpoint ? 'Send investigation request' : 'Open email draft'}</button></div>
         {!endpoint && <p class="small muted">Your email app will open with these details filled in. Review and send the draft there.</p>}
-        <p class="small muted">I reply within one business day.</p>
-        <p id="form-status" class="small" role="status" aria-live="polite"></p>
+        <p class="small muted">I review inquiries personally and will respond by email if the work is a fit.</p>
+        <p id="form-status" class="small" role="status" aria-live="polite" tabindex="-1"></p>
       </form>
 
       <aside class="card">
@@ -93,7 +93,7 @@ const action = endpoint || `mailto:${site.email}`;
       }
       const offerInput = form.elements.namedItem('offer');
       const fromInput = form.elements.namedItem('from_page');
-      if (offerInput instanceof HTMLInputElement && /^[a-z]+$/.test(offer)) offerInput.value = offer;
+      if (offerInput instanceof HTMLSelectElement && [...offerInput.options].some((option) => option.value === offer)) offerInput.value = offer;
       if (fromInput instanceof HTMLInputElement && fromPage.startsWith('/')) fromInput.value = fromPage;
       const database = form.elements.namedItem('database');
       const platformForOffer: Record<string, string> = { pgvector: 'pgvector', sqlserver: 'SQL Server', snowflake: 'Snowflake' };
@@ -106,6 +106,7 @@ const action = endpoint || `mailto:${site.email}`;
         }
       });
       form.addEventListener('submit', (event) => {
+        if (!form.reportValidity()) return;
         if (form.dataset.mailtoFallback !== 'true') {
           event.preventDefault();
           const status = form.querySelector<HTMLElement>('#form-status');
@@ -115,12 +116,13 @@ const action = endpoint || `mailto:${site.email}`;
           fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
             .then((response) => {
               if (!response.ok) throw new Error(String(response.status));
-              window.dispatchEvent(new CustomEvent('dd:track', { detail: { name: 'contact_submit', props: { offer: /^[a-z]+$/.test(offer) ? offer : undefined, from_page: fromPage.startsWith('/') ? fromPage : undefined } } }));
+              const selectedOffer = offerInput instanceof HTMLSelectElement ? offerInput.value : '';
+              window.dispatchEvent(new CustomEvent('dd:track', { detail: { name: 'contact_submit', props: { offer: selectedOffer, from_page: fromPage.startsWith('/') ? fromPage : undefined } } }));
               form.reset();
-              if (status) status.textContent = 'Thanks. Your request was sent and I will reply by email.';
+              if (status) { status.textContent = 'Thanks. Your inquiry was sent. I will review it and respond by email if there is a fit.'; status.focus(); }
             })
-            .catch(() => {
-              if (status) status.textContent = `Sending failed. Please email ${form.dataset.email} directly.`;
+            .catch((error) => {
+              if (status) { status.textContent = error.message === '429' ? `Too many requests. Please wait and retry, or email ${form.dataset.email}.` : `Sending failed. Please email ${form.dataset.email} directly.`; status.focus(); }
             })
             .finally(() => { if (button) button.disabled = false; });
           return;
@@ -138,7 +140,7 @@ const action = endpoint || `mailto:${site.email}`;
           .filter(([key]) => String(fields.get(key) ?? '').trim())
           .map(([key, label]) => `${label}: ${String(fields.get(key)).trim()}`)
           .join('\n');
-        const subject = encodeURIComponent('Database investigation request');
+        const subject = encodeURIComponent('WalStack inquiry');
         const message = encodeURIComponent(body);
         window.location.href = `mailto:${form.dataset.email}?subject=${subject}&body=${message}`;
       });

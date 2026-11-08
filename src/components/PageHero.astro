@@ -5,6 +5,7 @@ const {
   description,
   primaryLabel = 'Request an Investigation',
   primaryHref = '/contact',
+  primaryTrack = 'primary_cta_click',
   secondaryLabel,
   secondaryHref,
   supportingText
@@ -16,7 +17,7 @@ const {
     <h1>{title}</h1>
     <p class="lede">{description}</p>
     <div class="actions">
-      <a class="button primary" data-track="primary_cta_click" href={primaryHref}>{primaryLabel}</a>
+      <a class="button primary" data-track={primaryTrack} href={primaryHref}>{primaryLabel}</a>
       {secondaryLabel && secondaryHref && <a class="button ghost" data-track={secondaryHref === '/sample-report' ? 'sample_report_click' : undefined} href={secondaryHref}>{secondaryLabel}</a>}
     </div>
     {supportingText && <p class="small muted hero-supporting">{supportingText}</p>}

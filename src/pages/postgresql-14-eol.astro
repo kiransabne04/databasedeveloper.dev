@@ -6,7 +6,7 @@ import { pg14Facts } from '../data/facts';
 ---
 <BaseLayout
   title="PostgreSQL 14 End of Life: Upgrade Planning — WalStack"
-  description="PostgreSQL 14 community support ends 12 November 2026. RDS and Aurora dates, early minor-version deadlines and a link to the full upgrade checklist."
+  description="PostgreSQL 14 community support ends 12 November 2026. Distinct AWS RDS/Aurora and Azure support dates, early minor-version deadlines and upgrade planning."
 >
   <PageHero
     eyebrow="Time-sensitive guide"
@@ -26,9 +26,11 @@ import { pg14Facts } from '../data/facts';
           <tbody>
             <tr><td>PostgreSQL 14 community fixes end</td><td>{pg14Facts.communityEol}</td></tr>
             <tr><td>RDS and Aurora PostgreSQL 14 standard support ends</td><td>{pg14Facts.rdsStandardSupportEnd}</td></tr>
-            <tr><td>Extended Support year-1 pricing begins</td><td>{pg14Facts.rdsExtendedSupportYear1Start}</td></tr>
-            <tr><td>Extended Support year-3 pricing begins</td><td>{pg14Facts.rdsExtendedSupportYear3Start}</td></tr>
-            <tr><td>Extended Support ends</td><td>{pg14Facts.rdsExtendedSupportEnd}</td></tr>
+            <tr><td>RDS and Aurora Extended Support year-1 pricing begins</td><td>{pg14Facts.rdsExtendedSupportYear1Start}</td></tr>
+            <tr><td>RDS and Aurora Extended Support year-3 pricing begins</td><td>{pg14Facts.rdsExtendedSupportYear3Start}</td></tr>
+            <tr><td>RDS and Aurora Extended Support ends</td><td>{pg14Facts.rdsExtendedSupportEnd}</td></tr>
+            <tr><td>Azure Database for PostgreSQL Flexible Server standard support ends</td><td>{pg14Facts.azureStandardSupportEnd}</td></tr>
+            <tr><td>Azure Flexible Server Extended Support starts</td><td>{pg14Facts.azureExtendedSupportStart}</td></tr>
           </tbody>
         </table>
       </div>
@@ -58,6 +60,7 @@ import { pg14Facts } from '../data/facts';
       <p><a href={pg14Facts.postgresqlSource}>PostgreSQL versioning and support policy ↗</a></p>
       <p><a href={pg14Facts.awsSource}>Amazon RDS for PostgreSQL release calendar ↗</a></p>
       <p><a href={pg14Facts.auroraSource}>Aurora PostgreSQL release calendar ↗</a></p>
+      <p><a href={pg14Facts.azureSource}>Azure Flexible Server Extended Support calendar ↗</a></p>
     </div>
   </section>
   <section><div class="container"><CTA eyebrow="Upgrade readiness" title="Still running PostgreSQL 14?" description="Send your platform, current version and extension list. You will get a direct answer on whether a fixed-scope readiness review fits, and what it would cover." primaryLabel="Ask about upgrade readiness" secondaryLabel="See the readiness review" secondaryHref="/postgresql-upgrade-readiness" /></div></section>

@@ -1,0 +1,46 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+---
+<BaseLayout title="Synthetic PostgreSQL Upgrade Readiness Report | WalStack" description="Synthetic PostgreSQL 14 to 18 upgrade-readiness report using a reproducible self-managed lab. Inventory, blockers, risk register and go/no-go criteria.">
+  <PageHero eyebrow="Synthetic lab report" title="PostgreSQL 14 → 18: an upgrade decision record" description="An illustrative readiness report based on a reproducible self-managed lab. Generated data only; this is not a customer engagement or an RDS/Aurora rehearsal." primaryLabel="Ask about upgrade readiness" primaryHref="/contact?offer=upgrade&from=/sample-upgrade-readiness-report" secondaryLabel="View lab method" secondaryHref="/insights/pg-upgrade-check-failures" />
+  <section><div class="container prose">
+    <p class="notice"><strong>Synthetic example.</strong> The recorded observations below come from the <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/pg-upgrade-14-to-18">published lab script and output</a> run on 21 October 2026. No client data or client outcome is represented.</p>
+    <h2>Scope and inventory</h2>
+    <div class="table-wrap"><table><thead><tr><th>Item</th><th>Lab evidence</th><th>Decision use</th></tr></thead><tbody>
+      <tr><td>Engine</td><td>PostgreSQL 14.24 → 18.6, self-managed Docker/PGDG packages</td><td>Path applies to this lab only</td></tr>
+      <tr><td>Data</td><td>Generated <code>orders</code> table, 500,000 rows</td><td>Representative of this test, not a client workload</td></tr>
+      <tr><td>Extensions</td><td>Upgrade check logged “Checking for extension updates … ok”; a complete extension version matrix was not captured</td><td>Real review requires <code>pg_extension</code> inventory and target availability</td></tr>
+      <tr><td>Replication</td><td><code>pgoutput</code> logical slot <code>debezium_orders</code> and publication <code>cdc_pub</code></td><td>CDC consumer restart and reconciliation need an owner</td></tr>
+      <tr><td>Checksums</td><td>PG14 cluster off; PG18 default initialization on</td><td>Cluster creation settings must match for <code>pg_upgrade</code></td></tr>
+    </tbody></table></div>
+    <h2>Compatibility and blockers</h2>
+    <div class="table-wrap"><table><thead><tr><th>Check</th><th>Observed</th><th>Action before go</th></tr></thead><tbody>
+      <tr><td>Data checksums</td><td>Initial check failed with mismatched settings</td><td>Initialize target consistently, or choose and test another migration path</td></tr>
+      <tr><td>Prepared transaction</td><td>Check failed until open transaction was rolled back</td><td>Resolve with application owner; prevent recreation during cutover</td></tr>
+      <tr><td><code>regproc</code> column</td><td>Check failed until the lab column was converted to text</td><td>Review application semantics and schema migration</td></tr>
+      <tr><td>Logical slot / CDC</td><td>Check passed with the slot present; slot was absent after upgrade</td><td>Plan CDC position, recreation and downstream reconciliation</td></tr>
+      <tr><td>Planner statistics</td><td>Lab ran staged analyze after upgrade</td><td>Include statistics rebuild and workload comparison in runbook</td></tr>
+    </tbody></table></div>
+    <h2>Representative workload baseline</h2>
+    <p>The lab records a 500,000-row <code>orders</code> table but does not record pre/post query latency or plans. Therefore it cannot establish performance readiness. A client report would include agreed query fingerprints, plans, p95/p99 latency, call volume, waits and error rate from comparable windows. The go decision stays pending until that evidence exists.</p>
+    <h2>Risk register</h2>
+    <ul>
+      <li><strong>High: CDC continuity.</strong> The logical slot did not survive the tested path. Owner: data pipeline team. Validation: no missing or duplicate downstream events after a documented restart point.</li>
+      <li><strong>High: application compatibility.</strong> Driver/ORM and extension versions were not inventoried. Owner: application team. Validation: target-version staging tests.</li>
+      <li><strong>Medium: post-upgrade plan change.</strong> No representative baseline was captured. Owner: performance reviewer. Validation: compare critical query fingerprints before and after on the same workload.</li>
+      <li><strong>Medium: rollback feasibility.</strong> <code>pg_upgrade --link</code> has different recovery constraints from a copy-based path. Owner: operations. Validation: rehearse restore/switchover and set a cutover decision time.</li>
+    </ul>
+    <h2>Go / no-go checklist</h2>
+    <ul>
+      <li>☐ Target engine, extension and driver compatibility verified.</li>
+      <li>☐ <code>pg_upgrade --check</code> passes on the final rehearsal copy.</li>
+      <li>☐ Prepared transactions and schema blockers are resolved.</li>
+      <li>☐ CDC consumers, positions and reconciliation owner are documented.</li>
+      <li>☐ Critical query baseline and post-upgrade thresholds are agreed.</li>
+      <li>☐ Restore path, backup integrity and rollback decision time are rehearsed.</li>
+    </ul>
+    <p><strong>Illustrative decision:</strong> no-go until the unmeasured workload and CDC recovery criteria are documented and tested. Passing the mechanical upgrade check alone is insufficient.</p>
+    <p>See the <a href="/postgresql-14-upgrade-checklist">full upgrade checklist</a> and <a href="/postgresql-upgrade-readiness">review scope</a>.</p>
+  </div></section>
+</BaseLayout>

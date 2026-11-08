@@ -16,7 +16,7 @@ import { site } from '../config/site';
       <li><strong>Your team collects evidence.</strong> Run the <a href="/evidence-collection">read-only collector</a> as a <code>pg_monitor</code> role, once in a normal period and, if possible, once while the problem is happening. Add representative <code>EXPLAIN (ANALYZE, BUFFERS)</code> output from a safe environment, a short change timeline and, on RDS or Aurora, Database Insights and CloudWatch exports for the same window.</li>
       <li><strong>Review and redact.</strong> The output is plain text. Your team reads it and removes anything it does not want to share before sending it.</li>
       <li><strong>Investigation.</strong> The workload is ranked by total cost, the symptom is correlated with waits, plans, locks, connections and changes, and competing explanations are tested against the evidence. Gaps are raised early rather than filled with guesses.</li>
-      <li><strong>Report within {site.investigationTurnaround}</strong> of receiving the agreed evidence. Each finding states severity, confidence, evidence, observation, likely cause, recommendation, risk, rollback and validation. See the <a href="/sample-report">sample report</a>.</li>
+      <li><strong>Target report in {site.investigationTurnaround}</strong> after receiving usable evidence, subject to availability. Each finding states severity, confidence, evidence, observation, likely cause, recommendation, risk, rollback and validation. See the <a href="/sample-report">sample report</a>.</li>
       <li><strong>Review call.</strong> A 60-minute walkthrough with your engineers, followed by bounded async clarification. Your team decides what to change and when.</li>
     </ol>
 

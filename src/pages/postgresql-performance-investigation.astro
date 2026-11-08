@@ -12,7 +12,7 @@ const schema = {
   provider: { '@type': 'ProfessionalService', name: site.brand, url: site.url },
   areaServed: 'Worldwide',
   url: `${site.url}/postgresql-performance-investigation`,
-  offers: { '@type': 'Offer', priceCurrency: 'USD', price: site.foundingOffer.international.replace('$', ''), description: `Founding price for the first three engagements; standard ${site.standardOffer.international}` }
+  description: 'Fixed-scope assessment quoted after a fit review'
 };
 ---
 <BaseLayout
@@ -24,9 +24,10 @@ const schema = {
     eyebrow="Core offer"
     title="PostgreSQL Performance Investigation"
     description="A bounded investigation of one production PostgreSQL cluster and its dominant workload—using read-only evidence, human-reviewed findings and a measurable validation plan."
+    primaryHref="/contact?offer=investigation&from=/postgresql-performance-investigation"
     secondaryLabel="See sample report"
     secondaryHref="/sample-report"
-    supportingText={`Founding price ${site.foundingOffer.international} for the first three suitable engagements · Report within ${site.investigationTurnaround} of receiving agreed evidence · No production access required`}
+    supportingText={`Fixed quote after fit review · Target report in ${site.investigationTurnaround} after usable evidence, subject to availability · No production access required`}
   />
 
   <section>
@@ -65,7 +66,7 @@ const schema = {
 
   <section>
     <div class="container">
-      <div class="section-head"><div><span class="eyebrow">Process</span><h2>Bounded and async-first.</h2></div><p>Report delivered within {site.investigationTurnaround} of receiving the agreed evidence. No 24×7 incident-response promise and no production write access.</p></div>
+      <div class="section-head"><div><span class="eyebrow">Process</span><h2>Bounded and async-first.</h2></div><p>Target report in {site.investigationTurnaround} after receiving usable evidence, subject to availability. No 24×7 incident response or production write access.</p></div>
       <InvestigationWorkflow />
     </div>
   </section>
@@ -92,7 +93,7 @@ const schema = {
         <span class="kicker">You receive</span>
         <h3>Ranked, actionable findings</h3>
         <ul class="muted">
-          <li>Report within {site.investigationTurnaround} of receiving evidence</li>
+          <li>Target report in {site.investigationTurnaround} after usable evidence</li>
           <li>Executive summary</li>
           <li>Top findings ranked by impact/confidence</li>
           <li>Evidence references</li>
@@ -100,7 +101,7 @@ const schema = {
           <li>Risk and rollback consideration</li>
           <li>Validation plan</li>
           <li>60-minute review call</li>
-          <li>Follow-up questions by email after delivery: 14 days (7 days at the founding price)</li>
+          <li>Follow-up questions during the agreed review window</li>
         </ul>
       </div>
     </div>
@@ -110,14 +111,14 @@ const schema = {
     <div class="container prose">
       <h2>Questions before you request an investigation</h2>
       <h3>What does the initial scope cover?</h3>
-      <p>One PostgreSQL cluster and its dominant production workload. The fit review identifies the symptom, evidence available and decision your team needs to make. Additional clusters or unrelated workloads need a separate scope.</p>
+      <p>{site.investigationOffer.scope}. The fit review identifies the symptom, evidence available and decision your team needs to make. Additional clusters or unrelated workloads need a separate scope.</p>
       <h3>Do we have to grant database access?</h3>
       <p>No. Your team runs agreed read-only collection and reviews the evidence before sharing it. Credentials and production dumps should stay in your environment.</p>
       <h3>What if the evidence does not support one clear fix?</h3>
       <p>The report separates supported findings from hypotheses, states confidence and missing evidence, and recommends the next useful test. A guaranteed performance gain is not part of the offer.</p>
       <h3>Who implements the changes?</h3>
       <p>Your engineering team owns production changes. If implementation help is useful, a bounded remediation sprint can be scoped separately after the findings are reviewed.</p>
-      <p><a class="button primary" data-track="primary_cta_click" href="/contact">Request an Investigation</a></p>
+      <p><a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/postgresql-performance-investigation">Request an Investigation</a></p>
     </div>
   </section>
 
@@ -135,21 +136,10 @@ const schema = {
 
   <section>
     <div class="container">
-      <div class="grid two">
-        <div class="card price-card">
-          <span class="kicker">Founding</span>
-          <h3>First three suitable engagements</h3>
-          <div class="price">{site.foundingOffer.international}</div>
-          <p class="muted">Used to build independent proof and refine the delivery system.</p>
-          <a class="button primary" data-track="primary_cta_click" href="/contact">Request an Investigation</a>
-        </div>
-        <div class="card price-card">
-          <span class="kicker">Standard</span>
-          <h3>After founding proof</h3>
-          <div class="price">{site.standardOffer.international}</div>
-          <p class="muted">Final scope depends on cluster/workload complexity and evidence available.</p>
-          <a class="button" href="/pricing">See pricing model</a>
-        </div>
+      <div class="card price-card">
+        <span class="kicker">Fixed scope</span><h3>Price agreed before work starts</h3>
+        <p class="muted">{site.investigationOffer.display}. I send a written scope, fee and delivery window after reviewing the evidence available. You decide before paid work starts.</p>
+        <a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/postgresql-performance-investigation">Request an Investigation</a>
       </div>
     </div>
   </section>

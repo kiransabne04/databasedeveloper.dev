@@ -10,9 +10,9 @@ import CTA from '../components/CTA.astro';
     <h2>How to run it</h2>
 <pre><code>psql "host=... dbname=... user=..." -X -f pg-evidence-collector.sql -o evidence.txt</code></pre>
     <ul>
-      <li>Connect to the application database as a role with <code>pg_monitor</code>. On RDS or Aurora, the master user can grant it to a dedicated role: <code>GRANT pg_monitor TO your_role;</code></li>
+      <li>Use a dedicated role whose permissions your DBA has reviewed. <code>pg_monitor</code> may expose broader statistics than this collection needs, and does not guarantee access to every optional view on every platform. Test permissions before a client run.</li>
       <li>The script sets <code>default_transaction_read_only = on</code>, a 30-second <code>statement_timeout</code> and a 1-second <code>lock_timeout</code> for its own session.</li>
-      <li>Supports PostgreSQL 13 and later. Tested against PostgreSQL 14 and 17 with a <code>pg_monitor</code> role. Not yet tested against RDS or Aurora themselves.</li>
+      <li>Designed for PostgreSQL 13 and later. Tested against PostgreSQL 14 and 17 with a <code>pg_monitor</code> role. RDS and Aurora still require platform-specific review and have not been tested here.</li>
       <li>Run it once during a normal period and, if you can, once while the problem is happening.</li>
     </ul>
 
@@ -35,7 +35,7 @@ import CTA from '../components/CTA.astro';
     <ul>
       <li>No table data. It reads only statistics and catalog views.</li>
       <li>No passwords or connection strings.</li>
-      <li>No literal values from <code>pg_stat_statements</code>. PostgreSQL normalizes them to <code>$1</code>, <code>$2</code>, ….</li>
+      <li><code>pg_stat_statements</code> usually normalizes constants, but statement text and identifiers can still reveal sensitive context. The current-activity section can include literal values.</li>
     </ul>
 
     <h2>Review before you send</h2>
