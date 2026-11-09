@@ -14,6 +14,7 @@ export interface FeedPost {
 const legacyDate = 'Tue, 13 Oct 2026 00:00:00 GMT';
 
 export const posts: FeedPost[] = [
+  { title: 'CREATE INDEX CONCURRENTLY Stuck? Find the PostgreSQL Wait', path: '/insights/postgresql-create-index-concurrently-stuck', date: 'Mon, 09 Nov 2026 00:00:00 GMT', postgresql: true, description: 'Use pg_stat_progress_create_index, pg_blocking_pids and catalog checks to tell a slow concurrent index build from a blocked one, then choose a safe next step.' },
   { title: 'PostgreSQL DELETE Slow? Check for Unindexed Foreign Keys', path: '/insights/postgresql-foreign-key-index-slow-delete', date: 'Wed, 04 Nov 2026 00:00:00 GMT', postgresql: true, description: 'Tested on PostgreSQL 18: deleting one customer took 1.7 seconds and ran 22 sequential scans because two foreign keys had no index. Find them, and why pg_stat_statements hides the cost.' },
   { title: 'PostgreSQL 18 Async I/O: Does io_method Make Queries Faster?', path: '/insights/postgresql-18-async-io-io-method', date: 'Tue, 27 Oct 2026 00:00:00 GMT', postgresql: true, description: 'Lab-tested on PostgreSQL 18.6: sync, worker and io_uring on cold sequential and bitmap heap scans.' },
   { title: 'RDS and Aurora PostgreSQL 14 Extended Support: What It Will Cost', path: '/insights/rds-aurora-postgresql-14-extended-support-cost', date: 'Tue, 27 Oct 2026 00:00:00 GMT', postgresql: true, description: 'Dates, per-vCPU billing on primaries, standbys and replicas, and how to list affected instances.' },

@@ -40,6 +40,16 @@ for (const [route, html] of allHtml) {
   }
 }
 const page = (route) => allHtml.find(([path]) => path === route)?.[1] || '';
+const indexWaitGuide = page('/insights/postgresql-create-index-concurrently-stuck');
+assert(indexWaitGuide.includes('"@type":"Article"'), 'Concurrent index guide lost Article structured data');
+for (const section of ['progress', 'waits', 'working', 'failed-build', 'rds-aurora', 'response', 'sources']) {
+  assert(indexWaitGuide.includes(`href="#${section}"`) && indexWaitGuide.includes(`id="${section}"`), `Concurrent index guide TOC target missing: ${section}`);
+}
+for (const route of ['/problems/postgresql-lock-contention', '/aws-rds-aurora-postgresql', '/evidence-collection', '/sample-report', '/postgresql-performance-investigation']) {
+  assert(indexWaitGuide.includes(`href="${route}"`), `Concurrent index guide missing link: ${route}`);
+}
+assert(/href="https:\/\/(?:www\.)?planreader\.dev\//.test(indexWaitGuide), 'Concurrent index guide missing PlanReader link');
+assert(page('/postgresql-concurrency-and-locking-a-comprehensive-guide').includes('href="/insights/postgresql-create-index-concurrently-stuck"'), 'Locking guide backlink missing');
 assert(page('/').includes('href="/contact?offer=investigation&amp;from=/"'), 'Homepage primary CTA lost offer attribution');
 assert(page('/').includes('href="/sample-report"'), 'Homepage sample CTA missing');
 assert(page('/partners').includes('href="/contact?offer=partnership&amp;from=/partners"'), 'Partner CTA missing');
