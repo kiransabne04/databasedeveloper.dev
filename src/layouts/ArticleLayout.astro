@@ -16,17 +16,18 @@ interface Props {
   offer?: OfferKey;
   /** Hide the header offer line where no offer matches the topic. */
   offerLine?: boolean;
+  schemaType?: 'Article' | 'BlogPosting';
   /** Questions answered in the article's FAQ section, as plain text, for FAQPage structured data. */
   faq?: { q: string; a: string }[];
 }
 
-const { title, description, eyebrow, published, updated, original = false, ctaTitle, ctaDescription, offer = 'investigation', offerLine = true, faq } = Astro.props;
+const { title, description, eyebrow, published, updated, original = false, ctaTitle, ctaDescription, offer = 'investigation', offerLine = true, schemaType = 'BlogPosting', faq } = Astro.props;
 const details = offers[offer];
 const ask = contactHref(offer, Astro.url.pathname);
 const pageUrl = new URL(Astro.url.pathname, site.url).toString();
 const articleSchema = {
   '@context': 'https://schema.org',
-  '@type': 'BlogPosting',
+  '@type': schemaType,
   headline: title,
   description,
   mainEntityOfPage: pageUrl,

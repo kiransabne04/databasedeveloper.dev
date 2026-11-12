@@ -40,7 +40,7 @@ ORDER BY blocking_transaction_age DESC NULLS LAST;</code></pre>
     <li><strong>DDL queue:</strong> a schema change waits for a conflicting lock, and later application statements queue behind it. The DDL statement may be quick once granted; waiting time is the incident.</li>
     <li><strong>Deadlock:</strong> transactions wait on each other in a cycle. PostgreSQL detects the cycle and aborts one transaction. A long lock wait without a cycle is a different problem.</li>
   </ul>
-  <p>For a realistic sequence of the second pattern, see the <a href="/case-studies/lab-lock-queue">synthetic DDL lock-queue walkthrough</a>.</p>
+  <p>For a realistic sequence of the second pattern, see the <a href="/case-studies/lab-lock-queue">synthetic DDL lock-queue walkthrough</a>. If a concurrent index build appears to be waiting, the <a href="/insights/postgresql-create-index-concurrently-stuck">CREATE INDEX CONCURRENTLY diagnosis guide</a> shows how to read its progress phase and identify the transaction it is waiting for.</p>
 
   <h3>Why a quick migration can stop ordinary reads</h3>
   <p>An <code>ALTER TABLE</code> may only change a catalog entry, yet still request an <code>ACCESS EXCLUSIVE</code> table lock. If an older transaction already holds an <code>ACCESS SHARE</code> lock, the DDL waits. Later <code>SELECT</code> statements can queue behind that waiting DDL even though they would have been compatible with the older reader. In this pattern the migration's lock wait, rather than its execution time, determines the outage window.</p>

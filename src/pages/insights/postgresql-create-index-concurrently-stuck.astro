@@ -1,0 +1,113 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import { site } from '../../config/site';
+
+const title = 'CREATE INDEX CONCURRENTLY Stuck? Find the PostgreSQL Wait';
+const description = 'Use pg_stat_progress_create_index, pg_blocking_pids and catalog checks to tell a slow concurrent index build from a blocked one, then choose a safe next step.';
+---
+<ArticleLayout
+  title={title}
+  description={description}
+  eyebrow="PostgreSQL indexing · Production diagnosis"
+  published="2026-11-09"
+  updated="2026-11-09"
+  offerLine={false}
+  schemaType="Article"
+  ctaTitle="Concurrent index build waiting longer than expected?"
+  ctaDescription="A scoped investigation can distinguish transaction waits from build work, check index state, and give your team a documented next step."
+>
+  <p><code>CREATE INDEX CONCURRENTLY</code> can appear stuck while PostgreSQL waits for another transaction, scans a large table, or validates the new index. Those cases need different responses. A long elapsed time alone does not tell you which one is happening, and canceling the command before checking can leave an invalid index behind.</p>
+  <p>Start with the progress view while the command is running. Its <code>phase</code> says whether the build is waiting or working; its locker columns identify the session currently holding up a wait. The checks below read server state and catalogs. They do not change the index or end a session.</p>
+
+  <nav class="notice" aria-label="On this page">
+    <strong>On this page</strong>
+    <ol>
+      <li><a href="#progress">Read the build phase</a></li>
+      <li><a href="#waits">Find the transaction behind a wait</a></li>
+      <li><a href="#working">Decide whether the build is still working</a></li>
+      <li><a href="#failed-build">Check an interrupted or failed build</a></li>
+      <li><a href="#rds-aurora">RDS and Aurora considerations</a></li>
+      <li><a href="#response">Choose a safe response</a></li>
+      <li><a href="#sources">Sources and related guides</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="progress">Read the build phase</h2>
+  <p>Run this from the same database as the index build. Capture more than one sample if the command is still active. The block counters describe work in a phase; they are not an overall percentage for the entire command.</p>
+<pre><code>{`SELECT p.pid AS build_pid,
+       p.relid::regclass AS table_name,
+       p.index_relid::regclass AS index_name,
+       p.command, p.phase,
+       p.lockers_done, p.lockers_total, p.current_locker_pid,
+       p.blocks_done, p.blocks_total,
+       a.wait_event_type, a.wait_event,
+       now() - a.query_start AS elapsed
+FROM pg_stat_progress_create_index AS p
+JOIN pg_stat_activity AS a USING (pid)
+WHERE p.datname = current_database()
+ORDER BY a.query_start;`}</code></pre>
+  <p>Interpret the phase before looking at the elapsed time:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Phase</th><th scope="col">What it means</th><th scope="col">Next check</th></tr></thead>
+    <tbody>
+      <tr><td><code>waiting for writers before build</code> or <code>before validation</code></td><td>PostgreSQL is waiting for transactions that could have modified the table.</td><td>Inspect <code>current_locker_pid</code>, transaction age and owner.</td></tr>
+      <tr><td><code>waiting for old snapshots</code></td><td>A transaction can still see a snapshot that predates the second scan.</td><td>Inspect the reported locker; it may not have written to this table.</td></tr>
+      <tr><td><code>building index</code> or <code>index validation: …</code></td><td>PostgreSQL is scanning, sorting, loading or checking tuples.</td><td>Compare phase and counters across samples; check I/O and system load.</td></tr>
+      <tr><td>No progress row</td><td>The command may have completed, failed, or not reached the view.</td><td>Check the client result and index catalog state before retrying.</td></tr>
+    </tbody>
+  </table></div>
+  <p>A concurrent build performs more work than a regular index build: it scans the table twice and waits at transaction boundaries. It generally permits ordinary writes during the build, but still consumes I/O, CPU and storage and can wait on other sessions. PostgreSQL documents the phases in its <a href="https://www.postgresql.org/docs/18/progress-reporting.html#CREATE-INDEX-PROGRESS-REPORTING">progress reporting reference</a>.</p>
+
+  <h2 id="waits">Find the transaction behind a wait</h2>
+  <p>For a waiting phase, <code>current_locker_pid</code> points to the session currently being waited on. <code>lockers_total</code> and <code>lockers_done</code> show how many of the phase's lockers have been processed. Check <code>pg_blocking_pids()</code> as well; it accounts for lock queues. These are live snapshots, so a blocker may disappear between queries.</p>
+<pre><code>{`SELECT p.pid AS build_pid, p.phase,
+       p.current_locker_pid,
+       pg_blocking_pids(p.pid) AS blocking_pids,
+       b.application_name, b.state,
+       now() - b.xact_start AS blocker_transaction_age,
+       b.wait_event_type, b.wait_event
+FROM pg_stat_progress_create_index AS p
+LEFT JOIN pg_stat_activity AS b
+  ON b.pid = p.current_locker_pid
+WHERE p.datname = current_database();`}</code></pre>
+  <p>An <code>idle in transaction</code> writer can hold up a build even when it is no longer running SQL. In the old-snapshot phase, a long-lived transaction may be relevant even if its last query touched another table. Identify the application and transaction owner before asking for it to finish. A PID is evidence for diagnosis, not permission to terminate a backend. The wider <a href="/problems/postgresql-lock-contention">PostgreSQL lock-contention guide</a> explains how to trace a blocking chain.</p>
+  <p>Activity views can expose query text and other sensitive details. These examples deliberately omit it. Access to full statistics and other users' activity depends on the role and managed-service permissions; arrange an authorized view or client-run capture when necessary. See the <a href="/evidence-collection">evidence-collection guidance</a> for handling production data.</p>
+
+  <h2 id="working">Decide whether the build is still working</h2>
+  <p>If the phase is <code>building index</code> or <code>index validation</code>, sample it again rather than assuming a lock. <code>blocks_done</code> may advance during table or index scans; during a sort or load, these block counters can be zero or unchanged while work continues. Read the phase and wait event together. For example, an I/O wait during a scan points to a different bottleneck than <code>Lock:virtualxid</code> during a writer wait.</p>
+  <p>Check the size and write rate of the table and whether the build competes with the application for storage throughput. On <a href="/aws-rds-aurora-postgresql">RDS or Aurora PostgreSQL</a>, combine the SQL view with your existing instance and storage metrics. Avoid declaring the command stalled from a single progress sample or applying a generic timeout to a build whose duration is not yet understood.</p>
+
+  <h2 id="failed-build">Check an interrupted or failed build</h2>
+  <p>A failed concurrent build can leave an index entry with <code>indisvalid = false</code>. The planner will not use an invalid index for normal queries, but one that is ready for inserts can still add write overhead. A failed concurrent <em>unique</em> index can even continue enforcing uniqueness after the failure. Inspect its state before retrying or removing it.</p>
+<pre><code>{`-- Replace public.orders with the intended table.
+SELECT idx.relname AS index_name,
+       i.indisvalid, i.indisready, i.indisunique,
+       pg_size_pretty(pg_relation_size(idx.oid)) AS index_size
+FROM pg_index AS i
+JOIN pg_class AS idx ON idx.oid = i.indexrelid
+WHERE i.indrelid = 'public.orders'::regclass
+ORDER BY idx.relname;`}</code></pre>
+  <p><code>IF NOT EXISTS</code> only checks whether an object with the name exists; it does not certify that an existing index is valid or has the definition you intended. Review the index definition, constraint dependencies and failure cause before choosing a recovery. PostgreSQL documents dropping the invalid index and retrying, or rebuilding it with <code>REINDEX INDEX CONCURRENTLY</code>, as possible paths. Both are schema changes that need a separate change plan. <code>CREATE INDEX CONCURRENTLY</code> also cannot run inside a transaction block, which matters for migration tools.</p>
+
+  <h2 id="rds-aurora">RDS and Aurora considerations</h2>
+  <p>The PostgreSQL progress and catalog queries apply to RDS and Aurora PostgreSQL, subject to the engine version and your role's visibility. You may need the database owner or a role with suitable statistics access to see another session's details. Coordinate with the application owner before changing timeouts, canceling a build or ending a transaction. The <a href="/aws-rds-aurora-postgresql">RDS and Aurora capability guide</a> covers the broader platform context.</p>
+
+  <h2 id="response">Choose a safe response</h2>
+  <ol>
+    <li><strong>Record the evidence:</strong> command start time, progress phase, locker PID, transaction age, index state and the business reason for the build.</li>
+    <li><strong>For a writer or snapshot wait:</strong> identify the transaction owner and whether it can finish normally. Escalate cancellation only through the team's incident and change process.</li>
+    <li><strong>For active work:</strong> watch repeated progress samples and I/O pressure. Decide whether to let the build finish or reschedule it based on the workload.</li>
+    <li><strong>After failure:</strong> inspect validity and dependencies; choose a reviewed cleanup or rebuild plan before rerunning the migration.</li>
+    <li><strong>After completion:</strong> verify <code>indisvalid</code>, then compare the intended query plan and write cost against the pre-build baseline. A valid index does not guarantee the planner will use it or that the overall workload improves.</li>
+  </ol>
+  <p>For a full evidence-to-decision example, see the <a href="/sample-report">synthetic sample report</a>. If the index is meant to address slow queries, the <a href="/postgresql-performance-investigation">performance investigation scope</a> shows what a bounded diagnosis includes. You can inspect a captured execution plan with <a href={site.planReaderPostgresUrl} data-track="planreader_click">PlanReader</a>; a plan by itself does not show why an index build is waiting.</p>
+
+  <h2 id="sources">Sources and related guides</h2>
+  <ul>
+    <li><a href="https://www.postgresql.org/docs/18/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY">PostgreSQL 18: building indexes concurrently</a> — scans, transaction waits, invalid indexes and transaction-block restrictions.</li>
+    <li><a href="https://www.postgresql.org/docs/18/progress-reporting.html#CREATE-INDEX-PROGRESS-REPORTING">PostgreSQL 18: CREATE INDEX progress reporting</a> — phase and locker column definitions.</li>
+    <li><a href="https://www.postgresql.org/docs/18/functions-info.html#FUNCTIONS-INFO-SESSION">PostgreSQL 18: session information functions</a> — <code>pg_blocking_pids()</code>.</li>
+    <li><a href="https://www.postgresql.org/docs/18/catalog-pg-index.html">PostgreSQL 18: pg_index catalog</a> — <code>indisvalid</code> and <code>indisready</code>.</li>
+    <li><a href="/postgresql-concurrency-and-locking-a-comprehensive-guide">PostgreSQL concurrency and locking</a> — broader lock-queue diagnosis.</li>
+  </ul>
+</ArticleLayout>

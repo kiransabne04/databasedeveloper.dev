@@ -10,6 +10,7 @@ const groups = [
     intro: 'Diagnose blocking, indexing and physical-design problems from production evidence before changing the schema.',
     related: { label: 'PostgreSQL performance investigation', href: '/postgresql-performance-investigation' },
     items: [
+      { href: '/insights/postgresql-create-index-concurrently-stuck', kicker: 'Indexing · New', title: 'CREATE INDEX CONCURRENTLY stuck?', text: 'Read the build phase, identify a waiting transaction, and inspect index state before a retry.' },
       { href: '/insights/how-to-profile-slow-postgresql-queries', kicker: 'Method · New', title: 'How to profile slow PostgreSQL queries', text: 'pg_stat_statements to rank, auto_explain to capture the real plan, EXPLAIN ANALYZE to measure, then validate.' },
       { href: '/insights/postgresql-foreign-key-index-slow-delete', kicker: 'Lab-tested · New', title: 'Slow DELETE? Check for unindexed foreign keys', text: 'Deleting one customer took 1.7 seconds and 22 sequential scans. Find the foreign keys behind it and why pg_stat_statements hides them.' },
       { href: '/insights/postgresql-18-async-io-io-method', kicker: 'Lab-tested · New', title: 'PostgreSQL 18 async I/O: does io_method help?', text: 'worker cut a cold sequential scan by a third; io_uring won on a bitmap scan. How to measure it on your storage.' },
