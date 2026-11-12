@@ -1,0 +1,64 @@
+== 1. Server version
+         server_version          | server_version_num | major 
+---------------------------------+--------------------+-------
+ 14.24 (Debian 14.24-1.pgdg13+2) |             140024 |    14
+(1 row)
+
+== 2. Installed extensions in this database
+      extname       | extversion | packaged_default 
+--------------------+------------+------------------
+ pg_stat_statements | 1.9        | 1.9
+ pgcrypto           | 1.3        | 1.3
+ plpgsql            | 1.0        | 1.0
+(3 rows)
+
+== 3. Logical replication slots (CDC, Debezium, DMS, subscriptions)
+ slot_name |  plugin  | database | active |   behind   
+-----------+----------+----------+--------+------------
+ debezium  | pgoutput | postgres | f      | 8384 bytes
+(1 row)
+
+== 4. Settings changed from default that later versions removed
+           name           | setting |    source    
+--------------------------+---------+--------------
+ vacuum_defer_cleanup_age | 1000    | command line
+(1 row)
+
+== 5. Functions in languages or calls removed after 14
+ nspname |       proname        | lanname 
+---------+----------------------+---------
+ public  | nightly_backup_start | sql
+(1 row)
+
+== 6. Roles with MD5 password hashes (deprecated in PostgreSQL 18)
+  rolname   
+------------
+ legacy_app
+(1 row)
+
+== 7. Database sizes
+  datname  |  size   
+-----------+---------
+ postgres  | 8651 kB
+ template1 | 8441 kB
+(2 rows)
+
+== PostgreSQL 18: the flagged function restores but fails when called; MD5 warns
+                                                         version                                                          
+--------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+SET
+CREATE FUNCTION
+ERROR:  function pg_start_backup(unknown) does not exist
+LINE 1:  SELECT pg_start_backup('nightly') 
+                ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+QUERY:   SELECT pg_start_backup('nightly') 
+CONTEXT:  SQL function "nightly_backup_start" during inlining
+SET
+WARNING:  setting an MD5-encrypted password
+DETAIL:  MD5 password support is deprecated and will be removed in a future release of PostgreSQL.
+HINT:  Refer to the PostgreSQL documentation for details about migrating to another password type.
+CREATE ROLE

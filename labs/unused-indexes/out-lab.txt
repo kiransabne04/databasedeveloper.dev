@@ -1,0 +1,104 @@
+== version
+PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+== sizes
+           index           | size  
+---------------------------+-------
+ orders_pkey               | 43 MB
+ orders_customer_idx       | 14 MB
+ orders_customer_dup_idx   | 14 MB
+ orders_status_created_idx | 65 MB
+ orders_external_ref_uq    | 60 MB
+ orders_updated_at_idx     | 43 MB
+(6 rows)
+
+== create replica
+in_recovery=true
+== workload: primary point lookups by customer_id (500x)
+== workload: replica reporting query (200x)
+== replica plan
+                                             QUERY PLAN                                              
+-----------------------------------------------------------------------------------------------------
+ Aggregate
+   ->  Index Only Scan using orders_status_created_idx on orders
+         Index Cond: ((status = 'refunded'::text) AND (created_at > (now() - '03:00:00'::interval)))
+(3 rows)
+
+== pg_stat_user_indexes on PRIMARY
+           index           | idx_scan | has_last_scan | uniq | size  
+---------------------------+----------+---------------+------+-------
+ orders_customer_dup_idx   |      500 | t             | f    | 14 MB
+ orders_customer_idx       |        0 | f             | f    | 14 MB
+ orders_external_ref_uq    |        0 | f             | t    | 60 MB
+ orders_pkey               |        0 | f             | t    | 43 MB
+ orders_status_created_idx |        0 | f             | f    | 65 MB
+ orders_updated_at_idx     |        0 | f             | f    | 43 MB
+(6 rows)
+
+== pg_stat_user_indexes on REPLICA
+           index           | idx_scan | has_last_scan | uniq | size  
+---------------------------+----------+---------------+------+-------
+ orders_customer_dup_idx   |        0 | f             | f    | 14 MB
+ orders_customer_idx       |        0 | f             | f    | 14 MB
+ orders_external_ref_uq    |        0 | f             | t    | 60 MB
+ orders_pkey               |        0 | f             | t    | 43 MB
+ orders_status_created_idx |      200 | t             | f    | 65 MB
+ orders_updated_at_idx     |        0 | f             | f    | 43 MB
+(6 rows)
+
+== candidate query on primary
+ schemaname | table_name |        index_name         | idx_scan | last_idx_scan | index_size | indisunique | indisprimary | backs_constraint | db_stats_reset 
+------------+------------+---------------------------+----------+---------------+------------+-------------+--------------+------------------+----------------
+ public     | orders     | orders_status_created_idx |        0 |               | 65 MB      | f           | f            |                  | 
+ public     | orders     | orders_external_ref_uq    |        0 |               | 60 MB      | t           | f            |                  | 
+ public     | orders     | orders_updated_at_idx     |        0 |               | 43 MB      | f           | f            |                  | 
+ public     | orders     | orders_pkey               |        0 |               | 43 MB      | t           | t            | orders_pkey      | 
+ public     | orders     | orders_customer_idx       |        0 |               | 14 MB      | f           | f            |                  | 
+(5 rows)
+
+== filtered candidates (article query) on primary
+ schemaname | table_name |        index_name         | idx_scan | last_idx_scan | index_size 
+------------+------------+---------------------------+----------+---------------+------------
+ public     | orders     | orders_status_created_idx |        0 |               | 65 MB
+ public     | orders     | orders_updated_at_idx     |        0 |               | 43 MB
+ public     | orders     | orders_customer_idx       |        0 |               | 14 MB
+(3 rows)
+
+== how old are these counters
+        server_started         | db_stats_reset 
+-------------------------------+----------------
+ 2026-11-11 05:28:25.048272+00 | 
+(1 row)
+
+== duplicate index check
+ table_name |                same_definition                | combined_size 
+------------+-----------------------------------------------+---------------
+ orders     | {orders_customer_idx,orders_customer_dup_idx} | 27 MB
+(1 row)
+
+== write cost: pgbench updates of updated_at WITH orders_updated_at_idx
+latency average = 1.386 ms
+updates=20000 hot_updates=0 hot_pct=0 wal_bytes=279950921 wal_bytes_per_update=13997
+orders heap size=164 MB
+== DROP INDEX CONCURRENTLY orders_updated_at_idx (definition saved first)
+CREATE INDEX orders_updated_at_idx ON public.orders USING btree (updated_at)
+DROP INDEX
+== write cost WITHOUT orders_updated_at_idx
+latency average = 0.584 ms
+updates=20000 hot_updates=20000 hot_pct=100 wal_bytes=98676681 wal_bytes_per_update=4933
+orders heap size=164 MB
+== DROP INDEX CONCURRENTLY inside transaction
+BEGIN
+ERROR:  DROP INDEX CONCURRENTLY cannot run inside a transaction block
+== dropping the unique index that backs nothing vs a constraint
+NOTICE:  ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index "orders_external_ref_uq" to "orders_ref_key"
+ALTER TABLE
+ERROR:  cannot drop index orders_ref_key because constraint orders_ref_key on table orders requires it
+HINT:  You can drop constraint orders_ref_key on table orders instead.
+== stats after immediate shutdown (crash-like)
+before: orders_customer_dup_idx idx_scan=500
+after immediate stop: orders_customer_dup_idx idx_scan=0
+db stats_reset=null postmaster_start=2026-11-11 05:29:04.912424+00
+== clean restart
+before clean restart: orders_customer_dup_idx idx_scan=3
+after clean restart: orders_customer_dup_idx idx_scan=3
+== done

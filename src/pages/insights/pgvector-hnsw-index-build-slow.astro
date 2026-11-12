@@ -1,0 +1,181 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+
+const title = 'pgvector HNSW Index Build Slow? Memory, Parallel Workers and /dev/shm';
+const description = 'Lab-tested on pgvector 0.8.7 and PostgreSQL 18: a 100,000-row HNSW build took 9 minutes at the default maintenance_work_mem and under 2 at 1GB. Then why parallel workers never started for 768-dimension vectors, and the Docker shared-memory error behind failed builds.';
+
+const faq = [
+  {
+    q: 'Why is my pgvector HNSW index build so slow?',
+    a: 'Usually because the graph does not fit in maintenance_work_mem. pgvector prints "hnsw graph no longer fits into maintenance_work_mem after N tuples" and continues much more slowly. In a test with 100,000 768-dimension vectors, the build took 9 minutes 4 seconds at the 64MB default and between 1 minute 33 seconds and 2 minutes 2 seconds at 1GB.'
+  },
+  {
+    q: 'How much maintenance_work_mem does an HNSW build need?',
+    a: 'Enough to hold the whole graph, which is roughly the size of the finished index. In the test, the index was 391 MB and a 1GB setting kept the build in memory. Set it per session for the build, and leave headroom for the rest of the server; parallel builds also allocate that amount as shared memory.'
+  },
+  {
+    q: 'Why does my HNSW build not use parallel workers?',
+    a: 'PostgreSQL decides the number of workers from the size of the table heap. Vectors of more than about 500 dimensions are stored out of line in TOAST, so the heap stays small. In the test, the heap was 5.9 MB against 391 MB of TOAST, below the 8MB min_parallel_table_scan_size, so no workers started. Setting the table reloption parallel_workers made them start.'
+  },
+  {
+    q: 'What does "could not resize shared memory segment ... No space left on device" mean during an HNSW build?',
+    a: 'The parallel build tried to allocate maintenance_work_mem as a POSIX shared memory segment in /dev/shm, and /dev/shm was too small. Docker gives containers 64MB by default. Start the container with --shm-size at least as large as maintenance_work_mem, or mount a larger memory-backed volume at /dev/shm in Kubernetes.'
+  },
+  {
+    q: 'Do more parallel workers always make HNSW builds faster?',
+    a: 'No. In the test, two workers cut the build from about 1 minute 45 seconds to 53 seconds, while four and eight workers took 70 and 74 seconds. Workers insert into one shared graph and contend for it. Measure two or three settings on a copy of your data before picking one.'
+  }
+];
+---
+<ArticleLayout
+  title={title}
+  description={description}
+  eyebrow="pgvector · Lab-tested"
+  published="2026-11-11"
+  updated="2026-11-11"
+  offer="pgvector"
+  schemaType="Article"
+  faq={faq}
+  ctaTitle="Vector index builds blocking a release, or vector search too slow for production?"
+  ctaDescription="A pgvector review measures build time, memory, recall and filtered-query latency on your data and gives you index settings, a build procedure and the numbers to validate them."
+>
+  <p class="notice"><strong>Short answer:</strong> an HNSW build is fast only while the whole graph fits in <code>maintenance_work_mem</code>. Raise it for the build session to more than the expected index size. If you want parallel workers, check that PostgreSQL will actually start them: for vectors stored in TOAST it often will not, until you set the table's <code>parallel_workers</code> option. In Docker or Kubernetes, give <code>/dev/shm</code> at least as much space as <code>maintenance_work_mem</code>, or the parallel build fails.</p>
+
+  <p>HNSW is the index type most teams pick for pgvector, and its build is the slow part. I built the same index 14 times on pgvector 0.8.7 and PostgreSQL 18.6 in Docker, changing memory, workers and shared memory, to see which settings matter. The scripts and full output are in the <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/pgvector-hnsw-build">lab folder</a>.</p>
+
+  <nav class="notice" aria-label="On this page">
+    <strong>On this page</strong>
+    <ol>
+      <li><a href="#setup">The test setup</a></li>
+      <li><a href="#memory">maintenance_work_mem: the 5x setting</a></li>
+      <li><a href="#workers">Why parallel workers did not start</a></li>
+      <li><a href="#shm">The /dev/shm error in Docker and Kubernetes</a></li>
+      <li><a href="#progress">Watch a build in progress</a></li>
+      <li><a href="#production">Build procedure for production</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#sources">Sources</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="setup">The test setup</h2>
+  <ul>
+    <li><code>pgvector/pgvector:0.8.7-pg18</code> image: PostgreSQL 18.6, pgvector 0.8.7, on a laptop with 10 CPU cores and 8 GB of memory available to Docker.</li>
+    <li>One table, <code>items(id bigint, embedding vector(768))</code>, 100,000 rows of random values. 768 dimensions is a common size for sentence-embedding models.</li>
+    <li>Index: <code>CREATE INDEX … USING hnsw (embedding vector_cosine_ops)</code> with the defaults <code>m = 16</code> and <code>ef_construction = 64</code>. The finished index was 391 MB.</li>
+  </ul>
+  <p>Random vectors are a harder case for graph construction than real embeddings, which cluster. Your absolute times will differ. The ratios between settings are what carry over.</p>
+
+  <h2 id="memory">maintenance_work_mem: the 5x setting</h2>
+  <p>At the default <code>maintenance_work_mem</code> of 64MB, pgvector stopped building in memory after about 18,000 of the 100,000 rows:</p>
+<pre><code>{`NOTICE:  hnsw graph no longer fits into maintenance_work_mem after 17697 tuples
+DETAIL:  Building will take significantly more time.
+HINT:  Increase maintenance_work_mem to speed up builds.`}</code></pre>
+  <p>From that point it inserts the remaining rows into the on-disk index one at a time, which is much slower than building in memory. Serial build times:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col"><code>maintenance_work_mem</code></th><th scope="col">Build time</th><th scope="col">Graph in memory?</th></tr></thead>
+    <tbody>
+      <tr><td>64MB (default)</td><td>9 min 4 s; 11 min 49 s in a run that requested 2 workers, which did not start</td><td>Only the first 17,697 rows</td></tr>
+      <tr><td>1GB</td><td>1 min 33 s to 2 min 2 s across 9 runs</td><td>Yes</td></tr>
+    </tbody>
+  </table></div>
+  <p>That is a 5x difference from one setting, and it grows with the table: the in-memory part stays the same size while the slow part grows. Set it for the session that runs the build, not globally:</p>
+<pre><code>{`SET maintenance_work_mem = '1GB';   -- more than the expected index size
+CREATE INDEX CONCURRENTLY items_embedding_hnsw
+  ON items USING hnsw (embedding vector_cosine_ops);
+RESET maintenance_work_mem;`}</code></pre>
+  <p>To size it, estimate the index from a build on a sample, or use the existing index size if you are rebuilding. The graph needs roughly the finished index size. Do not set it so high that the build pushes the rest of the server into swap or the out-of-memory killer. On RDS or Aurora, check the instance class memory and what the instance already uses, and remember that a parallel build also allocates that amount as shared memory, below.</p>
+
+  <h2 id="workers">Why parallel workers did not start</h2>
+  <p>pgvector supports parallel HNSW builds, and <code>max_parallel_maintenance_workers</code> defaults to 2. In the first round of tests, though, 2, 4 and 8 workers made no difference: 1 minute 46 seconds to 2 minutes 1 second, the same as serial. Sampling <code>pg_stat_activity</code> during the builds showed why:</p>
+<pre><code>{`=== shm=4g maintenance_work_mem=1GB workers=4
+sample 1: workers=0 cpu=102.19%
+sample 2: workers=0 cpu=99.71%
+sample 3: workers=0 cpu=100.08%`}</code></pre>
+  <p>No workers, one core busy. PostgreSQL decides how many workers an index build gets from the size of the table's <em>heap</em>, using <code>min_parallel_table_scan_size</code> (8MB by default) as the threshold. The <code>vector</code> type uses <code>EXTERNAL</code> storage, and a 768-dimension vector takes about 3 KB, above the roughly 2 KB at which PostgreSQL moves values out of line. So the vectors live in the TOAST table and the heap holds little more than pointers:</p>
+<pre><code>{`SELECT pg_size_pretty(pg_relation_size('items')) AS heap,
+       pg_relation_size('items') / current_setting('block_size')::int AS heap_pages,
+       pg_size_pretty(pg_relation_size(reltoastrelid)) AS toast,
+       current_setting('min_parallel_table_scan_size') AS min_parallel_table_scan_size
+FROM pg_class WHERE oid = 'items'::regclass;
+
+  heap   | heap_pages | toast  | min_parallel_table_scan_size
+---------+------------+--------+------------------------------
+ 5888 kB |        736 | 391 MB | 8MB`}</code></pre>
+  <p>A 5.9 MB heap is below the threshold, so the planner assigned zero workers. Raising <code>max_parallel_maintenance_workers</code> changes nothing in that case. The same applies to most embeddings from 512 dimensions up, including 1,536- and 3,072-dimension models. A <code>halfvec(768)</code> column, at about 1.5 KB per value, would usually stay in the heap.</p>
+  <p>The table storage parameter <code>parallel_workers</code> overrides the size-based calculation. With it set, the workers started:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Workers (<code>parallel_workers</code> and <code>max_parallel_maintenance_workers</code>)</th><th scope="col">Workers seen</th><th scope="col">Container CPU</th><th scope="col">Build time</th></tr></thead>
+    <tbody>
+      <tr><td>0 (no reloption)</td><td>0</td><td>~100%</td><td>1 min 33 s – 2 min 2 s</td></tr>
+      <tr><td>2</td><td>2</td><td>302%</td><td>53 s</td></tr>
+      <tr><td>4</td><td>4</td><td>503%</td><td>1 min 10 s</td></tr>
+      <tr><td>8</td><td>8</td><td>970%</td><td>1 min 14 s</td></tr>
+    </tbody>
+  </table></div>
+  <p>Two workers halved the build. Four and eight used more CPU and were slower than two: the leader and workers insert into one shared graph and contend for it. Your best number depends on cores, dimensions and data, so time two or three settings on a copy. The procedure that worked:</p>
+<pre><code>{`ALTER TABLE items SET (parallel_workers = 2);
+SET maintenance_work_mem = '1GB';
+SET max_parallel_maintenance_workers = 2;
+CREATE INDEX CONCURRENTLY items_embedding_hnsw
+  ON items USING hnsw (embedding vector_cosine_ops);
+ALTER TABLE items RESET (parallel_workers);`}</code></pre>
+  <p>Reset the option afterwards. <code>parallel_workers</code> also sets the number of workers for parallel queries that scan the table, so leaving it set changes query plans, not just index builds. The workers come from <code>max_parallel_workers</code> and <code>max_worker_processes</code>, both 8 by default; if those are already in use by parallel queries, the build gets fewer workers than it asked for.</p>
+
+  <ArticleOffer offer="pgvector" title="Rebuilding vector indexes for a new model, and the build window keeps growing?" text="I measure build time, memory and recall for your dimensions and data on a copy, pick m, ef_construction, memory and worker settings from the results, and write the build and cutover procedure for production." />
+
+  <h2 id="shm">The /dev/shm error in Docker and Kubernetes</h2>
+  <p>A parallel build places the graph in dynamic shared memory, sized by <code>maintenance_work_mem</code>. On Linux, PostgreSQL's default <code>dynamic_shared_memory_type</code> is <code>posix</code>, which allocates from <code>/dev/shm</code>. Docker gives a container 64MB there unless told otherwise. With workers running and <code>maintenance_work_mem = 1GB</code>, the build failed at once:</p>
+<pre><code>{`ERROR:  could not resize shared memory segment "/PostgreSQL.323454400" to 1070632480 bytes: No space left on device`}</code></pre>
+  <p>1,070,632,480 bytes is just under 1 GiB: the graph's share of the 1GB <code>maintenance_work_mem</code>, requested as one segment. The serial builds never hit this, which is why it surfaces only when someone adds workers, or when a table grows enough for the planner to start them on its own. The fix is to give <code>/dev/shm</code> more room than <code>maintenance_work_mem</code>:</p>
+<pre><code>{`# Docker
+docker run --shm-size=2g ... pgvector/pgvector:0.8.7-pg18
+
+# docker compose
+services:
+  db:
+    image: pgvector/pgvector:0.8.7-pg18
+    shm_size: 2gb
+
+# Kubernetes: memory-backed volume at /dev/shm (counts toward the pod's memory)
+volumes:
+  - name: dshm
+    emptyDir:
+      medium: Memory
+      sizeLimit: 2Gi
+# container.volumeMounts: - name: dshm, mountPath: /dev/shm`}</code></pre>
+  <p>The pgvector README gives the same advice for Docker: keep <code>--shm-size</code> at least as large as <code>maintenance_work_mem</code>. If an operator runs your PostgreSQL pods, check how it sizes <code>/dev/shm</code> before raising <code>maintenance_work_mem</code> on a containerized server. Managed services such as RDS and Aurora handle shared memory themselves.</p>
+
+  <h2 id="progress">Watch a build in progress</h2>
+  <p>HNSW builds report through the standard index progress view. pgvector uses two phases, <code>initializing</code> and <code>loading tuples</code>; the view shows the second as <code>building index: loading tuples</code>:</p>
+<pre><code>{`SELECT p.pid, p.phase, p.tuples_done,
+       c.reltuples::bigint AS estimated_rows,
+       round(100.0 * p.tuples_done / nullif(c.reltuples, 0), 1) AS pct,
+       now() - a.query_start AS elapsed
+FROM pg_stat_progress_create_index AS p
+JOIN pg_stat_activity AS a USING (pid)
+JOIN pg_class AS c ON c.oid = p.relid;`}</code></pre>
+  <p>In the lab, during the loading phase <code>tuples_total</code> was 0 while the block counters already read 736 of 736, because they count the small heap. <code>tuples_done</code> was the useful counter, so the query above compares it with the planner's row estimate. A build that has printed the "no longer fits" notice slows down after that point, so do not extrapolate the finish time from the first minutes. If a concurrent build is waiting rather than working, see <a href="/insights/postgresql-create-index-concurrently-stuck">CREATE INDEX CONCURRENTLY stuck?</a></p>
+
+  <h2 id="production">Build procedure for production</h2>
+  <ol>
+    <li><strong>Rehearse on a copy</strong> with the real vectors. Record the index size, the build time and whether the notice appears.</li>
+    <li><strong>Set memory for the session</strong> above the rehearsed index size, within what the server can spare.</li>
+    <li><strong>Check worker planning</strong> with the heap and TOAST query. If the heap is smaller than <code>min_parallel_table_scan_size</code>, set <code>parallel_workers</code> for the build and reset it afterwards. In containers, check <code>/dev/shm</code> first.</li>
+    <li><strong>Build with <code>CONCURRENTLY</code></strong> so writes continue. It takes longer and waits for running transactions; schedule it outside the peak.</li>
+    <li><strong>Validate</strong>: check <code>indisvalid</code>, then measure recall and latency against exact search for representative queries, including filtered ones. A fast build with poor recall is not a result. See <a href="/insights/pgvector-hnsw-vs-ivfflat">HNSW vs IVFFlat</a> and <a href="/insights/pgvector-filtered-search-missing-results">filtered search returning too few rows</a>.</li>
+  </ol>
+  <p>If you are on pgvector 0.8.6 or earlier, upgrade before rebuilding. The <a href="/insights/pgvector-087-cve-upgrade">0.8.7 security fix</a> covers IVFFlat builds, and the upgrade is a good moment to schedule the rebuild window.</p>
+
+  <h2 id="faq">FAQ</h2>
+  {faq.map((item) => (<><h3>{item.q}</h3><p>{item.a}</p></>))}
+
+  <h2 id="sources">Sources</h2>
+  <ul>
+    <li><a href="https://github.com/pgvector/pgvector#hnsw">pgvector README: HNSW</a> — index options, build time, the notice text, parallel workers, progress phases and the Docker <code>--shm-size</code> note.</li>
+    <li><a href="https://www.postgresql.org/docs/18/runtime-config-resource.html">PostgreSQL 18: resource consumption</a> — <code>maintenance_work_mem</code>, <code>max_parallel_maintenance_workers</code>, <code>dynamic_shared_memory_type</code>.</li>
+    <li><a href="https://www.postgresql.org/docs/18/sql-createtable.html#SQL-CREATETABLE-STORAGE-PARAMETERS">PostgreSQL 18: table storage parameters</a> — <code>parallel_workers</code>.</li>
+    <li><a href="https://www.postgresql.org/docs/18/storage-toast.html">PostgreSQL 18: TOAST</a> — when values move out of line, and the <code>EXTERNAL</code> strategy.</li>
+    <li><a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/pgvector-hnsw-build">Lab: pgvector HNSW build</a> — scripts and output for every build in this article.</li>
+  </ul>
+</ArticleLayout>

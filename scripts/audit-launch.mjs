@@ -50,6 +50,19 @@ for (const route of ['/problems/postgresql-lock-contention', '/aws-rds-aurora-po
 }
 assert(/href="https:\/\/(?:www\.)?planreader\.dev\//.test(indexWaitGuide), 'Concurrent index guide missing PlanReader link');
 assert(page('/postgresql-concurrency-and-locking-a-comprehensive-guide').includes('href="/insights/postgresql-create-index-concurrently-stuck"'), 'Locking guide backlink missing');
+const newGuides = [
+  ['/postgresql-14-eol', ['dates', 'what-changes', 'managed', 'inventory', 'target', 'breaks', 'paths', 'plan', 'faq', 'sources'], ['/postgresql-14-upgrade-checklist', '/insights/rds-aurora-postgresql-14-extended-support-cost', '/insights/postgresql-upgrade-logical-replication-slots']],
+  ['/insights/postgresql-find-unused-indexes', ['test', 'replicas', 'reset', 'query', 'duplicates', 'cost', 'drop', 'managed', 'faq', 'sources'], ['/insights/postgresql-create-index-concurrently-stuck', '/insights/postgresql-slow-queries-pg-stat-statements']],
+  ['/insights/pgvector-hnsw-index-build-slow', ['setup', 'memory', 'workers', 'shm', 'progress', 'production', 'faq', 'sources'], ['/insights/pgvector-hnsw-vs-ivfflat', '/insights/postgresql-create-index-concurrently-stuck']],
+  ['/insights/sql-server-implicit-conversion-nvarchar-varchar', ['repro', 'collation', 'find', 'fix', 'cast', 'validate', 'faq', 'sources'], ['/insights/sql-server-parameter-sniffing-query-store']]
+];
+for (const [route, sections, links] of newGuides) {
+  const html = page(route);
+  assert(html.includes('"@type":"Article"'), `${route} lost Article structured data`);
+  assert(html.includes('"@type":"FAQPage"'), `${route} lost FAQPage structured data`);
+  for (const section of sections) assert(html.includes(`href="#${section}"`) && html.includes(`id="${section}"`), `${route} TOC target missing: ${section}`);
+  for (const link of links) assert(html.includes(`href="${link}"`), `${route} missing link: ${link}`);
+}
 assert(page('/').includes('href="/contact?offer=investigation&amp;from=/"'), 'Homepage primary CTA lost offer attribution');
 assert(page('/').includes('href="/sample-report"'), 'Homepage sample CTA missing');
 assert(page('/partners').includes('href="/contact?offer=partnership&amp;from=/partners"'), 'Partner CTA missing');

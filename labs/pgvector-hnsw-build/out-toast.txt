@@ -1,0 +1,51 @@
+ setseed 
+---------
+ 
+(1 row)
+
+##### shm=4g
+  heap   | heap_pages | toast  | min_parallel_table_scan_size 
+---------+------------+--------+------------------------------
+ 5888 kB |        736 | 391 MB | 8MB
+(1 row)
+
+ERROR:  operator is not unique: unknown || "char"
+LINE 1: select 'vector typstorage=' || typstorage from pg_type where...
+                                    ^
+HINT:  Could not choose a best candidate operator. You might need to add explicit type casts.
+=== shm=4g maintenance_work_mem=1GB parallel_workers reloption=2 max_parallel_maintenance_workers=2
+sample: parallel workers=2 cpu=301.82%
+Time: 53010.495 ms (00:53.010)
+Time: 94.397 ms
+=== shm=4g maintenance_work_mem=1GB parallel_workers reloption=4 max_parallel_maintenance_workers=4
+sample: parallel workers=4 cpu=502.87%
+Time: 69785.953 ms (01:09.786)
+Time: 99.987 ms
+=== shm=4g maintenance_work_mem=1GB parallel_workers reloption=8 max_parallel_maintenance_workers=8
+sample: parallel workers=8 cpu=969.84%
+Time: 73666.185 ms (01:13.666)
+Time: 26.735 ms
+2026-11-11 06:12:26.936 UTC [110] HINT:  Could not choose a best candidate operator. You might need to add explicit type casts.
+ setseed 
+---------
+ 
+(1 row)
+
+##### shm=64m
+  heap   | heap_pages | toast  | min_parallel_table_scan_size 
+---------+------------+--------+------------------------------
+ 5888 kB |        736 | 391 MB | 8MB
+(1 row)
+
+ERROR:  operator is not unique: unknown || "char"
+LINE 1: select 'vector typstorage=' || typstorage from pg_type where...
+                                    ^
+HINT:  Could not choose a best candidate operator. You might need to add explicit type casts.
+=== shm=64m maintenance_work_mem=1GB parallel_workers reloption=2 max_parallel_maintenance_workers=2
+ERROR:  could not resize shared memory segment "/PostgreSQL.323454400" to 1070632480 bytes: No space left on device
+Time: 17.523 ms
+NOTICE:  index "i" does not exist, skipping
+Time: 0.134 ms
+sample: parallel workers=0 cpu=0.08%
+2026-11-11 06:15:57.217 UTC [116] HINT:  Could not choose a best candidate operator. You might need to add explicit type casts.
+2026-11-11 06:15:57.333 UTC [123] ERROR:  could not resize shared memory segment "/PostgreSQL.323454400" to 1070632480 bytes: No space left on device
