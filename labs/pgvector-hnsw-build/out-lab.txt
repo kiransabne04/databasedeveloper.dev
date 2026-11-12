@@ -1,0 +1,103 @@
+== container A: default /dev/shm (64MB)
+PostgreSQL 18.6 (Debian 18.6-1.pgdg12+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 12.2.0-14+deb12u1) 12.2.0, 64-bit
+shm              64M  1.1M   63M   2% /dev/shm
+ setseed 
+---------
+ 
+(1 row)
+
+ table_size | count  
+------------+--------
+ 403 MB     | 100000
+(1 row)
+
+64MB
+2
+--- maintenance_work_mem=64MB max_parallel_maintenance_workers=0
+NOTICE:  index "items_embedding_hnsw" does not exist, skipping
+Timing is on.
+NOTICE:  hnsw graph no longer fits into maintenance_work_mem after 17697 tuples
+DETAIL:  Building will take significantly more time.
+HINT:  Increase maintenance_work_mem to speed up builds.
+CREATE INDEX
+Time: 544243.422 ms (09:04.243)
+Timing is off.
+ index_size 
+------------
+ 391 MB
+(1 row)
+
+--- maintenance_work_mem=1GB max_parallel_maintenance_workers=0
+Timing is on.
+CREATE INDEX
+Time: 118657.860 ms (01:58.658)
+Timing is off.
+ index_size 
+------------
+ 391 MB
+(1 row)
+
+--- maintenance_work_mem=1GB max_parallel_maintenance_workers=2
+Timing is on.
+CREATE INDEX
+Time: 121044.599 ms (02:01.045)
+Timing is off.
+ index_size 
+------------
+ 391 MB
+(1 row)
+
+== container B: /dev/shm 4GB
+shm             4.0G  1.1M  4.0G   1% /dev/shm
+ setseed 
+---------
+ 
+(1 row)
+
+--- maintenance_work_mem=64MB max_parallel_maintenance_workers=2
+NOTICE:  index "items_embedding_hnsw" does not exist, skipping
+Timing is on.
+NOTICE:  hnsw graph no longer fits into maintenance_work_mem after 17702 tuples
+DETAIL:  Building will take significantly more time.
+HINT:  Increase maintenance_work_mem to speed up builds.
+CREATE INDEX
+Time: 709192.028 ms (11:49.192)
+Timing is off.
+ index_size 
+------------
+ 391 MB
+(1 row)
+
+--- maintenance_work_mem=1GB max_parallel_maintenance_workers=2
+Timing is on.
+CREATE INDEX
+Time: 105640.747 ms (01:45.641)
+Timing is off.
+ index_size 
+------------
+ 391 MB
+(1 row)
+
+--- maintenance_work_mem=1GB max_parallel_maintenance_workers=4
+Timing is on.
+CREATE INDEX
+Time: 114683.004 ms (01:54.683)
+Timing is off.
+ index_size 
+------------
+ 391 MB
+(1 row)
+
+--- maintenance_work_mem=1GB max_parallel_maintenance_workers=8
+Timing is on.
+CREATE INDEX
+Time: 112090.207 ms (01:52.090)
+Timing is off.
+ index_size 
+------------
+ 391 MB
+(1 row)
+
+== progress phases during a build (sampled every 0.5s)
+04:24:43 building index: loading tuples tuples 74/0 blocks 736/736
+== done

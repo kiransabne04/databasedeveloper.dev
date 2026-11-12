@@ -1,67 +1,263 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHero from '../components/PageHero.astro';
-import CTA from '../components/CTA.astro';
-import { pg14Facts } from '../data/facts';
+import ArticleLayout from '../layouts/ArticleLayout.astro';
+import ArticleOffer from '../components/ArticleOffer.astro';
+import { pg14Facts as f } from '../data/facts';
+
+const title = 'PostgreSQL 14 End of Life: What Changes on 12 November 2026';
+const description = 'PostgreSQL 14 gets its final community release on 12 November 2026. What stops, what keeps running, the RDS, Aurora and Azure dates that follow, a tested inventory script, and how to choose a target version.';
+
+const faq = [
+  {
+    q: 'When does PostgreSQL 14 reach end of life?',
+    a: `The PostgreSQL Global Development Group lists ${f.communityEol} as the final release date for PostgreSQL 14. After that release there are no more community bug or security fixes for the 14 branch. Managed services have later dates: AWS RDS and Aurora end standard support on ${f.rdsStandardSupportEnd}, and Azure Database for PostgreSQL Flexible Server on ${f.azureStandardSupportEnd}.`
+  },
+  {
+    q: 'Will PostgreSQL 14 stop working after end of life?',
+    a: 'No. Existing servers keep running and accepting connections. End of life means the community stops publishing fixes. Any security issue or data-corruption bug found later and fixed in 15 to 18 is not fixed in 14 by the community.'
+  },
+  {
+    q: 'What happens to RDS and Aurora PostgreSQL 14 instances?',
+    a: `Nothing changes on ${f.communityEol}. Standard support continues until ${f.rdsStandardSupportEnd}. From ${f.rdsExtendedSupportYear1Start}, instances still on 14 with Extended Support enabled (the default) are enrolled in paid RDS Extended Support, billed per vCPU-hour, until ${f.rdsExtendedSupportEnd}. Some minor versions reach end of standard support earlier.`
+  },
+  {
+    q: 'Which version should I upgrade PostgreSQL 14 to?',
+    a: 'For most teams, PostgreSQL 17 or 18. PostgreSQL 18 has support until November 2030 and PostgreSQL 17 until November 2029. Pick the newest version that your platform, extensions, drivers, CDC tooling and ORM all support, then test it against a workload baseline.'
+  },
+  {
+    q: 'Can I upgrade directly from PostgreSQL 14 to 18?',
+    a: 'Yes. pg_upgrade and logical replication both support skipping major versions. On RDS and Aurora, check the valid upgrade targets for your exact minor version with aws rds describe-db-engine-versions, because the allowed targets depend on the source minor.'
+  },
+  {
+    q: 'Is paying for RDS Extended Support a reasonable option?',
+    a: 'It can be a deliberate bridge when something specific blocks the upgrade, such as a vendor application, a CDC pipeline that needs rework, or a planned platform move. It is an expensive default when the only blocker is scheduling.'
+  }
+];
 ---
-<BaseLayout
-  title="PostgreSQL 14 End of Life: Upgrade Planning — WalStack"
-  description="PostgreSQL 14 community support ends 12 November 2026. Distinct AWS RDS/Aurora and Azure support dates, early minor-version deadlines and upgrade planning."
+<ArticleLayout
+  title={title}
+  description={description}
+  eyebrow="PostgreSQL upgrades · End of life"
+  published="2026-10-13"
+  updated="2026-11-11"
+  offer="upgrade"
+  schemaType="Article"
+  faq={faq}
+  ctaTitle="Still running PostgreSQL 14 in production?"
+  ctaDescription="Send your platform, current minor version and extension list. A readiness review ranks the blockers per cluster, captures a performance baseline and gives you a dated, reversible upgrade plan."
 >
-  <PageHero
-    eyebrow="Time-sensitive guide"
-    title="PostgreSQL 14 reaches community end of life on 12 November 2026."
-    description="If PG14 is still in production, the immediate job is not panic—it is inventory, target-version choice, compatibility testing, workload baselining and a controlled validation plan."
-    primaryLabel="Review upgrade readiness"
-    primaryHref="/postgresql-upgrade-readiness"
-    secondaryLabel="AWS RDS/Aurora"
-    secondaryHref="/aws-rds-aurora-postgresql"
-  />
-  <section>
-    <div class="container prose">
-      <h2>Current dates</h2>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>Milestone</th><th>Date</th></tr></thead>
-          <tbody>
-            <tr><td>PostgreSQL 14 community fixes end</td><td>{pg14Facts.communityEol}</td></tr>
-            <tr><td>RDS and Aurora PostgreSQL 14 standard support ends</td><td>{pg14Facts.rdsStandardSupportEnd}</td></tr>
-            <tr><td>RDS and Aurora Extended Support year-1 pricing begins</td><td>{pg14Facts.rdsExtendedSupportYear1Start}</td></tr>
-            <tr><td>RDS and Aurora Extended Support year-3 pricing begins</td><td>{pg14Facts.rdsExtendedSupportYear3Start}</td></tr>
-            <tr><td>RDS and Aurora Extended Support ends</td><td>{pg14Facts.rdsExtendedSupportEnd}</td></tr>
-            <tr><td>Azure Database for PostgreSQL Flexible Server standard support ends</td><td>{pg14Facts.azureStandardSupportEnd}</td></tr>
-            <tr><td>Azure Flexible Server Extended Support starts</td><td>{pg14Facts.azureExtendedSupportStart}</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <p class="small muted">Dates verified {pg14Facts.verifiedOn}. Re-check provider timelines before scheduling a change.</p>
+  <p class="notice"><strong>Short answer:</strong> PostgreSQL 14 receives its final community release on <strong>{f.communityEol}</strong>. Your servers will not stop, but no further bug or security fixes will be published for the 14 branch. On AWS RDS and Aurora, standard support runs until <strong>{f.rdsStandardSupportEnd}</strong> and paid Extended Support starts on {f.rdsExtendedSupportYear1Start}. On Azure Flexible Server, standard support ends on {f.azureStandardSupportEnd}. Move to the final 14 minor release now, and plan the major upgrade from an inventory and a workload baseline rather than from the calendar.</p>
 
-      <h2>Check your minor version first</h2>
-      <p>Some PostgreSQL 14 minor versions reach end of standard support before the major version does. Per the AWS release calendars:</p>
-      <ul>
-        <li><strong>RDS for PostgreSQL</strong> {pg14Facts.rdsEarlyMinorEnds}</li>
-        <li><strong>Aurora PostgreSQL</strong> {pg14Facts.auroraEarlyMinorEnds}</li>
-      </ul>
-      <p>If you are on one of these, you may need a minor-version upgrade before the major-version decision. Either way, test it like a change: baseline first, then compare after. <a href="/insights/postgresql-14-minor-version-deadlines">What RDS does at a minor-version deadline, and how to check your instances.</a></p>
+  <nav class="notice" aria-label="On this page">
+    <strong>On this page</strong>
+    <ol>
+      <li><a href="#dates">PostgreSQL 14 support dates by platform</a></li>
+      <li><a href="#what-changes">What end of life changes, and what it does not</a></li>
+      <li><a href="#managed">RDS, Aurora and Azure: what happens to your instances</a></li>
+      <li><a href="#inventory">Find what you are running (tested script)</a></li>
+      <li><a href="#target">Choose a target version: 17 or 18</a></li>
+      <li><a href="#breaks">What breaks between 14 and 18</a></li>
+      <li><a href="#paths">Upgrade paths and where the downtime goes</a></li>
+      <li><a href="#plan">A 90-day plan</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#sources">Sources</a></li>
+    </ol>
+  </nav>
 
-      <h2>What to do first</h2>
-      <p>The short version is below. The full <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a> has the queries, the blockers RDS and <code>pg_upgrade</code> check for, and a PDF copy. If you are on RDS or Aurora, see <a href="/insights/rds-aurora-postgresql-14-extended-support-cost">what Extended Support will cost</a> from 1 March 2027.</p>
-      <ol>
-        <li>Inventory PG14 instances, extensions and client libraries.</li>
-        <li>Choose a supported target version based on application constraints and support horizon.</li>
-        <li>Capture representative query/workload baselines before the change.</li>
-        <li>Test extensions and migrations in a realistic staging environment.</li>
-        <li>Compare important plans and latency after upgrade.</li>
-        <li>Define rollback criteria before the maintenance window.</li>
-      </ol>
-      <p>A clean cutover can still leave queries slower. In a <a href="/insights/postgresql-slow-after-major-upgrade">reproduced PostgreSQL 14-to-17 upgrade</a>, missing optimizer statistics changed a join plan; the guide shows the evidence to capture and how the query recovered after analysis.</p>
+  <h2 id="dates">PostgreSQL 14 support dates by platform</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">Platform</th><th scope="col">Milestone</th><th scope="col">Date</th></tr></thead>
+      <tbody>
+        <tr><td>Community PostgreSQL</td><td>First release</td><td>30 September 2021</td></tr>
+        <tr><td>Community PostgreSQL</td><td>Final release (end of life)</td><td>{f.communityEol}</td></tr>
+        <tr><td>RDS for PostgreSQL and Aurora PostgreSQL</td><td>End of standard support</td><td>{f.rdsStandardSupportEnd}</td></tr>
+        <tr><td>RDS and Aurora</td><td>Extended Support, year 1–2 pricing starts</td><td>{f.rdsExtendedSupportYear1Start}</td></tr>
+        <tr><td>RDS and Aurora</td><td>Extended Support, year 3 pricing starts</td><td>{f.rdsExtendedSupportYear3Start}</td></tr>
+        <tr><td>RDS and Aurora</td><td>End of Extended Support</td><td>{f.rdsExtendedSupportEnd}</td></tr>
+        <tr><td>Azure Database for PostgreSQL Flexible Server</td><td>End of standard support</td><td>{f.azureStandardSupportEnd}</td></tr>
+        <tr><td>Azure Flexible Server</td><td>Extended Support</td><td>{f.azureExtendedSupportStart} to {f.azureExtendedSupportEnd}</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p class="small muted">Dates verified {f.verifiedOn} against the PostgreSQL versioning policy and the AWS and Microsoft calendars linked in <a href="#sources">Sources</a>. Providers change these pages; re-check before you schedule a change. Other managed services (Google Cloud SQL, Crunchy Bridge, Supabase, Neon and others) publish their own policies.</p>
+  <p>For comparison, the community final-release dates for the newer branches are 11 November 2027 (15), 9 November 2028 (16), 8 November 2029 (17) and 14 November 2030 (18). The project supports each major version for five years after its first release.</p>
 
-      <h2>Primary sources</h2>
-      <p><a href={pg14Facts.postgresqlSource}>PostgreSQL versioning and support policy ↗</a></p>
-      <p><a href={pg14Facts.awsSource}>Amazon RDS for PostgreSQL release calendar ↗</a></p>
-      <p><a href={pg14Facts.auroraSource}>Aurora PostgreSQL release calendar ↗</a></p>
-      <p><a href={pg14Facts.azureSource}>Azure Flexible Server Extended Support calendar ↗</a></p>
-    </div>
-  </section>
-  <section><div class="container"><CTA eyebrow="Upgrade readiness" title="Still running PostgreSQL 14?" description="Send your platform, current version and extension list. You will get a direct answer on whether a fixed-scope readiness review fits, and what it would cover." primaryLabel="Ask about upgrade readiness" secondaryLabel="See the readiness review" secondaryHref="/postgresql-upgrade-readiness" /></div></section>
-</BaseLayout>
+  <h2 id="what-changes">What end of life changes, and what it does not</h2>
+  <p>The PostgreSQL project ships a final minor release for a branch on its end-of-life date, then stops. In practice:</p>
+  <ul>
+    <li><strong>Your servers keep running.</strong> Nothing in PostgreSQL checks a date. Connections, replication and backups behave exactly as before.</li>
+    <li><strong>No new fixes.</strong> A security vulnerability or data-corruption bug found after {f.communityEol} is fixed in 15 to 18 only. The fix and its description are public, which makes an unpatched 14 server easier to target over time, not harder.</li>
+    <li><strong>Run the final minor first.</strong> As of {f.verifiedOn}, the latest 14 release is {f.latestMinorBeforeEol}. Any 14 minor published with the 12 November release round is the last one; apply it when it appears. Upgrading within a major version replaces binaries only and needs no dump or pg_upgrade, which makes it the cheapest risk reduction available. Read the release notes of every minor you skip for post-upgrade steps such as reindexing.</li>
+    <li><strong>The ecosystem moves on gradually.</strong> Extension authors, drivers, ORMs, monitoring agents and CDC tools drop older branches at their own pace. Expect new extension releases to stop being built for 14.</li>
+    <li><strong>Audit findings.</strong> Vulnerability scanners and security questionnaires commonly flag unsupported database versions. If you sell to companies that run vendor reviews, "PostgreSQL 14 after end of life" tends to become a written finding with a remediation date.</li>
+    <li><strong>Distribution packages are a separate question.</strong> A Linux distribution that ships PostgreSQL 14 in a long-term release may keep patching its own package under its own policy. That applies to that vendor's package, not to the PGDG repository packages or the community Docker image.</li>
+  </ul>
+
+  <h2 id="managed">RDS, Aurora and Azure: what happens to your instances</h2>
+  <h3>AWS RDS for PostgreSQL and Aurora PostgreSQL</h3>
+  <p>Nothing changes on the community date. AWS keeps PostgreSQL 14 in standard support until {f.rdsStandardSupportEnd}. After that:</p>
+  <ul>
+    <li><strong>Automatic enrollment in Extended Support.</strong> Instances and clusters created or restored with Extended Support enabled are enrolled from {f.rdsExtendedSupportYear1Start}. Enabled is the default unless the instance was created with <code>--engine-lifecycle-support open-source-rds-extended-support-disabled</code>. AWS says enrollment does not change the engine or affect uptime.</li>
+    <li><strong>Billing per vCPU-hour</strong> on every instance that runs 14: writers, Multi-AZ standbys and read replicas. Year 3 pricing is higher from {f.rdsExtendedSupportYear3Start}. The <a href="/insights/rds-aurora-postgresql-14-extended-support-cost">Extended Support cost guide</a> shows how to price your own fleet.</li>
+    <li><strong>Opting out is an upgrade.</strong> You can change <code>EngineLifecycleSupport</code> at any time. If you disable it on an instance already past its end of standard support, AWS upgrades it automatically to the next supported major version. That is an unplanned major upgrade, which is the outcome to avoid.</li>
+    <li><strong>Earlier minor-version deadlines.</strong> On RDS, minors {f.rdsEarlyMinorEnds}, and 14.21 is marked as not available for new instances. On Aurora, {f.auroraEarlyMinorEnds}. Aurora lists the minors eligible for Extended Support as "to be determined". See <a href="/insights/postgresql-14-minor-version-deadlines">what happens at a minor-version deadline</a>.</li>
+  </ul>
+  <p>List your PostgreSQL 14 instances and their lifecycle setting in one call:</p>
+<pre><code>{`aws rds describe-db-instances \\
+  --query "DBInstances[?Engine=='postgres' || Engine=='aurora-postgresql'] \\
+    | [?starts_with(EngineVersion, '14.')] \\
+    .[DBInstanceIdentifier, Engine, EngineVersion, DBInstanceClass, MultiAZ, EngineLifecycleSupport]" \\
+  --output table
+
+# Valid upgrade targets for your exact source minor
+aws rds describe-db-engine-versions --engine postgres --engine-version 14.24 \\
+  --query 'DBEngineVersions[].ValidUpgradeTarget[?IsMajorVersionUpgrade == \`true\`].EngineVersion' \\
+  --output text`}</code></pre>
+  <p class="small muted">Run the first command per region. For Aurora targets use <code>--engine aurora-postgresql</code> and your cluster's version.</p>
+
+  <h3>Azure Database for PostgreSQL Flexible Server</h3>
+  <p>Standard support ends on {f.azureStandardSupportEnd}. Eligible servers move into paid Extended Support from {f.azureExtendedSupportStart} until {f.azureExtendedSupportEnd}. Microsoft's FAQ says you cannot opt out other than by upgrading to a supported version. Azure supports in-place major version upgrades for Flexible Server; test one on a restored copy first, because the server is unavailable while it runs.</p>
+<pre><code>{`az postgres flexible-server list \\
+  --query "[?version=='14'].{name:name, group:resourceGroup, location:location, sku:sku.name}" \\
+  --output table`}</code></pre>
+
+  <h2 id="inventory">Find what you are running (tested script)</h2>
+  <p>The upgrade plan depends on more than the version number. This read-only script lists what usually decides the effort: extensions, logical replication slots, settings that later versions removed, functions that call removed APIs, and MD5 passwords. I ran it against PostgreSQL 14.24 in Docker with each problem seeded; the output is in the <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/pg14-eol-inventory">lab folder</a>.</p>
+<pre><code>{`-- PostgreSQL 14 EOL inventory. Read-only. Run in each database you plan to upgrade.
+-- Check 6 reads pg_authid, which needs a superuser: it fails on RDS, Aurora and Azure.
+\\echo '== 1. Server version'
+SELECT current_setting('server_version') AS server_version,
+       current_setting('server_version_num')::int AS server_version_num,
+       current_setting('server_version_num')::int / 10000 AS major;
+
+\\echo '== 2. Installed extensions in this database'
+SELECT e.extname, e.extversion,
+       a.default_version AS packaged_default
+FROM pg_extension e
+LEFT JOIN pg_available_extensions a ON a.name = e.extname
+ORDER BY e.extname;
+
+\\echo '== 3. Logical replication slots (CDC, Debezium, DMS, subscriptions)'
+SELECT slot_name, plugin, database, active,
+       pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), confirmed_flush_lsn)) AS behind
+FROM pg_replication_slots
+WHERE slot_type = 'logical';
+
+\\echo '== 4. Settings changed from default that later versions removed'
+SELECT name, setting, source
+FROM pg_settings
+WHERE name IN ('vacuum_defer_cleanup_age', 'promote_trigger_file',
+               'old_snapshot_threshold', 'db_user_namespace',
+               'force_parallel_mode', 'stats_temp_directory')
+  AND source NOT IN ('default', 'override');
+
+\\echo '== 5. Functions in languages or calls removed after 14'
+SELECT n.nspname, p.proname, l.lanname
+FROM pg_proc p
+JOIN pg_namespace n ON n.oid = p.pronamespace
+JOIN pg_language l ON l.oid = p.prolang
+WHERE n.nspname NOT IN ('pg_catalog', 'information_schema')
+  AND (l.lanname IN ('plpython2u', 'plpythonu')
+       OR p.prosrc ~* '\\m(pg_start_backup|pg_stop_backup)\\M');
+
+\\echo '== 6. Roles with MD5 password hashes (deprecated in PostgreSQL 18)'
+SELECT rolname FROM pg_authid WHERE rolpassword LIKE 'md5%';
+
+\\echo '== 7. Database sizes'
+SELECT datname, pg_size_pretty(pg_database_size(datname)) AS size
+FROM pg_database WHERE datallowconn ORDER BY pg_database_size(datname) DESC;`}</code></pre>
+  <p>On the seeded PostgreSQL 14.24 server it reported:</p>
+<pre><code>{`== 3. Logical replication slots (CDC, Debezium, DMS, subscriptions)
+ slot_name |  plugin  | database | active |   behind
+-----------+----------+----------+--------+------------
+ debezium  | pgoutput | postgres | f      | 8384 bytes
+
+== 4. Settings changed from default that later versions removed
+           name           | setting |    source
+--------------------------+---------+--------------
+ vacuum_defer_cleanup_age | 1000    | command line
+
+== 5. Functions in languages or calls removed after 14
+ nspname |       proname        | lanname
+---------+----------------------+---------
+ public  | nightly_backup_start | sql
+
+== 6. Roles with MD5 password hashes (deprecated in PostgreSQL 18)
+  rolname
+------------
+ legacy_app`}</code></pre>
+  <p>How to read each result:</p>
+  <ul>
+    <li><strong>Logical slots</strong> matter most. <code>pg_upgrade</code> from 14 does not carry logical slots over: in a <a href="/insights/postgresql-upgrade-logical-replication-slots">tested 14-to-18 upgrade</a> the check passed with a Debezium slot present, and the slot was gone afterwards. Your CDC pipeline needs its own cutover plan.</li>
+    <li><strong>Removed settings</strong> left in <code>postgresql.conf</code> stop a self-managed server on the new version from starting until you remove them. On RDS and Aurora the parameter group family for the new version does not contain them, so carry your custom values over to a new parameter group by hand. <code>stats_temp_directory</code> was removed in 15; <code>vacuum_defer_cleanup_age</code> and <code>promote_trigger_file</code> in 16; <code>old_snapshot_threshold</code> and <code>db_user_namespace</code> in 17. <code>force_parallel_mode</code> was renamed <code>debug_parallel_query</code> in 16.</li>
+    <li><strong>Removed functions do not fail at upgrade time.</strong> I tested the flagged function on PostgreSQL 18: with <code>check_function_bodies = off</code>, which is how pg_dump restores, it was created without error, then the first call failed with <code>ERROR: function pg_start_backup(unknown) does not exist</code>. <code>pg_start_backup</code> and <code>pg_stop_backup</code> became <code>pg_backup_start</code> and <code>pg_backup_stop</code> in 15. This is a runtime failure that shows up after cutover, in whatever job calls it.</li>
+    <li><strong>MD5 passwords</strong> still work in 18, which prints <code>WARNING: setting an MD5-encrypted password</code> and a deprecation notice when one is set. Plan to move those roles to SCRAM. On managed services you cannot read <code>pg_authid</code>; check <code>password_encryption</code> and how each application role was created.</li>
+    <li><strong>Extensions</strong> must exist on the target, at a version the target supports. After a major upgrade, run <code>ALTER EXTENSION … UPDATE</code> per database. On RDS, compare with the extension list for the target version.</li>
+  </ul>
+  <p>The full <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a> adds the blockers <code>pg_upgrade --check</code> and RDS pre-checks look for. See <a href="/insights/pg-upgrade-check-failures">real pg_upgrade --check failures and fixes</a>.</p>
+
+  <ArticleOffer offer="upgrade" title="Several PostgreSQL 14 clusters, CDC on some of them, and no upgrade date yet?" text="The readiness review runs this inventory per cluster, adds the parameter group, client driver and CDC review, captures a pg_stat_statements baseline and gives you a dated plan to be off 14 before Extended Support billing starts." />
+
+  <h2 id="target">Choose a target version: 17 or 18</h2>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">Target</th><th scope="col">Community support until</th><th scope="col">Consider it when</th></tr></thead>
+      <tbody>
+        <tr><td>PostgreSQL 18</td><td>14 November 2030</td><td>Your platform, extensions, drivers and CDC tool support it. You get the longest runway, and pg_upgrade to 18 transfers most optimizer statistics.</td></tr>
+        <tr><td>PostgreSQL 17</td><td>8 November 2029</td><td>A required extension, vendor certification or tool does not support 18 yet. You want a version that has had more minor releases.</td></tr>
+        <tr><td>PostgreSQL 15 or 16</td><td>November 2027 / 2028</td><td>Only when a hard dependency forces it. You will be planning the next major upgrade within one or two years.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Going straight from 14 to 18 is supported by pg_upgrade, logical replication and the managed services, and is usually less total work than stepping through each version: you test one combined change instead of four. Do not pick a version from the release notes alone. The question that matters is whether your queries keep their plans. In a <a href="/insights/postgresql-slow-after-major-upgrade">reproduced 14-to-17 upgrade</a>, a join went from 222 ms to 904 ms because statistics were missing after pg_upgrade.</p>
+
+  <h2 id="breaks">What breaks between 14 and 18</h2>
+  <p>The release notes for 15, 16, 17 and 18 each have a "Migration" section. These are the items that most often affect applications coming from 14:</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th scope="col">Version</th><th scope="col">Change</th><th scope="col">Who it affects</th></tr></thead>
+      <tbody>
+        <tr><td>15</td><td>New databases no longer grant <code>CREATE</code> on the <code>public</code> schema to everyone.</td><td>Migration tools and roles that create objects in <code>public</code> in a newly created database.</td></tr>
+        <tr><td>15</td><td>Exclusive backup mode removed; <code>pg_start_backup</code>/<code>pg_stop_backup</code> renamed.</td><td>Custom backup scripts on self-managed servers.</td></tr>
+        <tr><td>15</td><td>PL/Python 2 removed.</td><td>Functions in <code>plpythonu</code>/<code>plpython2u</code>.</td></tr>
+        <tr><td>16</td><td><code>vacuum_defer_cleanup_age</code> and <code>promote_trigger_file</code> removed.</td><td>Old configuration files and HA tooling.</td></tr>
+        <tr><td>17</td><td><code>old_snapshot_threshold</code>, <code>db_user_namespace</code> and the <code>adminpack</code> extension removed.</td><td>Configuration and admin tools that installed <code>adminpack</code>.</td></tr>
+        <tr><td>18</td><td>MD5 password authentication deprecated; <code>initdb</code> enables data checksums by default.</td><td>Roles with MD5 hashes. Self-managed pg_upgrade from a cluster without checksums fails <code>--check</code> until you match the setting.</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>This is not the complete list. Read each Migration section, and run your application test suite and a workload replay against the target.</p>
+
+  <h2 id="paths">Upgrade paths and where the downtime goes</h2>
+  <ul>
+    <li><strong>pg_upgrade (self-managed):</strong> with <code>--link</code> or <code>--clone</code>, downtime is mostly catalog transfer and is roughly independent of data size. Then analyze, or rely on 18's statistics transfer and check with <code>vacuumdb --all --analyze-in-stages --missing-stats-only</code>.</li>
+    <li><strong>RDS and Aurora in-place major upgrade:</strong> one command, but the instance is unavailable while it runs, the pre-check fails while logical replication slots exist, and read replicas need a plan of their own.</li>
+    <li><strong>RDS Blue/Green Deployments:</strong> short switchover after the green environment catches up, with logical replication limits that can invalidate the green side. See <a href="/insights/rds-aurora-postgresql-14-to-18-blue-green">RDS and Aurora 14 to 18: downtime and Blue/Green</a>.</li>
+    <li><strong>Logical replication to a new cluster:</strong> the lowest downtime and the most work. Sequences, DDL and large objects are not replicated, and every table that receives updates or deletes needs a primary key or replica identity.</li>
+  </ul>
+  <p>Whichever path you use, the rollback plan is the part teams skip. After a pg_upgrade with <code>--link</code> has started the new cluster, you cannot go back to the old one. After an RDS in-place upgrade, rolling back means restoring a snapshot taken before it.</p>
+
+  <h2 id="plan">A 90-day plan</h2>
+  <ol>
+    <li><strong>Week 1:</strong> apply the final 14 minor. Run the inventory script on every cluster. List the owners of each CDC slot, extension and client.</li>
+    <li><strong>Week 2:</strong> capture a workload baseline: <code>pg_stat_statements</code> top statements by total time over a normal day, plus plans for the 10 most important queries (<a href="/insights/postgresql-slow-queries-pg-stat-statements">how</a>).</li>
+    <li><strong>Weeks 3–6:</strong> rehearse on a restored copy. Fix check failures, update extensions, run the test suite, compare plans and latency with the baseline.</li>
+    <li><strong>Weeks 7–10:</strong> upgrade the least critical environment, then production, with rollback criteria written before the window: which latency or error numbers trigger a rollback.</li>
+    <li><strong>After cutover:</strong> compare the same <code>pg_stat_statements</code> view to the baseline for a week. Recreate CDC slots and confirm downstream consumers.</li>
+  </ol>
+  <p>On RDS and Aurora, finishing before {f.rdsExtendedSupportYear1Start} avoids Extended Support charges. On Azure, the equivalent date is {f.azureExtendedSupportStart}.</p>
+
+  <h2 id="faq">FAQ</h2>
+  {faq.map((item) => (<><h3>{item.q}</h3><p>{item.a}</p></>))}
+
+  <h2 id="sources">Sources</h2>
+  <ul>
+    <li><a href={f.postgresqlSource}>PostgreSQL versioning policy</a> — release and final-release dates for every branch.</li>
+    <li><a href={f.awsSource}>Amazon RDS for PostgreSQL release calendar</a> and <a href={f.auroraSource}>Aurora PostgreSQL release calendar</a> — major and minor end-of-standard-support dates.</li>
+    <li><a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/extended-support.html">Amazon RDS Extended Support</a> — enrollment, opting out and automatic upgrades.</li>
+    <li><a href={f.azureSource}>Azure Database for PostgreSQL Extended Support</a> — Flexible Server dates and opt-out rules.</li>
+    <li><a href="https://www.postgresql.org/docs/release/">PostgreSQL release notes</a> — Migration sections for 15, 16, 17 and 18.</li>
+    <li><a href="https://www.postgresql.org/docs/18/pgupgrade.html">PostgreSQL 18: pg_upgrade</a> — link mode, statistics transfer and what it does not carry over.</li>
+    <li><a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/pg14-eol-inventory">Lab: PostgreSQL 14 inventory script</a> — the script, the seeded setup and the full output.</li>
+  </ul>
+</ArticleLayout>

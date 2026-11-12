@@ -10,6 +10,7 @@ const groups = [
     intro: 'Diagnose blocking, indexing and physical-design problems from production evidence before changing the schema.',
     related: { label: 'PostgreSQL performance investigation', href: '/postgresql-performance-investigation' },
     items: [
+      { href: '/insights/postgresql-find-unused-indexes', kicker: 'Lab-tested · New', title: 'Find unused indexes without dropping the wrong one', text: 'The primary said zero scans; the replica used the index 200 times. Safe candidate queries, and how one unused index blocked every HOT update.' },
       { href: '/insights/postgresql-create-index-concurrently-stuck', kicker: 'Indexing · New', title: 'CREATE INDEX CONCURRENTLY stuck?', text: 'Read the build phase, identify a waiting transaction, and inspect index state before a retry.' },
       { href: '/insights/how-to-profile-slow-postgresql-queries', kicker: 'Method · New', title: 'How to profile slow PostgreSQL queries', text: 'pg_stat_statements to rank, auto_explain to capture the real plan, EXPLAIN ANALYZE to measure, then validate.' },
       { href: '/insights/postgresql-foreign-key-index-slow-delete', kicker: 'Lab-tested · New', title: 'Slow DELETE? Check for unindexed foreign keys', text: 'Deleting one customer took 1.7 seconds and 22 sequential scans. Find the foreign keys behind it and why pg_stat_statements hides them.' },
@@ -32,14 +33,14 @@ const groups = [
     intro: 'Version deadlines on RDS, Aurora and community PostgreSQL, and how to plan an upgrade that does not regress performance.',
     related: { label: 'PostgreSQL upgrade readiness', href: '/postgresql-upgrade-readiness' },
     items: [
+      { href: '/postgresql-14-eol', kicker: 'End of life · Updated', title: 'PostgreSQL 14 end of life: what changes on 12 November', text: 'What stops, RDS, Aurora and Azure dates, a tested inventory script, and choosing between 17 and 18.' },
       { href: '/postgresql-14-upgrade-checklist', kicker: 'Checklist · New', title: 'PostgreSQL 14 upgrade checklist', text: 'Inventory, blockers, baseline, rehearsal, cutover and validation for RDS, Aurora and self-managed PG14.' },
       { href: '/insights/rds-aurora-postgresql-14-extended-support-cost', kicker: 'RDS · Aurora · New', title: 'PostgreSQL 14 Extended Support: what it will cost', text: 'Billing from 1 March 2027 per vCPU-hour on every primary, standby and replica. How to list and price yours.' },
       { href: '/insights/pg-upgrade-check-failures', kicker: 'Lab-tested · New', title: 'pg_upgrade --check failures and fixes', text: 'Real PG14 to PG18 output: checksum mismatch, prepared transactions and reg* columns, and what the check misses.' },
       { href: '/insights/postgresql-upgrade-logical-replication-slots', kicker: 'Lab-tested · New', title: 'pg_upgrade from 14 drops logical replication slots', text: 'The check passed with a CDC slot present; after the upgrade it was gone. RDS and Aurora block instead.' },
       { href: '/insights/rds-aurora-postgresql-14-to-18-blue-green', kicker: 'RDS · Aurora', title: 'RDS and Aurora 14 to 18: downtime and Blue/Green', text: 'In-place versus Blue/Green, and the logical replication limits that invalidate a green environment.' },
       { href: '/insights/postgresql-slow-after-major-upgrade', kicker: 'Lab-tested', title: 'Slow after a major upgrade? Check statistics first', text: 'A PG14 to PG17 pg_upgrade lost optimizer statistics and a join went from 222 ms to 904 ms.' },
-      { href: '/insights/postgresql-14-minor-version-deadlines', kicker: 'RDS · Oct 2026', title: 'RDS PostgreSQL 14.18/14.19 lose standard support on 31 October', text: 'Minor-version deadlines that arrive before the PG14 major-version dates, and how to check your instances.' },
-      { href: '/postgresql-14-eol', kicker: 'End of life', title: 'PostgreSQL 14 EOL planning', text: 'Current dates and the upgrade-readiness sequence.' }
+      { href: '/insights/postgresql-14-minor-version-deadlines', kicker: 'RDS · Oct 2026', title: 'RDS PostgreSQL 14.18/14.19 lose standard support on 31 October', text: 'Minor-version deadlines that arrive before the PG14 major-version dates, and how to check your instances.' }
     ]
   },
   {
@@ -48,6 +49,7 @@ const groups = [
     intro: 'Recall, latency, filtering and memory trade-offs when vector search runs inside PostgreSQL.',
     related: { label: 'pgvector performance review', href: '/pgvector-performance' },
     items: [
+      { href: '/insights/pgvector-hnsw-index-build-slow', kicker: 'Lab-tested · New', title: 'HNSW index build slow?', text: '9 minutes at default memory, under 2 at 1GB. Why parallel workers never started for 768-dimension vectors, and the /dev/shm error in Docker.' },
       { href: '/insights/pgvector-087-cve-upgrade', kicker: 'Security · Lab-tested · New', title: 'pgvector 0.8.7 security fix: check and upgrade', text: 'IVFFlat build overflow in 0.8.6 and earlier. Version checks, who could trigger it, and what the upgrade did to indexes.' },
       { href: '/insights/pgvector-filtered-search-missing-results', kicker: 'Lab-tested · New', title: 'Filtered vector search returns too few rows', text: 'Why HNSW plus a WHERE filter returned 0 of 10 rows, and measured fixes from iterative scans to partial indexes.' },
       { href: '/insights/pgvector-hnsw-vs-ivfflat', kicker: 'Indexing', title: 'HNSW vs IVFFlat is a workload decision', text: 'Recall, latency, memory, build cost and filtering trade-offs.' },
@@ -60,6 +62,7 @@ const groups = [
     intro: 'Concurrency and performance guides beyond PostgreSQL. SQL Server, Snowflake and analytical workloads are covered on their capability pages.',
     related: { label: 'All capabilities', href: '/capabilities' },
     items: [
+      { href: '/insights/sql-server-implicit-conversion-nvarchar-varchar', kicker: 'SQL Server · Lab-tested · New', title: 'nvarchar parameters scanning a varchar index', text: 'One ORM default turned 6 logical reads into 4,484. Why collation decides it, and how to find every affected query in Query Store.' },
       { href: '/insights/sql-server-parameter-sniffing-query-store', kicker: 'SQL Server · Lab-tested', title: 'SQL Server parameter sniffing', text: 'One cached plan read 9 pages for one customer and 900,524 for another. Query Store diagnosis and measured fixes.' },
       { href: '/insights/snowflake-gen2-vs-adaptive-warehouses', kicker: 'Snowflake · New', title: 'Snowflake Gen2 vs Adaptive warehouses', text: 'Idle credits, spills, pruning and queuing from ACCOUNT_USAGE decide which one costs less for your workload.' },
       { href: 'https://mssqlserver.dev', kicker: 'SQL Server · MSSQLServer.dev ↗', title: 'SQL Server tutorials', text: 'Window functions, CTEs, isolation levels, row versioning, temporal tables and change tracking, on Kiran\'s SQL Server blog.' },

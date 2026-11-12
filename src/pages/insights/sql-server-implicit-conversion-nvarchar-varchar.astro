@@ -1,0 +1,188 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+import { site } from '../../config/site';
+
+const title = 'SQL Server Implicit Conversion: nvarchar Parameters That Scan a varchar Index';
+const description = 'Tested on SQL Server 2022: one ORM-style nvarchar parameter turned a 6-read index seek into a 4,484-read scan. How collation decides whether it happens, how to find affected queries in Query Store, and the driver settings that fix it.';
+
+const faq = [
+  {
+    q: 'What is CONVERT_IMPLICIT in a SQL Server execution plan?',
+    a: 'It is a type conversion SQL Server added because two compared values have different data types. When an nvarchar parameter is compared with a varchar column, data type precedence converts the column to nvarchar. With a SQL collation, that conversion is applied to every row, so an index seek becomes a scan.'
+  },
+  {
+    q: 'Why does my ORM send nvarchar parameters?',
+    a: 'Most drivers map a string to Unicode by default. ADO.NET infers SqlDbType.NVarChar for a .NET string, the Microsoft JDBC driver sends strings as Unicode because sendStringParametersAsUnicode defaults to true, and EF Core maps strings as Unicode unless the property is configured with IsUnicode(false).'
+  },
+  {
+    q: 'Does an nvarchar parameter always cause an index scan on a varchar column?',
+    a: 'No. It depends on the column collation. In a SQL Server 2022 test, a varchar column with the SQL_Latin1_General_CP1_CI_AS collation was scanned (4,484 logical reads), while the same column with the Windows collation Latin1_General_CI_AS was still sought through GetRangeThroughConvert (6 logical reads). SQL_Latin1_General_CP1_CI_AS is the default server collation for US English installations.'
+  },
+  {
+    q: 'How do I find queries affected by implicit conversion?',
+    a: 'Search the plans in Query Store for the PlanAffectingConvert warning with ConvertIssue = "Seek Plan", and rank them by logical reads. The query in this article does that from sys.query_store_plan.'
+  },
+  {
+    q: 'What is the safest fix for nvarchar to varchar implicit conversion?',
+    a: 'Send the parameter as varchar with the column length, for that parameter only: SqlDbType.VarChar or DbType.AnsiString in ADO.NET, DbString with IsAnsi = true in Dapper, IsUnicode(false) in EF Core. Turning Unicode off for a whole JDBC connection also works but affects every string parameter, including ones meant for nvarchar columns.'
+  }
+];
+---
+<ArticleLayout
+  title={title}
+  description={description}
+  eyebrow="SQL Server · Lab-tested"
+  published="2026-11-11"
+  updated="2026-11-11"
+  offer="sqlserver"
+  schemaType="Article"
+  faq={faq}
+  ctaTitle="SQL Server CPU high and Query Store full of scans you can't explain?"
+  ctaDescription="A review ranks the statements that cost the most, identifies the plan-affecting conversions, sniffing and blocking behind them, and gives each fix with its risk and rollback."
+>
+  <p class="notice"><strong>Short answer:</strong> when an application sends a string parameter as <code>nvarchar</code> and the column is <code>varchar</code>, SQL Server converts the <em>column</em>, because <code>nvarchar</code> has higher data type precedence. With a SQL collation such as <code>SQL_Latin1_General_CP1_CI_AS</code>, the index on that column can no longer be sought. In my test, one lookup went from 6 logical reads to 4,484. Fix it in the data access layer by sending <code>varchar</code> for that parameter.</p>
+
+  <p>This is a common cause of unexplained CPU on SQL Server behind .NET and Java applications. The query text looks fine, the index exists, and the plan shows an index operator, just a scan instead of a seek. I reproduced it on SQL Server 2022 (CU27, Developer Edition in Docker) with three 1,000,000-row tables that differ only in column type and collation. The scripts and full output are in the <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/sqlserver-implicit-conversion">lab folder</a>.</p>
+
+  <nav class="notice" aria-label="On this page">
+    <strong>On this page</strong>
+    <ol>
+      <li><a href="#repro">The reproduction</a></li>
+      <li><a href="#collation">Collation decides the outcome</a></li>
+      <li><a href="#find">Find affected queries in Query Store</a></li>
+      <li><a href="#fix">Fix it in the driver or ORM</a></li>
+      <li><a href="#cast">Why CAST in the query is a last resort</a></li>
+      <li><a href="#validate">Validate the fix</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#sources">Sources</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="repro">The reproduction</h2>
+  <p>The table has an <code>email varchar(100)</code> column with a nonclustered index, and the server default collation <code>SQL_Latin1_General_CP1_CI_AS</code>. This is the shape of statement a driver sends when it passes a string as Unicode, which is the default in ADO.NET and the Microsoft JDBC driver (the declared length varies by driver):</p>
+<pre><code>{`EXEC sp_executesql
+  N'SELECT id, plan_code FROM dbo.accounts_sqlcoll WHERE email = @e',
+  N'@e nvarchar(4000)', @e = N'user777777@example.com';`}</code></pre>
+  <p>The actual plan and I/O:</p>
+<pre><code>{`Table 'accounts_sqlcoll'. Scan count 1, logical reads 4484
+
+|--Index Scan(OBJECT:([convlab].[dbo].[accounts_sqlcoll].[ix_accounts_sqlcoll_email]),
+     WHERE:(CONVERT_IMPLICIT(nvarchar(100),[convlab].[dbo].[accounts_sqlcoll].[email],0)=[@e]))`}</code></pre>
+  <p>The same statement with <code>@e varchar(100)</code>:</p>
+<pre><code>{`Table 'accounts_sqlcoll'. Scan count 1, logical reads 6
+
+|--Index Seek(OBJECT:([convlab].[dbo].[accounts_sqlcoll].[ix_accounts_sqlcoll_email]),
+     SEEK:([convlab].[dbo].[accounts_sqlcoll].[email]=[@e]) ORDERED FORWARD)`}</code></pre>
+  <p>The index is still used in the bad plan, which is why this gets missed. It is read from end to end, and every one of the 1,000,000 values is converted to <code>nvarchar</code> before the comparison. Cost grows with the table, not with the result.</p>
+  <p>Over 300 executions each, with different emails, Query Store recorded:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Parameter → column</th><th scope="col">Avg logical reads</th><th scope="col">Avg CPU</th></tr></thead>
+    <tbody>
+      <tr><td><code>nvarchar(4000)</code> → <code>varchar</code>, SQL collation</td><td>4,484</td><td>86.7 ms</td></tr>
+      <tr><td><code>nvarchar(4000)</code> → <code>varchar</code>, Windows collation</td><td>6</td><td>0.13 ms</td></tr>
+      <tr><td><code>varchar(100)</code> → <code>varchar</code>, SQL collation</td><td>6</td><td>0.11 ms</td></tr>
+    </tbody>
+  </table></div>
+  <p class="small muted">The container ran x86-64 SQL Server under emulation on an ARM laptop, so the CPU times are inflated. Compare the logical reads and the ratio, not the milliseconds.</p>
+
+  <h2 id="collation">Collation decides the outcome</h2>
+  <p>Precedence alone does not cause the scan. What matters is whether SQL Server can turn the converted comparison into a seek range. With a <strong>Windows collation</strong> (<code>Latin1_General_CI_AS</code>), it can. The plan still shows <code>CONVERT_IMPLICIT</code>, but it computes a range with <code>GetRangeThroughConvert</code> and seeks:</p>
+<pre><code>{`|--Compute Scalar(DEFINE:(([Expr1005],[Expr1006],[Expr1004])=GetRangeThroughConvert(
+     CONVERT_IMPLICIT(nvarchar(4000),[@e],0),CONVERT_IMPLICIT(nvarchar(4000),[@e],0),(62))))
+|--Index Seek(... SEEK:([email] > [Expr1005] AND [email] < [Expr1006]),
+     WHERE:(CONVERT_IMPLICIT(nvarchar(100),[email],0)=CONVERT_IMPLICIT(nvarchar(4000),[@e],0)))`}</code></pre>
+  <p>With a <strong>SQL collation</strong> (<code>SQL_Latin1_General_CP1_CI_AS</code>), varchar and nvarchar values sort by different rules, so no such range exists and SQL Server scans. That collation is the default server collation for installations with US English locale settings. Many databases created years ago, and the databases restored from them, still use it. Check yours:</p>
+<pre><code>{`SELECT DATABASEPROPERTYEX(DB_NAME(), 'Collation') AS database_collation;
+
+SELECT t.name AS table_name, c.name AS column_name,
+       TYPE_NAME(c.user_type_id) AS data_type, c.max_length, c.collation_name
+FROM sys.columns AS c
+JOIN sys.tables AS t ON t.object_id = c.object_id
+WHERE TYPE_NAME(c.user_type_id) IN ('varchar', 'char')
+  AND c.collation_name LIKE 'SQL[_]%'
+ORDER BY t.name, c.name;`}</code></pre>
+  <p>The reverse case is harmless. With an <code>nvarchar</code> column and a <code>varchar</code> parameter, the lab converted the parameter, not the column, and sought in 6 reads. Only <code>varchar</code> or <code>char</code> columns that receive Unicode parameters are at risk.</p>
+
+  <h2 id="find">Find affected queries in Query Store</h2>
+  <p>The optimizer records the problem as a <code>PlanAffectingConvert</code> warning in the plan XML. This query finds plans with that warning and ranks them by reads. It ran against the lab database and returned exactly the bad query:</p>
+<pre><code>{`WITH XMLNAMESPACES (DEFAULT 'http://schemas.microsoft.com/sqlserver/2004/07/showplan'),
+plans AS (
+  SELECT p.plan_id, q.query_id, qt.query_sql_text, TRY_CONVERT(xml, p.query_plan) AS plan_xml
+  FROM sys.query_store_plan p
+  JOIN sys.query_store_query q ON q.query_id = p.query_id
+  JOIN sys.query_store_query_text qt ON qt.query_text_id = q.query_text_id
+),
+warnings AS (
+  SELECT pl.query_id, pl.plan_id, pl.query_sql_text,
+         w.n.value('@ConvertIssue', 'varchar(40)') AS convert_issue,
+         w.n.value('@Expression', 'nvarchar(400)') AS expression
+  FROM plans pl
+  CROSS APPLY pl.plan_xml.nodes('//Warnings/PlanAffectingConvert') AS w(n)
+)
+SELECT w.query_id, w.plan_id, LEFT(w.query_sql_text, 90) AS query_text,
+       w.convert_issue, LEFT(w.expression, 90) AS expression,
+       SUM(rs.count_executions) AS execs,
+       CAST(MAX(rs.avg_logical_io_reads) AS bigint) AS avg_logical_reads
+FROM warnings w
+JOIN sys.query_store_runtime_stats rs ON rs.plan_id = w.plan_id
+GROUP BY w.query_id, w.plan_id, w.query_sql_text, w.convert_issue, w.expression
+ORDER BY avg_logical_reads DESC;`}</code></pre>
+<pre><code>{`query_text                                    | convert_issue | expression                                                                 | execs | avg_logical_reads
+(@e nvarchar(4000))SELECT id, plan_code FROM  | Seek Plan     | CONVERT_IMPLICIT(nvarchar(100),[convlab].[dbo].[accounts_sqlcoll].[email],0)=[@e] | 300   | 4484`}</code></pre>
+  <ul>
+    <li><code>ConvertIssue = "Seek Plan"</code> is the one that costs reads: the conversion prevented a seek. <code>"Cardinality Estimate"</code> means the conversion may affect row estimates; it is worth a look but is often noise from conversions in the select list.</li>
+    <li>The Windows-collation query did not appear. Its conversion did not prevent a seek, so the optimizer raised no warning.</li>
+    <li>Run it in a session with <code>QUOTED_IDENTIFIER ON</code>. SSMS sets it by default; the ODBC <code>sqlcmd</code> does not unless you pass <code>-I</code>. Without it, the XML methods fail with error 1934.</li>
+    <li>On a large Query Store, XML parsing is expensive. Restrict <code>plans</code> to the top plans by reads or CPU over the last few days first, and run it on a readable secondary if you have one.</li>
+  </ul>
+  <p>The parameter declaration at the start of <code>query_sql_text</code>, here <code>(@e nvarchar(4000))</code>, tells you the data access layer is responsible. The column's type is in the <code>expression</code> column.</p>
+
+  <ArticleOffer offer="sqlserver" title="Query Store shows the scans, but they come from a dozen services and two ORMs?" text="I rank the plan-affecting conversions by cost, trace each one to the code path and driver setting that produces it, and give the per-parameter fix with its risk, so you change what matters first." />
+
+  <h2 id="fix">Fix it in the driver or ORM</h2>
+  <p>Send <code>varchar</code> with the column's length for the parameters that hit <code>varchar</code> columns. Change it per parameter where you can; a connection-wide switch changes every string you send.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Stack</th><th scope="col">Default for a string</th><th scope="col">Fix</th></tr></thead>
+    <tbody>
+      <tr><td>ADO.NET (<code>Microsoft.Data.SqlClient</code>)</td><td><code>NVarChar</code>, inferred from the .NET type</td><td><code>new SqlParameter("@e", SqlDbType.VarChar, 100) {'{'} Value = email {'}'}</code>, or <code>DbType = DbType.AnsiString</code>. Avoid <code>AddWithValue</code> for these.</td></tr>
+      <tr><td>Dapper</td><td>Unicode</td><td><code>new DbString {'{'} Value = email, IsAnsi = true, Length = 100 {'}'}</code></td></tr>
+      <tr><td>EF Core</td><td>Strings mapped as Unicode (<code>nvarchar</code>)</td><td>Map the property to the real column: <code>.IsUnicode(false).HasMaxLength(100)</code> or <code>[Unicode(false)]</code>. EF then sends <code>varchar</code> parameters for it.</td></tr>
+      <tr><td>Microsoft JDBC driver (Hibernate, Spring)</td><td>Unicode: <code>sendStringParametersAsUnicode=true</code></td><td><code>sendStringParametersAsUnicode=false</code> in the connection string sends <code>setString</code> values as non-Unicode. Then use <code>setNString</code> for parameters that target <code>nvarchar</code> columns, because it always sends Unicode.</td></tr>
+      <tr><td>Node.js <code>mssql</code></td><td><code>NVarChar</code></td><td><code>request.input('e', sql.VarChar(100), email)</code></td></tr>
+    </tbody>
+  </table></div>
+  <p>Two cautions. First, a <code>varchar</code> parameter can only carry characters in the column's code page; see the next section. Second, the JDBC switch is global. If some columns are <code>nvarchar</code> and you send them non-Unicode strings, characters outside the code page are lost before they reach the server. Audit which columns are which before changing it, and prefer changing the column mappings in the ORM.</p>
+  <p>Changing the column to <code>nvarchar</code> also removes the mismatch, but it rewrites the table and its indexes, stores most text in two bytes per character (in the lab, 119 MB against 76 MB for the same rows), and needs a maintenance window on a large table. Changing the column to a Windows collation turns the scan into a seek but changes sort and comparison rules, and SQL Server refuses the change while an index, manually created statistics, a CHECK or FOREIGN KEY constraint, a computed column or a schema-bound object references the column, so those must be dropped and recreated around it. Both are schema projects, not quick fixes.</p>
+
+  <h2 id="cast">Why CAST in the query is a last resort</h2>
+  <p>If you cannot change the driver, converting the parameter in the SQL does produce a seek:</p>
+<pre><code>{`WHERE email = CAST(@e AS varchar(100))
+-- Index Seek ... SEEK:([email]=CONVERT(varchar(100),[@e],0))   logical reads 6`}</code></pre>
+  <p>The catch is that the conversion can change the value. In the lab, on the <code>SQL_Latin1_General_CP1_CI_AS</code> code page (1252):</p>
+<pre><code>{`SELECT CAST(N'zoë.ł@example.com' AS varchar(100)),   -- zoë.l@example.com
+       CAST(N'用户@example.com'   AS varchar(100));  -- ??@example.com`}</code></pre>
+  <p><code>ë</code> exists in code page 1252 and survives. <code>ł</code> does not and becomes <code>l</code>, a different, valid character. For a login or account lookup, that means a value the user typed can match another user's row. Characters with no near equivalent become <code>?</code>. Validate or reject input outside the column's code page first, or keep the comparison in Unicode and fix the type mismatch in the schema.</p>
+
+  <h2 id="validate">Validate the fix</h2>
+  <ol>
+    <li>Record the query's average logical reads, CPU and execution count from Query Store before the change.</li>
+    <li>Deploy the parameter change. The new parameter declaration produces a new query text in Query Store, so compare the new <code>query_id</code> with the old one, not the same row over time.</li>
+    <li>Confirm the new plan shows an <code>Index Seek</code> and no <code>PlanAffectingConvert</code> warning.</li>
+    <li>Check total CPU on the instance. When a scan like this runs thousands of times a minute, fixing one query often moves the whole server.</li>
+  </ol>
+  <p>To read a captured plan operator by operator, paste it into <a href={site.planReaderSqlServerUrl} data-track="planreader_click">PlanReader's SQL Server analyzer</a>. If the same query is fast for some values and slow for others, the cause is more likely <a href="/insights/sql-server-parameter-sniffing-query-store">parameter sniffing</a>.</p>
+
+  <h2 id="faq">FAQ</h2>
+  {faq.map((item) => (<><h3>{item.q}</h3><p>{item.a}</p></>))}
+
+  <h2 id="sources">Sources</h2>
+  <ul>
+    <li><a href="https://learn.microsoft.com/en-us/sql/t-sql/data-types/data-type-precedence-transact-sql">Data type precedence (Transact-SQL)</a> — <code>nvarchar</code> ranks above <code>varchar</code>.</li>
+    <li><a href="https://learn.microsoft.com/en-us/sql/connect/jdbc/setting-the-connection-properties">JDBC driver connection properties</a> — <code>sendStringParametersAsUnicode</code> and <code>setNString</code>.</li>
+    <li><a href="https://learn.microsoft.com/en-us/dotnet/framework/data/adonet/configuring-parameters-and-parameter-data-types">ADO.NET: configuring parameters and parameter data types</a> — type inference and <code>DbType.AnsiString</code>.</li>
+    <li><a href="https://learn.microsoft.com/en-us/ef/core/modeling/entity-properties">EF Core: entity properties</a> — Unicode configuration.</li>
+    <li><a href="https://github.com/DapperLib/Dapper/blob/main/Readme.md">Dapper README</a> — "Ansi Strings and varchar".</li>
+    <li><a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/sqlserver-implicit-conversion">Lab: SQL Server implicit conversion</a> — setup, plans, Query Store output.</li>
+  </ul>
+</ArticleLayout>

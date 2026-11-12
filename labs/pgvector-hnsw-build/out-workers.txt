@@ -1,0 +1,38 @@
+ setseed 
+---------
+ 
+(1 row)
+
+=== shm=64m maintenance_work_mem=1GB workers=0
+sample 1: workers=0 cpu=100.90%
+sample 2: workers=0 cpu=99.92%
+sample 3: workers=0 cpu=100.48%
+Time: 96493.630 ms (01:36.494)
+Time: 57.245 ms
+=== shm=64m maintenance_work_mem=1GB workers=4
+sample 1: workers=0 cpu=100.26%
+sample 2: workers=0 cpu=100.13%
+sample 3: workers=0 cpu=100.24%
+Time: 92785.636 ms (01:32.786)
+Time: 23.949 ms
+shm              64M  1.1M   63M   2% /dev/shm
+selecting dynamic shared memory implementation ... posix
+ setseed 
+---------
+ 
+(1 row)
+
+=== shm=4g maintenance_work_mem=1GB workers=0
+sample 1: workers=0 cpu=101.21%
+sample 2: workers=0 cpu=100.13%
+sample 3: workers=0 cpu=99.78%
+Time: 104964.315 ms (01:44.964)
+Time: 55.807 ms
+=== shm=4g maintenance_work_mem=1GB workers=4
+sample 1: workers=0 cpu=102.19%
+sample 2: workers=0 cpu=99.71%
+sample 3: workers=0 cpu=100.08%
+Time: 121853.770 ms (02:01.854)
+Time: 60.565 ms
+shm             4.0G  1.1M  4.0G   1% /dev/shm
+selecting dynamic shared memory implementation ... posix

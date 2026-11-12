@@ -1,0 +1,91 @@
+##### 01-setup.sql
+Changed database context to 'convlab'.
+version|db_collation|compatibility_level
+-------|------------|-------------------
+Microsoft SQL Server 2022 (RTM-CU27) (KB5104824) - 16.0.4295.3 (X64) 
+	Aug 26 2026 11:02:22 
+	Copyright (C) 2022 Microsoft Corporation
+	Developer Edition (64-bit) on Linux (Ubuntu 22.04.5 LTS) <X64>|SQL_Latin1_General_CP1_CI_AS|160
+table_name|used_mb
+----------|-------
+accounts_nvarchar|119
+accounts_sqlcoll|76
+accounts_wincoll|76
+##### 02-plans.sql
+Changed database context to 'convlab'.
+=== A. varchar column, SQL collation, nvarchar parameter (ORM default)
+id|plan_code
+--|---------
+777777|FREE
+Table 'accounts_sqlcoll'. Scan count 1, logical reads 4484, physical reads 0, page server reads 0, read-ahead reads 41, page server read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob page server reads 0, lob read-ahead reads 0, lob page server read-ahead reads 0.
+Rows|Executes|StmtText|StmtId|NodeId|Parent|PhysicalOp|LogicalOp|Argument|DefinedValues|EstimateRows|EstimateIO|EstimateCPU|AvgRowSize|TotalSubtreeCost|OutputList|Warnings|Type|Parallel|EstimateExecutions
+----|--------|--------|------|------|------|----------|---------|--------|-------------|------------|----------|-----------|----------|----------------|----------|--------|----|--------|------------------
+1|1|SELECT id, plan_code FROM dbo.accounts_sqlcoll WHERE email = @e|1|1|0|NULL|NULL|NULL|NULL|1.0|NULL|NULL|NULL|4.9821248|NULL|NULL|SELECT|0|NULL
+1|1|  |--Nested Loops(Inner Join, OUTER REFERENCES:([convlab].[dbo].[accounts_sqlcoll].[id]))|1|3|1|Nested Loops|Inner Join|OUTER REFERENCES:([convlab].[dbo].[accounts_sqlcoll].[id])|NULL|1.0|0.0|4.1799999E-6|15|4.9821248|[convlab].[dbo].[accounts_sqlcoll].[id], [convlab].[dbo].[accounts_sqlcoll].[plan_code]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Index Scan(OBJECT:([convlab].[dbo].[accounts_sqlcoll].[ix_accounts_sqlcoll_email]),  WHERE:(CONVERT_IMPLICIT(nvarchar(100),[convlab].[dbo].[accounts_sqlcoll].[email],0)=[@e]))|1|4|3|Index Scan|Index Scan|OBJECT:([convlab].[dbo].[accounts_sqlcoll].[ix_accounts_sqlcoll_email]),  WHERE:(CONVERT_IMPLICIT(nvarchar(100),[convlab].[dbo].[accounts_sqlcoll].[email],0)=[@e])|[convlab].[dbo].[accounts_sqlcoll].[id]|1.0|3.2986805|1.100157|36|4.3988376|[convlab].[dbo].[accounts_sqlcoll].[id]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Clustered Index Seek(OBJECT:([convlab].[dbo].[accounts_sqlcoll].[PK__accounts__3213E83F0D3B4CD2]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[id]=[convlab].[dbo].[accounts_sqlcoll].[id]) LOOKUP ORDERED FORWARD)|1|6|3|Clustered Index Seek|Clustered Index Seek|OBJECT:([convlab].[dbo].[accounts_sqlcoll].[PK__accounts__3213E83F0D3B4CD2]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[id]=[convlab].[dbo].[accounts_sqlcoll].[id]) LOOKUP ORDERED FORWARD|[convlab].[dbo].[accounts_sqlcoll].[plan_code]|1.0|0.003125|0.0001581|11|0.0032831|[convlab].[dbo].[accounts_sqlcoll].[plan_code]|NULL|PLAN_ROW|0|1.0
+=== B. varchar column, SQL collation, varchar parameter
+id|plan_code
+--|---------
+777777|FREE
+Table 'accounts_sqlcoll'. Scan count 1, logical reads 6, physical reads 0, page server reads 0, read-ahead reads 0, page server read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob page server reads 0, lob read-ahead reads 0, lob page server read-ahead reads 0.
+Rows|Executes|StmtText|StmtId|NodeId|Parent|PhysicalOp|LogicalOp|Argument|DefinedValues|EstimateRows|EstimateIO|EstimateCPU|AvgRowSize|TotalSubtreeCost|OutputList|Warnings|Type|Parallel|EstimateExecutions
+----|--------|--------|------|------|------|----------|---------|--------|-------------|------------|----------|-----------|----------|----------------|----------|--------|----|--------|------------------
+1|1|SELECT id, plan_code FROM dbo.accounts_sqlcoll WHERE email = @e|1|1|0|NULL|NULL|NULL|NULL|1.0|NULL|NULL|NULL|6.5703802E-3|NULL|NULL|SELECT|0|NULL
+1|1|  |--Nested Loops(Inner Join, OUTER REFERENCES:([convlab].[dbo].[accounts_sqlcoll].[id]))|1|2|1|Nested Loops|Inner Join|OUTER REFERENCES:([convlab].[dbo].[accounts_sqlcoll].[id])|NULL|1.0|0.0|4.1799999E-6|15|6.5703802E-3|[convlab].[dbo].[accounts_sqlcoll].[id], [convlab].[dbo].[accounts_sqlcoll].[plan_code]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Index Seek(OBJECT:([convlab].[dbo].[accounts_sqlcoll].[ix_accounts_sqlcoll_email]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[email]=[@e]) ORDERED FORWARD)|1|3|2|Index Seek|Index Seek|OBJECT:([convlab].[dbo].[accounts_sqlcoll].[ix_accounts_sqlcoll_email]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[email]=[@e]) ORDERED FORWARD|[convlab].[dbo].[accounts_sqlcoll].[id]|1.0|0.003125|0.0001581|11|0.0032831|[convlab].[dbo].[accounts_sqlcoll].[id]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Clustered Index Seek(OBJECT:([convlab].[dbo].[accounts_sqlcoll].[PK__accounts__3213E83F0D3B4CD2]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[id]=[convlab].[dbo].[accounts_sqlcoll].[id]) LOOKUP ORDERED FORWARD)|1|5|2|Clustered Index Seek|Clustered Index Seek|OBJECT:([convlab].[dbo].[accounts_sqlcoll].[PK__accounts__3213E83F0D3B4CD2]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[id]=[convlab].[dbo].[accounts_sqlcoll].[id]) LOOKUP ORDERED FORWARD|[convlab].[dbo].[accounts_sqlcoll].[plan_code]|1.0|0.003125|0.0001581|11|0.0032831|[convlab].[dbo].[accounts_sqlcoll].[plan_code]|NULL|PLAN_ROW|0|1.0
+=== C. varchar column, Windows collation, nvarchar parameter
+id|plan_code
+--|---------
+777777|FREE
+Table 'accounts_wincoll'. Scan count 1, logical reads 6, physical reads 0, page server reads 0, read-ahead reads 0, page server read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob page server reads 0, lob read-ahead reads 0, lob page server read-ahead reads 0.
+Rows|Executes|StmtText|StmtId|NodeId|Parent|PhysicalOp|LogicalOp|Argument|DefinedValues|EstimateRows|EstimateIO|EstimateCPU|AvgRowSize|TotalSubtreeCost|OutputList|Warnings|Type|Parallel|EstimateExecutions
+----|--------|--------|------|------|------|----------|---------|--------|-------------|------------|----------|-----------|----------|----------------|----------|--------|----|--------|------------------
+1|1|SELECT id, plan_code FROM dbo.accounts_wincoll WHERE email = @e|1|1|0|NULL|NULL|NULL|NULL|1.0|NULL|NULL|NULL|0.00657106|NULL|NULL|SELECT|0|NULL
+1|1|  |--Nested Loops(Inner Join, OUTER REFERENCES:([convlab].[dbo].[accounts_wincoll].[id]))|1|3|1|Nested Loops|Inner Join|OUTER REFERENCES:([convlab].[dbo].[accounts_wincoll].[id])|NULL|1.0|0.0|4.1799999E-6|15|6.5709599E-3|[convlab].[dbo].[accounts_wincoll].[id], [convlab].[dbo].[accounts_wincoll].[plan_code]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Nested Loops(Inner Join, OUTER REFERENCES:([Expr1005], [Expr1006], [Expr1004]))|1|4|3|Nested Loops|Inner Join|OUTER REFERENCES:([Expr1005], [Expr1006], [Expr1004])|NULL|1.0|0.003125|0.0001581|36|0.0032831|[convlab].[dbo].[accounts_wincoll].[id]|NULL|PLAN_ROW|0|1.0
+1|1|       |    |--Compute Scalar(DEFINE:(([Expr1005],[Expr1006],[Expr1004])=GetRangeThroughConvert(CONVERT_IMPLICIT(nvarchar(4000),[@e],0),CONVERT_IMPLICIT(nvarchar(4000),[@e],0),(62))))|1|5|4|Compute Scalar|Compute Scalar|DEFINE:(([Expr1005],[Expr1006],[Expr1004])=GetRangeThroughConvert(CONVERT_IMPLICIT(nvarchar(4000),[@e],0),CONVERT_IMPLICIT(nvarchar(4000),[@e],0),(62)))|([Expr1005],[Expr1006],[Expr1004])=GetRangeThroughConvert(CONVERT_IMPLICIT(nvarchar(4000),[@e],0),CONVERT_IMPLICIT(nvarchar(4000),[@e],0),(62))|1.0|0.0|0.0|117|0.0|[Expr1005], [Expr1006], [Expr1004]|NULL|PLAN_ROW|0|1.0
+1|1|       |    |    |--Constant Scan|1|6|5|Constant Scan|Constant Scan|NULL|NULL|1.0|0.0|0.0|0|0.0|NULL|NULL|PLAN_ROW|0|1.0
+1|1|       |    |--Index Seek(OBJECT:([convlab].[dbo].[accounts_wincoll].[ix_accounts_wincoll_email]), SEEK:([convlab].[dbo].[accounts_wincoll].[email] > [Expr1005] AND [convlab].[dbo].[accounts_wincoll].[email] < [Expr1006]),  WHERE:(CONVERT_IMPLICIT(nvarchar(100),[convlab].[dbo].[accounts_wincoll].[email],0)=CONVERT_IMPLICIT(nvarchar(4000),[@e],0)) ORDERED FORWARD)|1|7|4|Index Seek|Index Seek|OBJECT:([convlab].[dbo].[accounts_wincoll].[ix_accounts_wincoll_email]), SEEK:([convlab].[dbo].[accounts_wincoll].[email] > [Expr1005] AND [convlab].[dbo].[accounts_wincoll].[email] < [Expr1006]),  WHERE:(CONVERT_IMPLICIT(nvarchar(100),[convlab].[dbo].[accounts_wincoll].[email],0)=CONVERT_IMPLICIT(nvarchar(4000),[@e],0)) ORDERED FORWARD|[convlab].[dbo].[accounts_wincoll].[id]|1.0|0.003125|0.0001581|36|0.0032831|[convlab].[dbo].[accounts_wincoll].[id]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Clustered Index Seek(OBJECT:([convlab].[dbo].[accounts_wincoll].[PK__accounts__3213E83F43BDCB90]), SEEK:([convlab].[dbo].[accounts_wincoll].[id]=[convlab].[dbo].[accounts_wincoll].[id]) LOOKUP ORDERED FORWARD)|1|9|3|Clustered Index Seek|Clustered Index Seek|OBJECT:([convlab].[dbo].[accounts_wincoll].[PK__accounts__3213E83F43BDCB90]), SEEK:([convlab].[dbo].[accounts_wincoll].[id]=[convlab].[dbo].[accounts_wincoll].[id]) LOOKUP ORDERED FORWARD|[convlab].[dbo].[accounts_wincoll].[plan_code]|1.0|0.003125|0.0001581|11|0.0032831|[convlab].[dbo].[accounts_wincoll].[plan_code]|NULL|PLAN_ROW|0|1.0
+=== D. nvarchar column, varchar parameter
+id|plan_code
+--|---------
+777777|FREE
+Table 'accounts_nvarchar'. Scan count 1, logical reads 6, physical reads 0, page server reads 0, read-ahead reads 0, page server read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob page server reads 0, lob read-ahead reads 0, lob page server read-ahead reads 0.
+Rows|Executes|StmtText|StmtId|NodeId|Parent|PhysicalOp|LogicalOp|Argument|DefinedValues|EstimateRows|EstimateIO|EstimateCPU|AvgRowSize|TotalSubtreeCost|OutputList|Warnings|Type|Parallel|EstimateExecutions
+----|--------|--------|------|------|------|----------|---------|--------|-------------|------------|----------|-----------|----------|----------------|----------|--------|----|--------|------------------
+1|1|SELECT id, plan_code FROM dbo.accounts_nvarchar WHERE email = @e|1|1|0|NULL|NULL|NULL|NULL|1.0|NULL|NULL|NULL|6.5703802E-3|NULL|NULL|SELECT|0|NULL
+1|1|  |--Nested Loops(Inner Join, OUTER REFERENCES:([convlab].[dbo].[accounts_nvarchar].[id]))|1|2|1|Nested Loops|Inner Join|OUTER REFERENCES:([convlab].[dbo].[accounts_nvarchar].[id])|NULL|1.0|0.0|4.1799999E-6|15|6.5703802E-3|[convlab].[dbo].[accounts_nvarchar].[id], [convlab].[dbo].[accounts_nvarchar].[plan_code]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Index Seek(OBJECT:([convlab].[dbo].[accounts_nvarchar].[ix_accounts_nvarchar_email]), SEEK:([convlab].[dbo].[accounts_nvarchar].[email]=CONVERT_IMPLICIT(nvarchar(100),[@e],0)) ORDERED FORWARD)|1|3|2|Index Seek|Index Seek|OBJECT:([convlab].[dbo].[accounts_nvarchar].[ix_accounts_nvarchar_email]), SEEK:([convlab].[dbo].[accounts_nvarchar].[email]=CONVERT_IMPLICIT(nvarchar(100),[@e],0)) ORDERED FORWARD|[convlab].[dbo].[accounts_nvarchar].[id]|1.0|0.003125|0.0001581|11|0.0032831|[convlab].[dbo].[accounts_nvarchar].[id]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Clustered Index Seek(OBJECT:([convlab].[dbo].[accounts_nvarchar].[PK__accounts__3213E83FDFAF5353]), SEEK:([convlab].[dbo].[accounts_nvarchar].[id]=[convlab].[dbo].[accounts_nvarchar].[id]) LOOKUP ORDERED FORWARD)|1|5|2|Clustered Index Seek|Clustered Index Seek|OBJECT:([convlab].[dbo].[accounts_nvarchar].[PK__accounts__3213E83FDFAF5353]), SEEK:([convlab].[dbo].[accounts_nvarchar].[id]=[convlab].[dbo].[accounts_nvarchar].[id]) LOOKUP ORDERED FORWARD|[convlab].[dbo].[accounts_nvarchar].[plan_code]|1.0|0.003125|0.0001581|11|0.0032831|[convlab].[dbo].[accounts_nvarchar].[plan_code]|NULL|PLAN_ROW|0|1.0
+=== E. nvarchar parameter cast back to varchar in the query text
+id|plan_code
+--|---------
+777777|FREE
+Table 'accounts_sqlcoll'. Scan count 1, logical reads 6, physical reads 0, page server reads 0, read-ahead reads 0, page server read-ahead reads 0, lob logical reads 0, lob physical reads 0, lob page server reads 0, lob read-ahead reads 0, lob page server read-ahead reads 0.
+Rows|Executes|StmtText|StmtId|NodeId|Parent|PhysicalOp|LogicalOp|Argument|DefinedValues|EstimateRows|EstimateIO|EstimateCPU|AvgRowSize|TotalSubtreeCost|OutputList|Warnings|Type|Parallel|EstimateExecutions
+----|--------|--------|------|------|------|----------|---------|--------|-------------|------------|----------|-----------|----------|----------------|----------|--------|----|--------|------------------
+1|1|SELECT id, plan_code FROM dbo.accounts_sqlcoll WHERE email = CAST(@e AS varchar(100))|1|1|0|NULL|NULL|NULL|NULL|1.0|NULL|NULL|NULL|6.5703802E-3|NULL|NULL|SELECT|0|NULL
+1|1|  |--Nested Loops(Inner Join, OUTER REFERENCES:([convlab].[dbo].[accounts_sqlcoll].[id]))|1|2|1|Nested Loops|Inner Join|OUTER REFERENCES:([convlab].[dbo].[accounts_sqlcoll].[id])|NULL|1.0|0.0|4.1799999E-6|15|6.5703802E-3|[convlab].[dbo].[accounts_sqlcoll].[id], [convlab].[dbo].[accounts_sqlcoll].[plan_code]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Index Seek(OBJECT:([convlab].[dbo].[accounts_sqlcoll].[ix_accounts_sqlcoll_email]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[email]=CONVERT(varchar(100),[@e],0)) ORDERED FORWARD)|1|3|2|Index Seek|Index Seek|OBJECT:([convlab].[dbo].[accounts_sqlcoll].[ix_accounts_sqlcoll_email]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[email]=CONVERT(varchar(100),[@e],0)) ORDERED FORWARD|[convlab].[dbo].[accounts_sqlcoll].[id]|1.0|0.003125|0.0001581|11|0.0032831|[convlab].[dbo].[accounts_sqlcoll].[id]|NULL|PLAN_ROW|0|1.0
+1|1|       |--Clustered Index Seek(OBJECT:([convlab].[dbo].[accounts_sqlcoll].[PK__accounts__3213E83F0D3B4CD2]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[id]=[convlab].[dbo].[accounts_sqlcoll].[id]) LOOKUP ORDERED FORWARD)|1|5|2|Clustered Index Seek|Clustered Index Seek|OBJECT:([convlab].[dbo].[accounts_sqlcoll].[PK__accounts__3213E83F0D3B4CD2]), SEEK:([convlab].[dbo].[accounts_sqlcoll].[id]=[convlab].[dbo].[accounts_sqlcoll].[id]) LOOKUP ORDERED FORWARD|[convlab].[dbo].[accounts_sqlcoll].[plan_code]|1.0|0.003125|0.0001581|11|0.0032831|[convlab].[dbo].[accounts_sqlcoll].[plan_code]|NULL|PLAN_ROW|0|1.0
+=== F. what CAST does to a character outside the code page
+cast_result|cast_result2
+-----------|------------
+zoë.l@example.com|??@example.com
+##### 03-workload.sql
+(workload result sets discarded)
+##### 04-report.sql
+Changed database context to 'convlab'.
+=== Query Store runtime stats, 300 executions each
+query_text|execs|avg_logical_reads|avg_cpu_ms|avg_duration_ms
+----------|-----|-----------------|----------|---------------
+(@e nvarchar(4000))SELECT id, plan_code FROM dbo.accounts_sqlcoll WHERE email = @e|300|4484.0|86.722|86.738
+(@e nvarchar(4000))SELECT id, plan_code FROM dbo.accounts_wincoll WHERE email = @e|300|6.0|.133|.133
+(@e varchar(100))SELECT id, plan_code FROM dbo.accounts_sqlcoll WHERE email = @e|300|6.0|.109|.109
+=== Find plans with a PlanAffectingConvert warning in Query Store
+query_id|plan_id|query_text|convert_issue|expression|execs|avg_logical_reads
+--------|-------|----------|-------------|----------|-----|-----------------
+1|1|(@e nvarchar(4000))SELECT id, plan_code FROM dbo.accounts_sqlcoll WHERE email = @e|Seek Plan|CONVERT_IMPLICIT(nvarchar(100),[convlab].[dbo].[accounts_sqlcoll].[email],0)=[@e]|300|4484

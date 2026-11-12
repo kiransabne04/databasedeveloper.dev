@@ -1,0 +1,213 @@
+---
+import ArticleLayout from '../../layouts/ArticleLayout.astro';
+import ArticleOffer from '../../components/ArticleOffer.astro';
+import { site } from '../../config/site';
+
+const title = 'Find Unused Indexes in PostgreSQL Without Dropping the Wrong One';
+const description = 'Tested on PostgreSQL 18 with a streaming replica: an index the primary reported as never scanned served every reporting query on the replica. How to find unused and duplicate indexes safely, and what dropping one saved.';
+
+const faq = [
+  {
+    q: 'How do I find unused indexes in PostgreSQL?',
+    a: 'Query pg_stat_user_indexes for indexes with idx_scan = 0, exclude primary keys, unique and exclusion indexes and any index that backs a constraint, and check last_idx_scan on PostgreSQL 16 and later. Then repeat the query on every read replica, because each server keeps its own counters, and confirm the counters cover a full business cycle.'
+  },
+  {
+    q: 'Does idx_scan include scans on read replicas?',
+    a: 'No. Cumulative statistics are per server. A scan on a streaming replica increments idx_scan on that replica only. In a tested PostgreSQL 18 setup, an index used 200 times on the replica showed idx_scan = 0 on the primary.'
+  },
+  {
+    q: 'When are PostgreSQL index usage statistics reset?',
+    a: 'On pg_stat_reset() and related reset functions, and after an unclean shutdown: a crash, an immediate shutdown, a start from a base backup or point-in-time recovery. pg_upgrade does not carry cumulative statistics over. A clean restart keeps them. After an immediate shutdown in a test, idx_scan went from 500 to 0 while stats_reset stayed null.'
+  },
+  {
+    q: 'Is it safe to drop an index with idx_scan = 0?',
+    a: 'Not by itself. A unique index still enforces uniqueness, an expression index can supply planner statistics, and a rarely used index may serve a monthly job or a replica. Save the definition with pg_get_indexdef, drop it with DROP INDEX CONCURRENTLY, and have the CREATE INDEX CONCURRENTLY statement ready as the rollback.'
+  },
+  {
+    q: 'What does an unused index cost?',
+    a: 'Disk, backup and cache space, plus work on every insert and on every update that changes an indexed column. An index on a frequently updated column also prevents HOT updates. In a test, dropping one such index raised HOT updates from 0% to 100% and cut WAL per update from about 14 KB to 4.9 KB.'
+  }
+];
+---
+<ArticleLayout
+  title={title}
+  description={description}
+  eyebrow="PostgreSQL indexing · Lab-tested"
+  published="2026-11-11"
+  updated="2026-11-11"
+  schemaType="Article"
+  faq={faq}
+  ctaTitle="Too many indexes, write latency creeping up, and no one sure what is safe to drop?"
+  ctaDescription="An investigation correlates index usage across the primary and every replica with the statements that need each index, then gives you a ranked drop list with rollback statements and the numbers to check afterwards."
+>
+  <p class="notice"><strong>Short answer:</strong> an index is a drop candidate when <code>pg_stat_user_indexes.idx_scan</code> is 0 <em>on every server that runs queries</em>, the counters cover a full business cycle, and the index does not enforce a constraint. The primary alone is not enough evidence: in the test below, the index that served every reporting query on a replica showed zero scans on the primary.</p>
+
+  <p>Unused indexes are a real cost. Every insert writes to every index, and an update that changes an indexed column writes to all of them and loses the HOT optimization. But the usual one-line query (<code>WHERE idx_scan = 0</code>) is wrong often enough that dropping from it is risky. I built a PostgreSQL 18.6 primary with a streaming replica in Docker, ran a small workload on each, and checked each assumption. The scripts and full output are in the <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/unused-indexes">lab folder</a>.</p>
+
+  <nav class="notice" aria-label="On this page">
+    <strong>On this page</strong>
+    <ol>
+      <li><a href="#test">The test setup</a></li>
+      <li><a href="#replicas">Replicas keep their own counters</a></li>
+      <li><a href="#reset">When the counters reset</a></li>
+      <li><a href="#query">A safer candidate query</a></li>
+      <li><a href="#duplicates">Duplicate indexes</a></li>
+      <li><a href="#cost">What an unused index costs: HOT and WAL</a></li>
+      <li><a href="#drop">Drop it safely, with a rollback</a></li>
+      <li><a href="#managed">RDS and Aurora notes</a></li>
+      <li><a href="#faq">FAQ</a></li>
+      <li><a href="#sources">Sources</a></li>
+    </ol>
+  </nav>
+
+  <h2 id="test">The test setup</h2>
+  <p>One table, <code>orders</code>, 2,000,000 rows, with six indexes:</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col">Index</th><th scope="col">Size</th><th scope="col">Role in the test</th></tr></thead>
+    <tbody>
+      <tr><td><code>orders_pkey</code></td><td>43 MB</td><td>Primary key</td></tr>
+      <tr><td><code>orders_customer_idx</code></td><td>14 MB</td><td>Lookups by <code>customer_id</code> on the primary</td></tr>
+      <tr><td><code>orders_customer_dup_idx</code></td><td>14 MB</td><td>Exact duplicate of the one above</td></tr>
+      <tr><td><code>orders_status_created_idx</code></td><td>65 MB</td><td><code>(status, created_at)</code>, used only by reporting on the replica</td></tr>
+      <tr><td><code>orders_external_ref_uq</code></td><td>60 MB</td><td>Unique index, never used for reads</td></tr>
+      <tr><td><code>orders_updated_at_idx</code></td><td>43 MB</td><td>On <code>updated_at</code>, a column every update changes; used by nothing</td></tr>
+    </tbody>
+  </table></div>
+  <p>The workload was 500 lookups by <code>customer_id</code> on the primary and 200 reporting queries on the replica, filtering on <code>status</code> and <code>created_at</code>.</p>
+
+  <h2 id="replicas">Replicas keep their own counters</h2>
+  <p>The same query against <code>pg_stat_user_indexes</code> on each server:</p>
+<pre><code>{`-- PRIMARY
+           index           | idx_scan | has_last_scan
+---------------------------+----------+---------------
+ orders_customer_dup_idx   |      500 | t
+ orders_customer_idx       |        0 | f
+ orders_external_ref_uq    |        0 | f
+ orders_pkey               |        0 | f
+ orders_status_created_idx |        0 | f
+ orders_updated_at_idx     |        0 | f
+
+-- REPLICA
+ orders_customer_dup_idx   |        0 | f
+ orders_customer_idx       |        0 | f
+ orders_external_ref_uq    |        0 | f
+ orders_pkey               |        0 | f
+ orders_status_created_idx |      200 | t
+ orders_updated_at_idx     |        0 | f`}</code></pre>
+  <p>From the primary alone, <code>orders_status_created_idx</code> is the largest unused index, at 65 MB, and the obvious first drop. On the replica it served all 200 reporting queries as an index-only scan. Dropping it on the primary drops it everywhere, because DDL replicates, and the reporting queries would fall back to scanning the table.</p>
+  <p>This is documented behaviour, not a bug: cumulative statistics are collected in each server's shared memory, and a physical replica keeps its own. It matters most for SaaS teams that send dashboards, exports or analytics to a read replica. On a cluster with several replicas, run the check on each one and add the results together.</p>
+  <p>Two more things in that output are easy to misread. The planner used <code>orders_customer_dup_idx</code> for all 500 lookups, so its identical twin <code>orders_customer_idx</code> looks unused, and which of the two looks unused is arbitrary. And <code>orders_pkey</code> shows zero scans because nothing had looked rows up by <code>id</code> yet. It is still required.</p>
+
+  <h2 id="reset">When the counters reset</h2>
+  <p>A zero only means something if the counters have been collecting long enough to include month-end jobs, quarterly reports and rare admin paths. They reset more often than many teams assume:</p>
+  <ul>
+    <li><strong>Reset functions.</strong> <code>pg_stat_reset()</code> zeroes every counter in the current database, index scans included. Monitoring tools and runbooks sometimes call it.</li>
+    <li><strong>Unclean shutdown.</strong> After a crash, an immediate shutdown, a start from a base backup or point-in-time recovery, all counters start from zero.</li>
+    <li><strong>Major upgrade.</strong> pg_upgrade transfers most optimizer statistics in PostgreSQL 18, but not the cumulative statistics behind <code>idx_scan</code>.</li>
+    <li><strong>New replica.</strong> A replica built from a base backup starts with empty counters.</li>
+  </ul>
+  <p>I tested the first two cases that are easy to miss:</p>
+<pre><code>{`before: orders_customer_dup_idx idx_scan=500
+after immediate stop: orders_customer_dup_idx idx_scan=0
+db stats_reset=null
+
+before clean restart: orders_customer_dup_idx idx_scan=3
+after clean restart: orders_customer_dup_idx idx_scan=3`}</code></pre>
+  <p>After the immediate shutdown, <code>pg_stat_database.stats_reset</code> was still null. That column records calls to the reset functions, not crash-recovery resets, so it cannot tell you how old the counters are. Check <code>pg_postmaster_start_time()</code>, the server log for crash-recovery messages, and your change history for upgrades, failovers and replica rebuilds. If in doubt, take a snapshot now and compare it with another one after a full business cycle. On PostgreSQL 16 and later, <code>last_idx_scan</code> shows when each index was last used, which helps for rarely used indexes.</p>
+
+  <h2 id="query">A safer candidate query</h2>
+  <p>This version excludes indexes that enforce something, and invalid indexes left by a failed concurrent build, which you handle separately (<a href="/insights/postgresql-create-index-concurrently-stuck">see the CREATE INDEX CONCURRENTLY guide</a>). Run it on the primary and on every replica.</p>
+<pre><code>{`SELECT s.schemaname, s.relname AS table_name, s.indexrelname AS index_name,
+       s.idx_scan, s.last_idx_scan,
+       pg_size_pretty(pg_relation_size(s.indexrelid)) AS index_size
+FROM pg_stat_user_indexes AS s
+JOIN pg_index AS i USING (indexrelid)
+WHERE s.idx_scan = 0
+  AND i.indisvalid
+  AND NOT i.indisunique
+  AND NOT i.indisprimary
+  AND NOT i.indisexclusion
+  AND NOT EXISTS (SELECT 1 FROM pg_constraint AS c WHERE c.conindid = s.indexrelid)
+ORDER BY pg_relation_size(s.indexrelid) DESC;
+
+-- How long have the counters been collecting?
+SELECT pg_postmaster_start_time() AS server_started,
+       d.stats_reset AS db_stats_reset
+FROM pg_stat_database AS d
+WHERE d.datname = current_database();`}</code></pre>
+  <p>On the lab primary it returned three rows: <code>orders_status_created_idx</code> (which the replica needs), <code>orders_updated_at_idx</code>, and <code>orders_customer_idx</code> (one of the duplicates). It excluded the primary key and the unique index. Remove the <code>last_idx_scan</code> column on PostgreSQL 15 and earlier.</p>
+  <p>Before you drop anything the query returns, check three more things that the counters cannot show:</p>
+  <ul>
+    <li><strong>Expression indexes carry planner statistics.</strong> <code>ANALYZE</code> collects statistics on the expression of an expression index, such as <code>lower(email)</code>. The planner can use them for row estimates even if it never scans the index. Dropping it can change plans elsewhere.</li>
+    <li><strong>Unique indexes protect data.</strong> The query excludes them for a reason: an unused unique index may be the only thing stopping duplicate rows. Drop one only after deciding the rule no longer applies.</li>
+    <li><strong>Infrequent code paths.</strong> Search the code and the scheduled jobs for the table and column before you trust a zero. A year-end report counts as usage.</li>
+  </ul>
+
+  <h2 id="duplicates">Duplicate indexes</h2>
+  <p>Identical indexes are the safest drop there is: the planner treats them as interchangeable, so removing one leaves the other to do the same work. This query groups indexes with the same columns, operator classes, collations, options, expressions and predicate:</p>
+<pre><code>{`SELECT indrelid::regclass AS table_name,
+       array_agg(indexrelid::regclass ORDER BY indexrelid) AS same_definition,
+       pg_size_pretty(sum(pg_relation_size(indexrelid))) AS combined_size
+FROM pg_index
+GROUP BY indrelid, indkey::text, indclass::text, indcollation::text,
+         indoption::text, coalesce(pg_get_expr(indexprs, indrelid), ''),
+         coalesce(pg_get_expr(indpred, indrelid), '')
+HAVING count(*) > 1;`}</code></pre>
+<pre><code>{` table_name |                same_definition                | combined_size
+------------+-----------------------------------------------+---------------
+ orders     | {orders_customer_idx,orders_customer_dup_idx} | 27 MB`}</code></pre>
+  <p>Keep the one that backs a constraint or is unique, if either does: the query groups a unique and a non-unique index on the same columns together. The query only finds exact duplicates. An index on <code>(customer_id)</code> next to one on <code>(customer_id, created_at)</code> is often redundant too, but not always: the narrower index is smaller and can be cheaper to scan. Decide that from the query plans, not from the definitions.</p>
+
+  <ArticleOffer offer="investigation" title="Dozens of indexes per table, several replicas, and a write path that keeps getting slower?" text="I collect index usage from every node, match it with pg_stat_statements and the plans that depend on each index, and give you a ranked drop list. Each item comes with its evidence, the rollback statement and the WAL and latency numbers to check afterwards." />
+
+  <h2 id="cost">What an unused index costs: HOT and WAL</h2>
+  <p>Disk space is the visible cost. The bigger one is on writes. A heap-only tuple (HOT) update is possible only when the update changes no indexed column and the new row version fits on the same page. A single index on a frequently updated column, such as <code>updated_at</code>, <code>last_seen_at</code> or a status, prevents HOT for every update that changes it. Each of those updates then adds a new entry to <em>every</em> index on the table.</p>
+  <p>I ran 20,000 single-row updates of <code>updated_at</code> (pgbench, 4 clients), once with <code>orders_updated_at_idx</code> and once after dropping it. The table had <code>fillfactor = 90</code>, so pages had room for HOT. Each run started straight after a <code>CHECKPOINT</code>, so both pay the same full-page-image overhead.</p>
+  <div class="table-wrap"><table>
+    <thead><tr><th scope="col"></th><th scope="col">With the unused index</th><th scope="col">After dropping it</th></tr></thead>
+    <tbody>
+      <tr><td>HOT updates</td><td>0 of 20,000 (0%)</td><td>20,000 of 20,000 (100%)</td></tr>
+      <tr><td>WAL per update</td><td>13,997 bytes</td><td>4,933 bytes</td></tr>
+      <tr><td>Total WAL</td><td>280 MB</td><td>99 MB</td></tr>
+      <tr><td>Average latency</td><td>1.386 ms</td><td>0.584 ms</td></tr>
+    </tbody>
+  </table></div>
+  <p>One index that nothing read was costing 65% of the WAL on this update path. WAL volume drives replica lag, backup size, archive storage and write I/O. These are laptop numbers on a table that fits in memory; read the direction and the ratio, not the absolute values. Without the index, HOT also means less index bloat and less vacuum work.</p>
+  <p>Check your own tables:</p>
+<pre><code>{`SELECT relname, n_tup_upd, n_tup_hot_upd,
+       round(100.0 * n_tup_hot_upd / nullif(n_tup_upd, 0), 1) AS hot_pct
+FROM pg_stat_user_tables
+WHERE n_tup_upd > 10000
+ORDER BY n_tup_upd - n_tup_hot_upd DESC
+LIMIT 20;`}</code></pre>
+  <p>A heavily updated table with a low <code>hot_pct</code> is where an unneeded index on an updated column costs the most. A BRIN index is the exception: as a summarizing index, it does not prevent HOT.</p>
+
+  <h2 id="drop">Drop it safely, with a rollback</h2>
+  <ol>
+    <li><strong>Save the definition</strong>, which is your rollback:
+<pre><code>{`SELECT pg_get_indexdef('orders_updated_at_idx'::regclass);
+-- CREATE INDEX orders_updated_at_idx ON public.orders USING btree (updated_at)`}</code></pre>
+    Add <code>CONCURRENTLY</code> to that statement when you run it as a rollback. Measure how long the rebuild takes on a copy, so you know how long the rollback takes.</li>
+    <li><strong>Drop without blocking reads and writes:</strong> <code>DROP INDEX CONCURRENTLY orders_updated_at_idx;</code>. It waits for transactions that use the table, so a long-running transaction delays it. It cannot run inside a transaction block, which matters for migration tools that wrap each file in <code>BEGIN</code>:
+<pre><code>{`ERROR:  DROP INDEX CONCURRENTLY cannot run inside a transaction block`}</code></pre></li>
+    <li><strong>Constraint indexes are dropped through the constraint.</strong> In the lab, <code>DROP INDEX</code> on an index that backed a unique constraint failed with <code>cannot drop index orders_ref_key because constraint orders_ref_key on table orders requires it</code>. <code>ALTER TABLE … DROP CONSTRAINT</code> takes an <code>ACCESS EXCLUSIVE</code> lock; plan it as a schema change.</li>
+    <li><strong>One index per change.</strong> If latency moves, you know which drop caused it.</li>
+    <li><strong>Validate:</strong> compare <code>pg_stat_statements</code> for the affected table's queries and the WAL rate before and after, on the primary and on the replicas. The <a href="/insights/postgresql-slow-queries-pg-stat-statements">pg_stat_statements guide</a> shows how to diff snapshots.</li>
+  </ol>
+
+  <h2 id="managed">RDS and Aurora notes</h2>
+  <p>The queries above work on RDS for PostgreSQL and Aurora PostgreSQL with a normal application or monitoring role. Each RDS read replica and each Aurora reader instance keeps its own counters, so connect to each instance's own endpoint rather than the Aurora cluster reader endpoint, which spreads connections across readers. Failovers, instance replacements and major version upgrades are all events after which the counters may restart, so check the event history for the period the counters cover. Performance Insights or your own <code>pg_stat_statements</code> snapshots can confirm which statements touch the table. To inspect a specific plan, paste it into <a href={site.planReaderPostgresUrl} data-track="planreader_click">PlanReader</a>.</p>
+
+  <h2 id="faq">FAQ</h2>
+  {faq.map((item) => (<><h3>{item.q}</h3><p>{item.a}</p></>))}
+
+  <h2 id="sources">Sources</h2>
+  <ul>
+    <li><a href="https://www.postgresql.org/docs/18/monitoring-stats.html">PostgreSQL 18: cumulative statistics system</a> — <code>pg_stat_all_indexes</code>, <code>last_idx_scan</code>, reset functions and when counters are discarded.</li>
+    <li><a href="https://www.postgresql.org/docs/18/storage-hot.html">PostgreSQL 18: heap-only tuples (HOT)</a> — the conditions for HOT updates and the summarizing-index exception.</li>
+    <li><a href="https://www.postgresql.org/docs/18/sql-dropindex.html">PostgreSQL 18: DROP INDEX</a> — <code>CONCURRENTLY</code> and its restrictions.</li>
+    <li><a href="https://www.postgresql.org/docs/18/pgupgrade.html">PostgreSQL 18: pg_upgrade</a> — which statistics are and are not transferred.</li>
+    <li><a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/unused-indexes">Lab: unused indexes on a primary and replica</a> — scripts and full output.</li>
+    <li>Related: <a href="/insights/postgresql-foreign-key-index-slow-delete">the opposite problem, a missing index on a foreign key</a>, and <a href="/insights/postgresql-autovacuum-not-removing-dead-tuples">autovacuum not removing dead tuples</a>.</li>
+  </ul>
+</ArticleLayout>
