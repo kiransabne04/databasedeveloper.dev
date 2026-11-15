@@ -1,0 +1,761 @@
+# CIC lab output
+container: cic-lab-17
+run at 2026-11-09T16:59:45Z
+[t=   0.0s] SQL> SELECT version();
+                                                          version                                                           
+----------------------------------------------------------------------------------------------------------------------------
+ PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+(1 row)
+
+[t=   0.1s] SQL> SHOW maintenance_work_mem;
+ maintenance_work_mem 
+----------------------
+ 64MB
+(1 row)
+
+[t=   1.3s] pgbench writer started (2 clients, -R 100)
+
+==================== L1 baseline: CREATE INDEX CONCURRENTLY, no blocker ====================
+[t=   0.9s] phase[b1]: waiting for writers before build | lockers 0/1 current_locker_pid=7335 (pgbench) | blocks 0/0 | wait -:-
+[t=   1.2s] phase[b1]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 10182/49487 | wait -:-
+[t=   2.5s] phase[b1]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 49487/49487 | wait -:-
+[t=   2.8s] phase[b1]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait LWLock:WALWrite
+[t=   3.7s] phase[b1]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 412/35001 | wait IO:DataFileRead
+[t=   4.5s] phase[b1]: index validation: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 42174/49491 | wait IO:DataFileRead
+[t=   4.7s] phase[b1]: (no progress row)
+[t=   4.7s] session b1 output:
+    Timing is on.
+    SET
+    Time: 0.143 ms
+    CREATE INDEX
+    Time: 3663.583 ms (00:03.664)
+    psql exit=0
+[t=   4.8s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | t          | t          | t         | f           | 273 MB
+(1 row)
+
+
+==================== L2a writer left idle in transaction before the build ====================
+[t=   1.7s] phase[b2a]: waiting for writers before build
+[t=   2.9s] progress: waiting for writers before build | lockers 0/1 current_locker_pid=7572 (w_idle) | blocks 0/0 | wait Lock:virtualxid
+[t=   2.9s] SQL> SELECT pid, application_name, state, now() - xact_start AS xact_age, backend_xmin FROM pg_stat_activity WHERE application_name = 'w_idle';
+ pid  | application_name |        state        |    xact_age     | backend_xmin 
+------+------------------+---------------------+-----------------+--------------
+ 7572 | w_idle           | idle in transaction | 00:00:02.286061 |             
+(1 row)
+
+[t=   3.0s] SQL> SELECT locktype, coalesce(relation::regclass::text,'') AS relation, virtualxid, transactionid, mode, granted
+     FROM pg_locks WHERE pid = 7586 AND (NOT granted OR locktype = 'relation') ORDER BY granted, locktype;
+  locktype  | relation | virtualxid | transactionid |           mode           | granted 
+------------+----------+------------+---------------+--------------------------+---------
+ virtualxid |          | 39/3       |               | ShareLock                | f
+ relation   | orders   |            |               | ShareUpdateExclusiveLock | t
+(2 rows)
+
+[t=   3.1s] SQL> SELECT 7586 AS build_pid, pg_blocking_pids(7586) AS blocking_pids,
+            (SELECT array_agg(application_name || ':' || pid) FROM pg_stat_activity WHERE pid = ANY(pg_blocking_pids(7586))) AS blockers;
+ build_pid | blocking_pids |   blockers    
+-----------+---------------+---------------
+      7586 | {7572}        | {w_idle:7572}
+(1 row)
+
+[t=   3.2s] phase[b2a]: waiting for writers before build | lockers 0/1 current_locker_pid=7572 (w_idle) | blocks 0/0 | wait Lock:virtualxid
+[t=  12.8s] phase[b2a]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 10642/49508 | wait -:-
+[t=  14.1s] phase[b2a]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 49508/49508 | wait -:-
+[t=  14.7s] phase[b2a]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait LWLock:WALWrite
+[t=  15.8s] phase[b2a]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 9165/35001 | wait IO:DataFileRead
+[t=  16.3s] phase[b2a]: index validation: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 32455/49511 | wait IO:DataFileRead
+[t=  16.6s] phase[b2a]: (no progress row)
+[t=  16.6s] session b2a output:
+    Timing is on.
+    SET
+    Time: 0.099 ms
+    CREATE INDEX
+    Time: 14674.418 ms (00:14.674)
+    psql exit=0
+[t=  16.6s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | t          | t          | t         | f           | 273 MB
+(1 row)
+
+
+==================== L2b REPEATABLE READ snapshot on an UNRELATED table, opened after the build started ====================
+[t=   1.7s] phase[b2b]: waiting for writers before build
+[t=   2.7s] SQL> SELECT application_name, state, backend_xmin, backend_xid FROM pg_stat_activity WHERE application_name IN ('rr_unrelated','w_gate');
+ application_name |        state        | backend_xmin | backend_xid 
+------------------+---------------------+--------------+-------------
+ w_gate           | idle in transaction |              |       23586
+ rr_unrelated     | idle in transaction |        23586 |            
+(2 rows)
+
+[t=   2.9s] w_gate commits at ~6s; build then proceeds; rr_unrelated stays idle until ~31s
+[t=   3.0s] phase[b2b]: waiting for writers before build
+[t=   6.7s] phase[b2b]: building index: scanning table
+[t=   8.5s] phase[b2b]: building index: sorting live tuples
+[t=   8.7s] phase[b2b]: building index: loading tuples in tree
+[t=  10.0s] phase[b2b]: index validation: scanning index
+[t=  10.4s] phase[b2b]: index validation: scanning table
+[t=  10.6s] phase[b2b]: waiting for old snapshots
+[t=  10.7s] progress: waiting for old snapshots | lockers 0/1 current_locker_pid=8360 (rr_unrelated) | blocks 49523/49524 | wait Lock:virtualxid
+[t=  10.7s] SQL> SELECT locktype, coalesce(relation::regclass::text,'') AS relation, virtualxid, transactionid, mode, granted
+     FROM pg_locks WHERE pid = 8352 AND (NOT granted OR locktype = 'relation') ORDER BY granted, locktype;
+  locktype  | relation | virtualxid | transactionid |           mode           | granted 
+------------+----------+------------+---------------+--------------------------+---------
+ virtualxid |          | 55/5       |               | ShareLock                | f
+ relation   | orders   |            |               | ShareUpdateExclusiveLock | t
+(2 rows)
+
+[t=  10.8s] SQL> SELECT 8352 AS build_pid, pg_blocking_pids(8352) AS blocking_pids,
+            (SELECT array_agg(application_name || ':' || pid) FROM pg_stat_activity WHERE pid = ANY(pg_blocking_pids(8352))) AS blockers;
+ build_pid | blocking_pids |      blockers       
+-----------+---------------+---------------------
+      8352 | {8360}        | {rr_unrelated:8360}
+(1 row)
+
+[t=  10.9s] phase[b2b]: waiting for old snapshots | lockers 0/1 current_locker_pid=8360 (rr_unrelated) | blocks 49523/49524 | wait Lock:virtualxid
+[t=  26.9s] phase[b2b]: (no progress row)
+[t=  26.9s] session b2b output:
+    Timing is on.
+    SET
+    Time: 0.143 ms
+    CREATE INDEX
+    Time: 25025.533 ms (00:25.026)
+    psql exit=0
+[t=  26.9s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | t          | t          | t         | f           | 273 MB
+(1 row)
+
+
+==================== L2b-rc same, but READ COMMITTED idle transaction (no snapshot held between statements) ====================
+[t=   1.7s] phase[b2r]: waiting for writers before build
+[t=   2.8s] SQL> SELECT application_name, state, backend_xmin, backend_xid FROM pg_stat_activity WHERE application_name IN ('rc_unrelated');
+ application_name |        state        | backend_xmin | backend_xid 
+------------------+---------------------+--------------+-------------
+ rc_unrelated     | idle in transaction |              |            
+(1 row)
+
+[t=   3.0s] phase[b2r]: waiting for writers before build | lockers 0/1 current_locker_pid=9520 (w_gate2) | blocks 0/0 | wait Lock:virtualxid
+[t=   6.9s] phase[b2r]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 10720/49549 | wait -:-
+[t=   8.2s] phase[b2r]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 49549/49549 | wait -:-
+[t=   8.8s] phase[b2r]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait -:-
+[t=   9.9s] phase[b2r]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 10011/35001 | wait -:-
+[t=  10.5s] phase[b2r]: index validation: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 22384/49553 | wait -:-
+[t=  10.7s] phase[b2r]: (no progress row)
+[t=  10.7s] session b2r output:
+    Timing is on.
+    SET
+    Time: 0.092 ms
+    CREATE INDEX
+    Time: 8818.344 ms (00:08.818)
+    psql exit=0
+[t=  10.7s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | t          | t          | t         | f           | 273 MB
+(1 row)
+
+
+==================== L2c two expression-index builds on different tables at the same time ====================
+[t=   0.7s] phase[b2c_t]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 303/40000 | wait -:-
+[t=   0.7s] phase[b2c_o]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 239/49555 | wait IO:DataFileRead
+[t=   5.6s] phase[b2c_t]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 40000/40000 | wait IO:BuffileWrite
+[t=   5.6s] phase[b2c_o]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 49555/49555 | wait -:-
+[t=   6.3s] phase[b2c_t]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait IO:WalSync
+[t=   6.4s] phase[b2c_o]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait LWLock:WALWrite
+[t=   9.1s] phase[b2c_t]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 16958/35001 | wait IO:DataFileWrite
+[t=   9.1s] phase[b2c_o]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 12991/35001 | wait IO:DataFileRead
+[t=   9.7s] phase[b2c_t]: index validation: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 14510/40000 | wait IO:DataFileRead
+[t=   9.7s] phase[b2c_o]: index validation: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 14628/49565 | wait IO:DataFileRead
+[t=  10.0s] phase[b2c_t]: (no progress row)
+[t=  10.0s] phase[b2c_o]: (no progress row)
+[t=  10.0s] session b2c_o output:
+    Timing is on.
+    SET
+    Time: 0.044 ms
+    SET
+    Time: 0.017 ms
+    CREATE INDEX
+    Time: 9210.596 ms (00:09.211)
+    psql exit=0
+[t=  10.0s] session b2c_t output:
+    Timing is on.
+    SET
+    Time: 0.106 ms
+    SET
+    Time: 0.016 ms
+    CREATE INDEX
+    Time: 9185.197 ms (00:09.185)
+    psql exit=0
+[t=  10.0s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |        index_name        | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------------+------------+------------+-----------+-------------+--------
+ orders | orders_lower_payload_idx | t          | t          | t         | f           | 273 MB
+ t2     | t2_lower_x_idx           | t          | t          | t         | f           | 273 MB
+(2 rows)
+
+
+==================== L2c-plain two plain-column builds on different tables at the same time (control) ====================
+[t=   0.9s] phase[b2p_o]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 7091/49567 | wait -:-
+[t=   1.0s] phase[b2p_t]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 7368/40000 | wait IO:DataFileRead
+[t=   4.3s] phase[b2p_t]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 40000/40000 | wait IO:BuffileWrite
+[t=   4.5s] phase[b2p_o]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 49567/49567 | wait IO:BuffileRead
+[t=   5.3s] phase[b2p_o]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait -:-
+[t=   5.6s] phase[b2p_t]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait -:-
+[t=   8.3s] phase[b2p_o]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 8606/35001 | wait IO:DataFileRead
+[t=   8.6s] phase[b2p_t]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 26136/35001 | wait -:-
+[t=   9.0s] phase[b2p_o]: index validation: sorting tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait -:-
+[t=   9.2s] phase[b2p_t]: index validation: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 13486/40000 | wait IO:DataFileRead
+[t=   9.4s] phase[b2p_o]: index validation: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 43753/49574 | wait -:-
+[t=   9.4s] phase[b2p_t]: (no progress row)
+[t=   9.6s] phase[b2p_o]: (no progress row)
+[t=   9.6s] session b2p_o output:
+    Timing is on.
+    SET
+    Time: 0.647 ms
+    CREATE INDEX
+    Time: 8528.037 ms (00:08.528)
+    psql exit=0
+[t=   9.6s] session b2p_t output:
+    Timing is on.
+    SET
+    Time: 0.108 ms
+    CREATE INDEX
+    Time: 8481.858 ms (00:08.482)
+    psql exit=0
+[t=   9.6s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | t          | t          | t         | f           | 273 MB
+ t2     | t2_x_idx           | t          | t          | t         | f           | 273 MB
+(2 rows)
+
+
+==================== L3a cancel during 'waiting for writers before build' ====================
+[t=   1.7s] phase[b3a]: waiting for writers before build
+[t=   1.7s] SQL> SELECT pg_cancel_backend(pid) FROM pg_stat_activity WHERE application_name = 'b3a';
+ pg_cancel_backend 
+-------------------
+ t
+(1 row)
+
+[t=   1.8s] session b3a output:
+    Timing is on.
+    SET
+    Time: 0.106 ms
+    ERROR:  canceling statement due to user request
+    Time: 71.138 ms
+    psql exit=0
+[t=   1.8s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size   
+--------+--------------------+------------+------------+-----------+-------------+---------
+ orders | orders_payload_idx | f          | f          | t         | f           | 0 bytes
+(1 row)
+
+
+==================== L3b cancel during 'building index' ====================
+[t=   0.8s] phase[b3b]: building index: scanning table
+[t=   1.4s] progress: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 20980/49580 | wait -:-
+[t=   1.4s] SQL> SELECT pg_cancel_backend(pid) FROM pg_stat_activity WHERE application_name = 'b3b';
+ pg_cancel_backend 
+-------------------
+ t
+ t
+(2 rows)
+
+[t=   1.5s] session b3b output:
+    Timing is on.
+    SET
+    Time: 0.149 ms
+    ERROR:  canceling statement due to user request
+    Time: 718.736 ms
+    psql exit=0
+[t=   1.5s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size   
+--------+--------------------+------------+------------+-----------+-------------+---------
+ orders | orders_payload_idx | f          | f          | t         | f           | 0 bytes
+(1 row)
+
+
+==================== L3c cancel during 'waiting for old snapshots' ====================
+[t=   1.9s] phase[b3c]: initializing
+[t=   2.1s] phase[b3c]: waiting for writers before build
+[t=   2.2s] phase[b3c]: waiting for writers before build
+[t=   5.9s] phase[b3c]: building index: scanning table
+[t=   8.0s] phase[b3c]: building index: sorting live tuples
+[t=   8.4s] phase[b3c]: building index: loading tuples in tree
+[t=   9.8s] phase[b3c]: index validation: scanning index
+[t=  10.5s] phase[b3c]: index validation: scanning table
+[t=  10.9s] phase[b3c]: waiting for old snapshots
+[t=  10.9s] SQL> SELECT pg_cancel_backend(pid) FROM pg_stat_activity WHERE application_name = 'b3c';
+ pg_cancel_backend 
+-------------------
+ t
+(1 row)
+
+[t=  11.0s] session b3c output:
+    Timing is on.
+    SET
+    Time: 0.064 ms
+    Time: 9045.557 ms (00:09.046)
+    ERROR:  canceling statement due to user request
+    psql exit=0
+[t=  11.0s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | f          | t          | t         | f           | 273 MB
+(1 row)
+
+
+==================== L3d statement_timeout during 'waiting for writers before build' ====================
+[t=   3.9s] session b3d output:
+    Timing is on.
+    SET
+    Time: 0.167 ms
+    SET
+    Time: 0.105 ms
+    ERROR:  canceling statement due to statement timeout
+    Time: 2004.853 ms (00:02.005)
+    psql exit=0
+[t=   3.9s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size   
+--------+--------------------+------------+------------+-----------+-------------+---------
+ orders | orders_payload_idx | f          | f          | t         | f           | 0 bytes
+(1 row)
+
+
+==================== L4a lock_timeout = 2s while waiting for a writer (waiting for writers before build) ====================
+[t=   3.9s] session b4a output:
+    Timing is on.
+    SET
+    Time: 0.091 ms
+    SET
+    Time: 0.060 ms
+    ERROR:  canceling statement due to lock timeout
+    Time: 2001.612 ms (00:02.002)
+    psql exit=0
+[t=   3.9s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size   
+--------+--------------------+------------+------------+-----------+-------------+---------
+ orders | orders_payload_idx | f          | f          | t         | f           | 0 bytes
+(1 row)
+
+
+==================== L4b lock_timeout = 2s while waiting for an old snapshot ====================
+[t=   1.0s] phase[b4b]: building index: scanning table
+[t=   1.1s] phase[b4b]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 9618/49601 | wait -:-
+[t=   3.2s] phase[b4b]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 49601/49601 | wait -:-
+[t=   3.7s] phase[b4b]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait IO:DataFileExtend
+[t=   5.3s] phase[b4b]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 10245/35001 | wait IO:DataFileRead
+[t=   5.8s] phase[b4b]: index validation: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 21430/49605 | wait -:-
+[t=   6.1s] phase[b4b]: waiting for old snapshots | lockers 0/1 current_locker_pid=11869 (rr4) | blocks 49604/49605 | wait Lock:virtualxid
+[t=   8.2s] phase[b4b]: (no progress row)
+[t=   8.2s] session b4b output:
+    Timing is on.
+    SET
+    Time: 0.135 ms
+    SET
+    Time: 0.083 ms
+    ERROR:  canceling statement due to lock timeout
+    Time: 6889.467 ms (00:06.889)
+    psql exit=0
+[t=   8.2s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | f          | t          | t         | f           | 273 MB
+(1 row)
+
+
+==================== L5 build waiting for its own SHARE UPDATE EXCLUSIVE table lock ====================
+[t=   3.9s] progress row: ''
+[t=   3.9s] SQL> SELECT pid, state, wait_event_type, wait_event FROM pg_stat_activity WHERE application_name = 'b5';
+  pid  | state  | wait_event_type | wait_event 
+-------+--------+-----------------+------------
+ 12251 | active | Lock            | relation
+(1 row)
+
+[t=   4.0s] SQL> SELECT locktype, coalesce(relation::regclass::text,'') AS relation, virtualxid, transactionid, mode, granted
+     FROM pg_locks WHERE pid = 12251 AND (NOT granted OR locktype = 'relation') ORDER BY granted, locktype;
+ locktype | relation | virtualxid | transactionid |           mode           | granted 
+----------+----------+------------+---------------+--------------------------+---------
+ relation | orders   |            |               | ShareUpdateExclusiveLock | f
+(1 row)
+
+[t=   4.1s] SQL> SELECT 12251 AS build_pid, pg_blocking_pids(12251) AS blocking_pids,
+            (SELECT array_agg(application_name || ':' || pid) FROM pg_stat_activity WHERE pid = ANY(pg_blocking_pids(12251))) AS blockers;
+ build_pid | blocking_pids |    blockers     
+-----------+---------------+-----------------
+     12251 | {12244}       | {suelock:12244}
+(1 row)
+
+[t=   4.2s] phase[b5]: (no progress row)
+[t=   8.9s] phase[b5]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 10708/49617 | wait -:-
+[t=  10.7s] phase[b5]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 49617/49617 | wait -:-
+[t=  11.7s] phase[b5]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait -:-
+[t=  12.6s] phase[b5]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 1632/35001 | wait IO:DataFileRead
+[t=  13.5s] phase[b5]: index validation: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 24270/49621 | wait IO:DataFileRead
+[t=  13.7s] phase[b5]: (no progress row)
+[t=  13.7s] session b5 output:
+    Timing is on.
+    SET
+    Time: 0.110 ms
+    CREATE INDEX
+    Time: 11737.009 ms (00:11.737)
+    psql exit=0
+[t=  13.7s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | t          | t          | t         | f           | 273 MB
+(1 row)
+
+
+==================== L6 CREATE INDEX CONCURRENTLY IF NOT EXISTS over an existing INVALID index ====================
+[t=   2.8s] session b6 output:
+    Timing is on.
+    SET
+    Time: 0.120 ms
+    SET
+    Time: 0.135 ms
+    Time: 1002.242 ms (00:01.002)
+    ERROR:  canceling statement due to lock timeout
+    psql exit=0
+[t=   2.8s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |   index_name   | indisvalid | indisready | indislive | indisunique |  size   
+--------+----------------+------------+------------+-----------+-------------+---------
+ orders | orders_ext_idx | f          | f          | t         | f           | 0 bytes
+(1 row)
+
+[t=   2.9s] now re-run with IF NOT EXISTS under ON_ERROR_STOP=1
+NOTICE:  relation "orders_ext_idx" already exists, skipping
+CREATE INDEX
+[t=   2.9s] psql exit code: 0
+[t=   2.9s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |   index_name   | indisvalid | indisready | indislive | indisunique |  size   
+--------+----------------+------------+------------+-----------+-------------+---------
+ orders | orders_ext_idx | f          | f          | t         | f           | 0 bytes
+(1 row)
+
+[t=   3.0s] SQL> SELECT indexrelid::regclass FROM pg_index WHERE NOT indisvalid;
+   indexrelid   
+----------------
+ orders_ext_idx
+(1 row)
+
+[t=   3.1s] recovery: REINDEX INDEX CONCURRENTLY on the invalid index
+[t=   3.1s] SQL> REINDEX INDEX CONCURRENTLY orders_ext_idx;
+REINDEX
+[t=  14.2s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |   index_name   | indisvalid | indisready | indislive | indisunique | size  
+--------+----------------+------------+------------+-----------+-------------+-------
+ orders | orders_ext_idx | t          | t          | t         | f           | 90 MB
+(1 row)
+
+
+==================== L7a UNIQUE build with a pre-existing duplicate (fails in first scan) ====================
+[t=   0.7s] SQL> INSERT INTO orders (tenant_id, external_ref, payload) VALUES (1, 'ref-1001', 'lab-dup');
+INSERT 0 1
+[t=   0.8s] phase[b7a]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 33/49639 | wait -:-
+[t=   2.1s] phase[b7a]: (no progress row)
+[t=   2.1s] session b7a output:
+    Timing is on.
+    SET
+    Time: 0.109 ms
+    ERROR:  could not create unique index "orders_tenant_ref_uq"
+    DETAIL:  Key (tenant_id, external_ref)=(1, ref-1001) is duplicated.
+    Time: 1209.620 ms (00:01.210)
+    psql exit=0
+[t=   2.1s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |      index_name      | indisvalid | indisready | indislive | indisunique |  size   
+--------+----------------------+------------+------------+-----------+-------------+---------
+ orders | orders_tenant_ref_uq | f          | f          | t         | t           | 0 bytes
+(1 row)
+
+[t=   2.2s] after failed first-scan unique build: insert another duplicate of an existing key
+[t=   2.2s] SQL> INSERT INTO orders (tenant_id, external_ref, payload) VALUES (2, 'ref-2002', 'lab-dup');
+INSERT 0 1
+
+==================== L7b UNIQUE build; duplicate inserted during first scan (fails in validation / second scan) ====================
+[t=   0.8s] phase[b7b]: initializing
+[t=   1.0s] phase[b7b]: building index: scanning table
+[t=   1.0s] SQL> INSERT INTO orders (tenant_id, external_ref, payload) VALUES (3, 'ref-3003', 'lab-dup');
+INSERT 0 1
+[t=   1.2s] phase[b7b]: building index: scanning table | lockers 0/0 current_locker_pid=0 (-) | blocks 23140/49641 | wait -:-
+[t=   2.4s] phase[b7b]: building index: sorting live tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 49641/49641 | wait -:-
+[t=   2.9s] phase[b7b]: building index: loading tuples in tree | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait -:-
+[t=   3.2s] phase[b7b]: index validation: scanning index | lockers 0/0 current_locker_pid=0 (-) | blocks 7207/11554 | wait IO:DataFileRead
+[t=   3.4s] phase[b7b]: index validation: sorting tuples | lockers 0/0 current_locker_pid=0 (-) | blocks 0/0 | wait -:-
+[t=   3.7s] phase[b7b]: (no progress row)
+[t=   3.7s] session b7b output:
+    Timing is on.
+    SET
+    Time: 0.090 ms
+    ERROR:  duplicate key value violates unique constraint "orders_tenant_ref_uq"
+    DETAIL:  Key (tenant_id, external_ref)=(3, ref-3003) already exists.
+    Time: 2840.071 ms (00:02.840)
+    psql exit=0
+[t=   3.7s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |      index_name      | indisvalid | indisready | indislive | indisunique | size  
+--------+----------------------+------------+------------+-----------+-------------+-------
+ orders | orders_tenant_ref_uq | f          | t          | t         | t           | 90 MB
+(1 row)
+
+[t=   3.8s] after failed second-scan unique build: insert a NEW duplicate of a different existing key
+[t=   3.8s] SQL> INSERT INTO orders (tenant_id, external_ref, payload) VALUES (4, 'ref-4004', 'lab-dup');
+ERROR:  duplicate key value violates unique constraint "orders_tenant_ref_uq"
+DETAIL:  Key (tenant_id, external_ref)=(4, ref-4004) already exists.
+[t=   3.8s] SQL> INSERT INTO orders (tenant_id, external_ref, payload) VALUES (9, 'brand-new-ref', 'lab-dup'), (9, 'brand-new-ref', 'lab-dup');
+ERROR:  duplicate key value violates unique constraint "orders_tenant_ref_uq"
+DETAIL:  Key (tenant_id, external_ref)=(9, brand-new-ref) already exists.
+[t=   3.9s] SQL> SET enable_seqscan = off; EXPLAIN (COSTS OFF) SELECT * FROM orders WHERE tenant_id = 4 AND external_ref = 'ref-4004';
+SET
+                            QUERY PLAN                             
+-------------------------------------------------------------------
+ Seq Scan on orders
+   Filter: ((tenant_id = 4) AND (external_ref = 'ref-4004'::text))
+(2 rows)
+
+[t=   4.0s] can the invalid unique index be dropped concurrently?
+[t=   4.0s] SQL> DROP INDEX CONCURRENTLY orders_tenant_ref_uq;
+DROP INDEX
+[t=   4.1s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+ tbl | index_name | indisvalid | indisready | indislive | indisunique | size 
+-----+------------+------------+------------+-----------+-------------+------
+(0 rows)
+
+
+==================== L7c successful UNIQUE build, then ADD CONSTRAINT ... USING INDEX: locks taken ====================
+[t=   0.7s] SQL> CREATE UNIQUE INDEX CONCURRENTLY orders_tenant_ref_uq ON orders (tenant_id, external_ref);
+CREATE INDEX
+BEGIN
+NOTICE:  ALTER TABLE / ADD CONSTRAINT USING INDEX will rename index "orders_tenant_ref_uq" to "orders_tenant_ref_key"
+ALTER TABLE
+        object         |           mode           | granted 
+-----------------------+--------------------------+---------
+ orders                | AccessExclusiveLock      | t
+ orders_tenant_ref_key | AccessShareLock          | t
+ orders_tenant_ref_key | ShareUpdateExclusiveLock | t
+ pg_locks              | AccessShareLock          | t
+(4 rows)
+
+COMMIT
+[t=   3.4s] SQL> DROP INDEX CONCURRENTLY orders_tenant_ref_key;
+ERROR:  cannot drop index orders_tenant_ref_key because constraint orders_tenant_ref_key on table orders requires it
+HINT:  You can drop constraint orders_tenant_ref_key on table orders instead.
+[t=   3.5s] SQL> ALTER TABLE orders DROP CONSTRAINT orders_tenant_ref_key;
+ALTER TABLE
+
+==================== L8 CREATE INDEX CONCURRENTLY inside a transaction block ====================
+BEGIN
+ERROR:  CREATE INDEX CONCURRENTLY cannot run inside a transaction block
+ROLLBACK
+
+==================== L9 partitioned table ====================
+[t=   0.8s] SQL> CREATE INDEX CONCURRENTLY orders_p_payload_idx ON orders_p (payload);
+ERROR:  cannot create index on partitioned table "orders_p" concurrently
+Timing is on.
+CREATE INDEX
+Time: 1013.441 ms (00:01.013)
+CREATE INDEX
+Time: 850.315 ms
+CREATE INDEX
+Time: 1223.283 ms (00:01.223)
+CREATE INDEX
+Time: 2.154 ms
+Timing is off.
+    partition_index    |     attached_to      
+-----------------------+----------------------
+ orders_p1_payload_idx | orders_p_payload_idx
+ orders_p2_payload_idx | orders_p_payload_idx
+ orders_p3_payload_idx | orders_p_payload_idx
+(3 rows)
+
+    tbl    | indexes 
+-----------+---------
+ orders_p  |       1
+ orders_p1 |       1
+ orders_p2 |       1
+ orders_p3 |       1
+(4 rows)
+
+[t=   4.0s] SQL> DROP INDEX CONCURRENTLY orders_p_payload_idx;
+ERROR:  cannot drop partitioned index "orders_p_payload_idx" concurrently
+[t=   4.1s] SQL> DROP INDEX orders_p_payload_idx;
+DROP INDEX
+
+==================== L11 REINDEX CONCURRENTLY cancelled: leftover _ccnew / _ccold ====================
+[t=   0.9s] SQL> CREATE INDEX CONCURRENTLY orders_payload_idx ON orders (payload);
+CREATE INDEX
+[t=   4.9s] phase[b11]: building index: scanning table
+[t=   4.9s] SQL> SELECT pg_cancel_backend(pid) FROM pg_stat_activity WHERE application_name = 'b11';
+ pg_cancel_backend 
+-------------------
+ t
+ t
+(2 rows)
+
+[t=   5.0s] session b11 output:
+    Timing is on.
+    SET
+    Time: 0.109 ms
+    ERROR:  canceling statement due to user request
+    Time: 101.396 ms
+    psql exit=0
+[t=   5.0s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |        index_name        | indisvalid | indisready | indislive | indisunique |  size   
+--------+--------------------------+------------+------------+-----------+-------------+---------
+ orders | orders_payload_idx       | t          | t          | t         | f           | 273 MB
+ orders | orders_payload_idx_ccnew | f          | f          | t         | f           | 0 bytes
+(2 rows)
+
+[t=   5.1s] SQL> DROP INDEX CONCURRENTLY orders_payload_idx_ccnew;
+DROP INDEX
+[t=   5.2s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | t          | t          | t         | f           | 273 MB
+(1 row)
+
+[t=   5.2s] L11b REINDEX CONCURRENTLY blocked by an idle reader that opened first, cancelled in the reader-wait phase
+[t=   5.9s] SQL> CREATE INDEX CONCURRENTLY orders_payload_idx ON orders (payload);
+CREATE INDEX
+[t=  11.2s] phase[b11b]: building index
+[t=  11.4s] phase[b11b]: building index: scanning table
+[t=  13.5s] phase[b11b]: building index: sorting live tuples
+[t=  14.3s] phase[b11b]: building index: loading tuples in tree
+[t=  15.1s] phase[b11b]: index validation: scanning index
+[t=  15.7s] phase[b11b]: index validation: scanning table
+[t=  16.4s] phase[b11b]: waiting for readers before marking dead
+[t=  17.5s] progress: waiting for readers before marking dead | lockers 0/1 current_locker_pid=13341 (reader11) | blocks 49666/49667 | wait Lock:virtualxid
+[t=  17.5s] SQL> SELECT pg_cancel_backend(pid) FROM pg_stat_activity WHERE application_name = 'b11b';
+ pg_cancel_backend 
+-------------------
+ t
+(1 row)
+
+[t=  17.6s] session b11b output:
+    Timing is on.
+    SET
+    Time: 0.184 ms
+    ERROR:  canceling statement due to user request
+    Time: 6402.196 ms (00:06.402)
+    psql exit=0
+[t=  17.6s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |        index_name        | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx       | t          | t          | t         | f           | 273 MB
+ orders | orders_payload_idx_ccold | f          | t          | t         | f           | 273 MB
+(2 rows)
+
+[t=  17.7s] SQL> SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE application_name = 'reader11';
+ pg_terminate_backend 
+----------------------
+ t
+(1 row)
+
+[t=  18.3s] SQL> DROP INDEX CONCURRENTLY orders_payload_idx_ccold;
+DROP INDEX
+[t=  18.4s] SQL> SELECT t.relname AS tbl, c.relname AS index_name, i.indisvalid, i.indisready, i.indislive, i.indisunique,
+            pg_size_pretty(pg_relation_size(c.oid)) AS size
+     FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid JOIN pg_class t ON t.oid = i.indrelid
+     WHERE t.relname IN ('orders','t2','orders_p','orders_p1','orders_p2','orders_p3') AND NOT i.indisprimary
+     ORDER BY 1, 2;
+  tbl   |     index_name     | indisvalid | indisready | indislive | indisunique |  size  
+--------+--------------------+------------+------------+-----------+-------------+--------
+ orders | orders_payload_idx | t          | t          | t         | f           | 273 MB
+(1 row)
+
+[t=  19.2s] pgbench stopped
+[t=  19.2s] DONE
+exit 0

@@ -1,0 +1,2 @@
+\set id random(1, 3000000)
+UPDATE orders SET created_at = now() WHERE id = :id;
