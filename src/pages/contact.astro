@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import { site } from '../config/site';
+import { reviews } from '../data/reviews';
 const endpoint = site.contactEndpoint;
 const action = endpoint || `mailto:${site.email}`;
 ---
@@ -22,9 +23,9 @@ const action = endpoint || `mailto:${site.email}`;
           </>
         )}
         <div class="form-grid">
-          <div class="field full"><label for="offer">What are you asking about?</label><select id="offer" name="offer" required><option value="">Choose an option</option><option value="investigation">PostgreSQL Performance Investigation</option><option value="upgrade">PostgreSQL Upgrade Readiness Review</option><option value="sprint">Remediation or migration validation sprint</option><option value="partnership">Technical partnership</option><option value="pgvector">pgvector review</option><option value="sqlserver">SQL Server review</option><option value="snowflake">Snowflake review</option><option value="other">Other or legacy inquiry</option></select></div>
+          <div class="field full"><label for="offer">What are you asking about?</label><select id="offer" name="offer" required><option value="">Choose an option</option><option value="investigation">PostgreSQL Performance Investigation</option>{Object.entries(reviews).map(([key, review]) => <option value={key} data-review>{review.name}</option>)}<option value="upgrade">PostgreSQL Upgrade Readiness Review</option><option value="sprint">Remediation or migration validation sprint</option><option value="partnership">Technical partnership</option><option value="pgvector">pgvector review</option><option value="sqlserver">SQL Server review</option><option value="snowflake">Snowflake review</option><option value="other">Other or legacy inquiry</option></select></div>
           <div class="field"><label for="name">Name</label><input id="name" name="name" required autocomplete="name" /></div>
-          <div class="field"><label for="email">Email</label><input id="email" type="email" name="email" required autocomplete="email" /></div>
+          <div class="field"><label for="email">Work email</label><input id="email" type="email" name="email" required autocomplete="email" /></div>
           <div class="field full"><label for="problem">What is happening or what collaboration do you have in mind?</label><textarea id="problem" name="problem" required minlength="20" placeholder="The decision, business impact, and evidence or context available"></textarea></div>
           <details class="field full optional-fields">
             <summary>Add platform, impact or evidence (optional)</summary>
@@ -39,7 +40,7 @@ const action = endpoint || `mailto:${site.email}`;
         </div>
         <div class="actions"><button class="button primary" type="submit">{endpoint ? 'Send investigation request' : 'Open email draft'}</button></div>
         {!endpoint && <p class="small muted">Your email app will open with these details filled in. Review and send the draft there.</p>}
-        <p class="small muted">I review inquiries personally and will respond by email if the work is a fit.</p>
+        <p class="small muted">I use these details to review fit and reply by email. <a href="/privacy">How WalStack handles enquiries</a>.</p>
         <p id="form-status" class="small" role="status" aria-live="polite" tabindex="-1"></p>
       </form>
 
@@ -65,7 +66,7 @@ const action = endpoint || `mailto:${site.email}`;
         <p class="muted">Used PlanReader? Mention the finding that prompted your request and whether it affects production. You can review and redact any plan or other evidence before sharing it separately.</p>
         <p class="notice"><strong>Do not send credentials, production dumps or confidential customer data through this form.</strong></p>
         <p class="muted">The work is async-first. Calls fit US East mornings and EU afternoons.</p>
-        <p>Email: <a href={`mailto:${site.email}`}>{site.email}</a></p>
+        <p>Email: <a id="inquiry-email" href={`mailto:${site.email}`}>{site.email}</a></p>
       </aside>
     </div>
   </section>
@@ -91,34 +92,65 @@ const action = endpoint || `mailto:${site.email}`;
           }
         } catch { /* A missing or invalid referrer does not block the form. */ }
       }
-      const offerInput = form.elements.namedItem('offer');
+      // Use only an internal path for attribution, even when a shared link includes parameters.
+      try {
+        const source = new URL(fromPage, location.origin);
+        fromPage = fromPage.startsWith('/') && source.origin === location.origin ? source.pathname : '';
+      } catch { fromPage = ''; }
+      const offerInput = form.querySelector<HTMLSelectElement>('#offer');
       const fromInput = form.elements.namedItem('from_page');
       if (offerInput instanceof HTMLSelectElement && [...offerInput.options].some((option) => option.value === offer)) offerInput.value = offer;
       if (fromInput instanceof HTMLInputElement && fromPage.startsWith('/')) fromInput.value = fromPage;
       const database = form.elements.namedItem('database');
       const platformForOffer: Record<string, string> = { pgvector: 'pgvector', sqlserver: 'SQL Server', snowflake: 'Snowflake' };
       if (database instanceof HTMLSelectElement && platformForOffer[offer]) database.value = platformForOffer[offer];
+      const reviewOption = () => {
+        const option = offerInput?.selectedOptions[0];
+        return option?.hasAttribute('data-review') ? option : undefined;
+      };
+      function trackReview(name: string, serviceId = reviewOption()?.value) {
+        if (serviceId) window.dispatchEvent(new CustomEvent('dd:track', { detail: { name, props: { service_id: serviceId } } }));
+      }
+      const emailLink = document.querySelector<HTMLAnchorElement>('#inquiry-email');
+      function updateEmailLink() {
+        const selected = reviewOption();
+        if (emailLink) emailLink.href = 'mailto:' + form?.dataset.email + (selected ? '?subject=' + encodeURIComponent(selected.text) : '');
+      }
+      updateEmailLink();
+      emailLink?.addEventListener('click', () => trackReview('service_contact_email_click'));
       let started = false;
-      form.addEventListener('focusin', () => {
+      const startedReviews = new Set<string>();
+      function startForm() {
         if (!started) {
           window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_start' }));
           started = true;
         }
-      });
+        const serviceId = reviewOption()?.value;
+        if (serviceId && !startedReviews.has(serviceId)) {
+          trackReview('service_form_start', serviceId);
+          startedReviews.add(serviceId);
+        }
+      }
+      form.addEventListener('focusin', startForm);
+      offerInput?.addEventListener('change', () => { startForm(); updateEmailLink(); });
       form.addEventListener('submit', (event) => {
+        event.preventDefault();
         if (!form.reportValidity()) return;
+        const selectedOffer = offerInput instanceof HTMLSelectElement ? offerInput.value : '';
+        const serviceId = reviewOption()?.value;
         if (form.dataset.mailtoFallback !== 'true') {
-          event.preventDefault();
           const status = form.querySelector<HTMLElement>('#form-status');
           const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
+          if (button?.disabled) return;
           if (button) button.disabled = true;
           if (status) status.textContent = 'Sending…';
           fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
             .then((response) => {
               if (!response.ok) throw new Error(String(response.status));
-              const selectedOffer = offerInput instanceof HTMLSelectElement ? offerInput.value : '';
+              if (serviceId) trackReview('service_lead_submit', serviceId);
               window.dispatchEvent(new CustomEvent('dd:track', { detail: { name: 'contact_submit', props: { offer: selectedOffer, from_page: fromPage.startsWith('/') ? fromPage : undefined } } }));
               form.reset();
+              updateEmailLink();
               if (status) { status.textContent = 'Thanks. Your inquiry was sent. I will review it and respond by email if there is a fit.'; status.focus(); }
             })
             .catch((error) => {
@@ -127,7 +159,7 @@ const action = endpoint || `mailto:${site.email}`;
             .finally(() => { if (button) button.disabled = false; });
           return;
         }
-        event.preventDefault();
+        trackReview('service_contact_email_click');
         window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_draft_open' }));
         const fields = new FormData(form);
         const labels: Record<string, string> = {

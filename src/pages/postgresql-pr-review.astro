@@ -1,0 +1,93 @@
+---
+import ReviewLayout from '../layouts/ReviewLayout.astro';
+
+const coverage = [
+  ['Schema and DDL safety', 'Inspect the lock modes and possible table rewrites for each ALTER TABLE operation. Check type conversions, constraint validation, index build strategy and compatibility with queries already deployed.'],
+  ['Transactions and concurrency', 'Trace when locks are acquired and released. Check transaction length, access order, possible deadlocks, isolation assumptions and what concurrent requests will see if a migration retries.'],
+  ['Backfills and data movement', 'Review batch size, commit boundaries, resource use and restart checkpoints. Identify where WAL generation and replication lag need measurement, and when rollback or roll-forward becomes the practical recovery path.'],
+  ['SQL and indexing', 'Read changed SQL alongside the application access patterns it serves. Check predicate selectivity, candidate plans and index write costs, including the queries that still run during rollout.'],
+  ['Security and tenant isolation', 'Where the patch touches tenancy or functions, check row-level security assumptions, search_path and execution privileges. Identify role-specific tests for permitted and denied access.'],
+];
+---
+<ReviewLayout service="pr-review" title="PostgreSQL Migration & SQL Code Review | WalStack"
+  description="Independent PostgreSQL SQL and migration review covering locking, indexes, backfills, transaction safety and deployment risks. Get actionable findings."
+  eyebrow="PostgreSQL change-risk review" heading="PostgreSQL Schema, SQL Code & Migration Review"
+  headline="Catch database performance and deployment risks before your changes reach production."
+  intro="Database changes can introduce locking, performance regressions, long-running transactions and unexpected deployment risks. Get an independent technical review of a defined SQL change set before production rollout."
+  trust="Focused review · Severity-ranked findings · Practical deployment guidance"
+  jumpLabel="Explore Review Coverage" jumpId="coverage"
+  scope={['One defined migration or SQL/database pull request.', 'A file or statement limit agreed after inspecting the change set.', 'One written review report and one clarification round.']}
+  exclusions="Full application security audits, production implementation, large-scale migration execution, unlimited revisions and emergency deployment support. A review cannot guarantee zero downtime."
+  finalHeading="Planning a PostgreSQL change that deserves a second pair of eyes?"
+  finalCopy="Share the migration or PR context and get a defined review scope before committing.">
+
+  <section><div class="container review-row">
+    <h2>When to request a review</h2>
+    <ul>
+      <li>A schema migration will alter a heavily used table, introduce an index or enforce a new constraint.</li>
+      <li>A backfill will compete with application writes, or a partitioning change affects existing readers.</li>
+      <li>An ORM generated the migration, and you need to understand the SQL your deployment runner will execute.</li>
+      <li>A critical SQL function, multi-tenant query or row-level security policy is changing.</li>
+    </ul>
+  </div></section>
+
+  <section id="coverage"><div class="container review-row">
+    <div><h2>Technical review coverage</h2><p>The agreed patch determines which checks apply. A new constraint on a busy table raises different questions from a change to a tenant-facing function.</p></div>
+    <div class="grid two">{coverage.map(([heading, body]) => <div class="card"><h3>{heading}</h3><p>{body}</p></div>)}</div>
+  </div></section>
+
+  <section><div class="container review-row">
+    <h2>How the review works</h2>
+    <ol>
+      <li><strong>Submit change context.</strong> Describe the SQL or migration, relevant schema, PostgreSQL version, expected data volumes and deployment order.</li>
+      <li><strong>Confirm scope.</strong> Agree on the patch revision, review objectives, evidence, fee and delivery window.</li>
+      <li><strong>Technical review.</strong> I trace correctness, locking, performance and deployment risks through the proposed sequence.</li>
+      <li><strong>Receive findings.</strong> Your team gets severity-ranked issues, safer alternatives and a checklist to validate the release.</li>
+    </ol>
+  </div></section>
+
+  <section id="deliverables"><div class="container review-row">
+    <h2>What you receive</h2>
+    <ul>
+      <li>An executive risk summary and severity-ranked findings tied to the affected SQL.</li>
+      <li>Statement-level observations, recommended alternatives and locking or migration-risk notes.</li>
+      <li>Validation tests for representative data volumes, application versions and roles.</li>
+      <li>Deployment order, rollback considerations, limitations and assumptions behind the review.</li>
+    </ul>
+  </div></section>
+
+  <section slot="evidence"><div class="container review-row">
+    <div><h2>Illustrative findings</h2><p>These examples show the level of detail in a review. They use hypothetical changes.</p></div>
+    <div>
+      <div class="report"><div class="report-body">
+        <h3>Index build on a busy table</h3>
+        <dl class="finding-grid">
+          <dt>Proposed SQL</dt><dd><code>CREATE INDEX ON orders (account_id);</code></dd>
+          <dt>Write impact</dt><dd>A standard build blocks writes to the table while it builds the index. A deployment transaction can hold the lock until commit.</dd>
+          <dt>Alternative</dt><dd>Evaluate <code>CREATE INDEX CONCURRENTLY</code>. It permits concurrent writes but adds work, can wait for transactions and must run outside a transaction block.</dd>
+          <dt>Before retrying</dt><dd>Check whether a failed concurrent build left an invalid index. Agree how to remove or rebuild it and verify validity before relying on it.</dd>
+        </dl>
+      </div></div>
+      <ul>
+        <li><strong>Single-transaction backfill.</strong> A large update can generate a burst of WAL. Test bounded batches with a stable checkpoint and an idempotent retry.</li>
+        <li><strong>New foreign key.</strong> Where supported, adding it <code>NOT VALID</code> separates enforcement on new writes from the later scan of existing rows. Plan both lock windows.</li>
+        <li><strong>Low-selectivity predicate.</strong> Compare a representative plan and the additional write cost before building the proposed index.</li>
+        <li><strong>Rolling deployment.</strong> A renamed column can break the previous application version while it still serves requests. Test both versions against the intermediate schema.</li>
+        <li><strong>Tenant policy.</strong> Exercise allowed and cross-tenant reads and writes under the actual application role.</li>
+      </ul>
+      <p><a href="/insights/postgresql-create-index-concurrently-stuck">Read the guide to concurrent index waits and failed builds</a>.</p>
+    </div>
+  </div></section>
+
+  <Fragment slot="faq">
+    <details><summary>Can you review migrations generated by Prisma, Django, Rails or another ORM?</summary><p>Yes. Include the emitted PostgreSQL SQL and your runner’s transaction settings alongside the migration definition.</p></details>
+    <details><summary>Do you need access to our GitHub repository?</summary><p>No. A redacted patch and the relevant schema usually suffice. Describe the change in the enquiry so we can agree how to share it.</p></details>
+    <details><summary>Can you work from a patch or SQL files?</summary><p>Yes. Identify the revision, execution order, current schema and application versions active during deployment.</p></details>
+    <details><summary>Can you identify locking risks before deployment?</summary><p>Often. The SQL and version establish likely lock modes. Table size, concurrent sessions and transaction boundaries influence how long other work may wait.</p></details>
+    <details><summary>Does the review guarantee zero downtime?</summary><p>No. A review identifies failure modes, rehearsal checks and recovery options. Production load and deployment conditions still affect the result.</p></details>
+    <details><summary>Can you review RDS or Aurora PostgreSQL migrations?</summary><p>Yes. Supply engine version, writer and replica topology, and any permission or extension restrictions that affect the change.</p></details>
+    <details><summary>Can you review SQL Server changes?</summary><p>This package covers PostgreSQL. Describe the change through the <a href="/sql-server-performance">SQL Server service</a> for a separate fit review.</p></details>
+    <details><summary>What happens if the change set exceeds the agreed scope?</summary><p>I identify the added work. You can select a smaller patch or agree a revised scope, quote and schedule before review continues.</p></details>
+  </Fragment>
+  <Fragment slot="related">Investigating existing latency? Start with <a href="/postgresql-query-rescue">one slow query</a> or the <a href="/postgresql-performance-investigation">broader PostgreSQL performance investigation</a>.</Fragment>
+</ReviewLayout>

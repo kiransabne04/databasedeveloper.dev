@@ -14,13 +14,15 @@ import { site } from '../config/site';
     <h2>Which review fits?</h2>
     <div class="table-wrap"><table><thead><tr><th>Your decision</th><th>Start here</th><th>What you receive</th></tr></thead><tbody>
       <tr><td>Why is latency, contention or database cost changing?</td><td><a href="/postgresql-performance-investigation">Performance investigation</a></td><td>Ranked causes, uncertainty and safe validation steps</td></tr>
+      <tr><td>Why is one identified query slow?</td><td><a href="/postgresql-query-rescue">Query Rescue</a></td><td>Annotated plan, ranked changes and validation queries</td></tr>
+      <tr><td>What could this migration block or break?</td><td><a href="/postgresql-pr-review">PR &amp; Migration Review</a></td><td>Severity-ranked findings and a deployment checklist</td></tr>
       <tr><td>Can we move to a target PostgreSQL version safely?</td><td><a href="/postgresql-upgrade-readiness">Upgrade readiness</a></td><td>Blockers, baseline, go/no-go and rollback criteria</td></tr>
       <tr><td>Did a specific agreed change meet its target?</td><td>Validation sprint after qualification</td><td>Before/after measures against acceptance criteria</td></tr>
     </tbody></table></div>
-    <h2>How the quote is set</h2><p>I scope one cluster and one dominant workload or upgrade path first. The quote states evidence required, deliverables, exclusions, review time and the delivery window. Additional clusters, unrelated workloads or implementation need a separate scope. Advisory is available for existing clients or qualified buyers after an assessment.</p>
-    <ol><li>Send the symptom or upgrade decision through <a href="/contact">the inquiry form</a>.</li><li>I review fit, evidence and timing, then send a written scope and fixed fee.</li><li>After acceptance, your team shares reviewed evidence and I deliver the report and review call.</li></ol>
+    <h2>How the quote is set</h2><p>For a cluster assessment I scope one dominant workload or upgrade path. For a focused review I scope one query path or change set. The quote states evidence required, deliverables, exclusions, review time and the delivery window. Additional clusters, unrelated workloads or implementation need a separate scope. Advisory is available for existing clients or qualified buyers after an assessment.</p>
+    <ol><li>Send the symptom or upgrade decision through <a href="/contact">the inquiry form</a>.</li><li>I review fit, evidence and timing, then send a written scope and fixed fee.</li><li>After acceptance, your team shares reviewed evidence and I deliver the report and the follow-up agreed for your offer.</li></ol>
     <h2>What your team owns</h2><p>Your team reviews and runs evidence collection, approves access and data handling, and executes production changes. WalStack does not include emergency response, 24×7 support or unlimited DBA staffing. A report may conclude that the evidence does not support a clear change; it will name the uncertainty and next test.</p>
-    <h2>Legacy inquiries</h2><p>If you came here for a single-query review or hourly help, <a href="/contact?offer=other&amp;from=/pricing">describe the decision you need to make</a>. I will say whether a bounded assessment fits or suggest another route.</p>
+    <h2>Legacy inquiries</h2><p>If you came here for a hourly help, <a href="/contact?offer=other&amp;from=/pricing">describe the decision you need to make</a>. I will say whether a bounded assessment fits or suggest another route.</p>
     <p><a href="/sample-report">See a synthetic performance report</a> or <a href="/sample-upgrade-readiness-report">synthetic upgrade-readiness report</a> before asking for a quote.</p>
   </div></section>
 </BaseLayout>

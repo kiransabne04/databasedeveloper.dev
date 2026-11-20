@@ -1,0 +1,92 @@
+---
+import ReviewLayout from '../layouts/ReviewLayout.astro';
+import { site } from '../config/site';
+
+const coverage = [
+  ['Execution-plan analysis', 'Compare estimated and actual rows at each node, accounting for loops. Follow scan methods, join order and join strategy to the first material divergence. Sort methods, hash batches, buffer activity and planned versus launched workers can explain where the work grew.'],
+  ['Query and index analysis', 'Trace predicates back to the SQL and check selectivity, statistics and cardinality estimates. Compare existing index coverage and composite key order with partial or expression indexes where relevant. Weigh potential overlap and write costs before proposing another index.'],
+  ['Workload and environment', 'Relate the plan to your PostgreSQL version, data distribution, table sizes, query frequency and concurrency. Relevant settings, ORM-generated SQL, wait snapshots and statement statistics help explain differences between environments.'],
+  ['Remediation and validation', 'Rank candidate changes by evidence, cost and risk. For each justified SQL, index or configuration change, identify a representative test, validation SQL, trade-offs and a rollback decision.'],
+];
+---
+<ReviewLayout service="query-rescue"
+  title="PostgreSQL Query Optimization & Diagnosis | WalStack"
+  description="Slow PostgreSQL query? Get an expert review of execution plans, indexes and query performance, with prioritized fixes and validation steps."
+  eyebrow="PostgreSQL performance investigation" heading="PostgreSQL Query Performance Diagnosis"
+  headline="Find out why a PostgreSQL query is slow—and what to change safely."
+  intro="Slow queries, unexpected execution plans and indexing decisions can be difficult to diagnose from application metrics alone. Get an independent, evidence-based investigation of one critical PostgreSQL query or a tightly related query path."
+  trust="Fixed-scope investigation · Written findings · No production access required for an initial review"
+  jumpLabel="See What's Included" jumpId="deliverables"
+  scope={['One query or tightly related query path in one PostgreSQL environment.', 'One written investigation and one clarification round.']}
+  exclusions="Unlimited SQL rewrites, production deployment, continuous monitoring, major architecture redesign, emergency on-call support and full-database audits."
+  finalHeading="Have a PostgreSQL query that's slowing down your application?"
+  finalCopy="Share the symptoms and available evidence. We'll confirm whether a focused investigation is appropriate before agreeing on scope.">
+
+  <section><div class="container review-row">
+    <h2>When a query review helps</h2>
+    <div>
+      <ul>
+        <li>Latency climbs as a table grows, or the same SQL runs quickly locally and slowly in production.</li>
+        <li>PostgreSQL chooses an unexpected sequential scan, or a new index makes little difference.</li>
+        <li>A join returns many more rows than the planner estimated, or a new join strategy coincides with a regression.</li>
+        <li>A sort, hash join or aggregate spills to disk under representative load.</li>
+        <li>The request is slow while the query waits on a lock or another transaction.</li>
+      </ul>
+      <p>A sequential scan can be the cheapest way to read a large share of a table. The review tests which explanation fits. If several workloads share a bottleneck, a <a href="/postgresql-performance-investigation">cluster-level performance investigation</a> may fit better.</p>
+    </div>
+  </div></section>
+
+  <section id="coverage"><div class="container review-row">
+    <h2>What gets investigated</h2>
+    <div class="grid two">{coverage.map(([heading, body]) => <div class="card"><h3>{heading}</h3><p>{body}</p></div>)}</div>
+  </div></section>
+
+  <section id="deliverables"><div class="container review-row">
+    <h2>What you receive</h2>
+    <div>
+      <ol>
+        <li>A written assessment of the likely root cause and the evidence supporting it.</li>
+        <li>An annotated reading of the relevant execution-plan nodes.</li>
+        <li>Recommended SQL or index changes where the evidence justifies them.</li>
+        <li>A remediation plan ordered by priority.</li>
+        <li>Validation queries and a before/after comparison using representative parameters and load.</li>
+        <li>Explicit assumptions, remaining uncertainties and deployment risks.</li>
+      </ol>
+      <p>Your team reviews the recommendations and owns production changes.</p>
+    </div>
+  </div></section>
+
+  <section><div class="container review-row">
+    <h2>Evidence to prepare</h2>
+    <div>
+      <ul class="checklist">
+        <li>PostgreSQL version, hosting environment and approximate table sizes.</li>
+        <li>The SQL with sensitive values removed, plus relevant table and index definitions.</li>
+        <li>An existing plan, ideally <code>EXPLAIN (ANALYZE, BUFFERS, FORMAT JSON)</code> when safe to collect.</li>
+        <li>Observed and expected latency, frequency, concurrency and what changed.</li>
+      </ul>
+      <p class="notice"><strong>EXPLAIN ANALYZE executes the query.</strong> Do not run write statements or expensive production queries solely to collect evidence without understanding their effects.</p>
+      <p>Ordinary <code>EXPLAIN</code> or existing monitoring evidence is enough to start. Remove literals and identifying details from plans as well as SQL. Describe what you have in the enquiry and agree how to share it afterwards.</p>
+    </div>
+  </div></section>
+
+  <section slot="evidence"><div class="container review-row">
+    <h2>Public PostgreSQL projects by Kiran Sabne</h2>
+    <div class="grid two">
+      <div class="card"><h3>PlanReader</h3><p>Inspect text or JSON execution plans in your browser. Its node graph can flag row-estimate errors and spills. A captured plan alone cannot describe competing sessions during the slow window.</p><p><a href={site.planReaderPostgresUrl} data-track="planreader_click">Analyze an execution plan with PlanReader</a></p></div>
+      <div class="card"><h3><code>pg_stat_index_queries</code></h3><p>This experimental open-source project attributes index use to queries. The native extension distinguishes planned scans from executed scans. Its SQL edition infers dependencies from available plans, so coverage depends on what was captured.</p><p><a href="https://github.com/kiransabne04/pg_stat_index_queries">Read the extension’s methods and limits</a></p></div>
+    </div>
+  </div></section>
+
+  <Fragment slot="faq">
+    <details><summary>Can you diagnose a slow query without production access?</summary><p>Often, yes. A sanitized query, schema and representative plan can support a finding. I identify gaps if the symptom depends on conditions those artifacts cannot show.</p></details>
+    <details><summary>What execution-plan information should I share?</summary><p>Include the full node tree, estimates and parameter types. Existing actual rows, loops, timings and buffer counts help. A fast and slow plan for comparable inputs can reveal where the paths diverge.</p></details>
+    <details><summary>Does adding an index always improve performance?</summary><p>No. Selectivity, index order and data distribution matter. Another index also consumes storage and can make writes more expensive.</p></details>
+    <details><summary>Can you review ORM-generated PostgreSQL queries?</summary><p>Yes. Share the generated SQL, parameter types and expected result. Include whether a prepared statement is reused across substantially different parameter values.</p></details>
+    <details><summary>Can you investigate locking or concurrency problems?</summary><p>For this query path, yes. A wait snapshot from the affected window can identify a blocker that the plan omits. A cluster-wide blocking chain may need a separate investigation.</p></details>
+    <details><summary>Will you implement the fixes?</summary><p>The review provides recommendations and tests. Your team owns rollout. Implementation help requires a separate scope.</p></details>
+    <details><summary>What if the available evidence is insufficient?</summary><p>I explain which conclusions the evidence supports, what remains uncertain and the smallest useful next observation. We agree on any further work first.</p></details>
+    <details><summary>Can you review RDS or Aurora PostgreSQL workloads?</summary><p>Yes. Include the engine version, instance role and relevant database metrics for the same time window. Your team can export the evidence using its existing permissions.</p></details>
+  </Fragment>
+  <Fragment slot="related">Preparing a SQL change? See the <a href="/postgresql-pr-review">PostgreSQL migration review</a>. For a collection walkthrough, read <a href="/insights/how-to-profile-slow-postgresql-queries">how to profile slow PostgreSQL queries</a>.</Fragment>
+</ReviewLayout>

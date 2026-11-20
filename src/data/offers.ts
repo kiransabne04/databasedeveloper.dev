@@ -1,3 +1,4 @@
+import type { ReviewKey } from './reviews';
 import { site } from '../config/site';
 
 /**
@@ -92,7 +93,7 @@ export const offers: Record<OfferKey, Offer> = {
 };
 
 /** Contact link that tells the form which guide and offer the reader came from. */
-export function contactHref(offer: OfferKey, fromPath: string): string {
+export function contactHref(offer: OfferKey | ReviewKey, fromPath: string): string {
   const params = new URLSearchParams({ offer, from: fromPath });
   return `/contact?${params.toString()}`;
 }
