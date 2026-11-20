@@ -58,7 +58,7 @@ const faqSchema = faq?.length ? {
       <h1 class="article-title">{title}</h1>
       <p class="lede">{description}</p>
       <p class="small muted">By <a href="/about">{site.personName}</a> · Published <time datetime={published}>{published}</time> · Updated <time datetime={updated}>{updated}</time></p>
-      {offerLine && <p class="article-service small">Dealing with this in production? I do this as fixed-scope paid work: <a data-track="article_header_offer_click" href={details.href}>{details.name}</a>, {details.price.charAt(0).toLowerCase() + details.price.slice(1)}.</p>}
+      {offerLine && <p class="article-service small">Dealing with this in production? I do this as fixed-scope paid work: <a data-track="article_offer_click" href={details.href}>{details.name}</a>, {details.price.charAt(0).toLowerCase() + details.price.slice(1)}.</p>}
       {original && <p class="small muted">Technically reviewed and corrected on <time datetime={updated}>{updated}</time>, with added <a href="#production-notes">production notes</a>.</p>}
     </header>
     <section><div class="container prose article-body"><slot /></div></section>

@@ -5,7 +5,7 @@ import CTA from '../components/CTA.astro';
 import { site } from '../config/site';
 ---
 <BaseLayout title="SQL Server Performance Review — WalStack" description="SQL Server performance review using Query Store, wait statistics and blocking DMVs: plan regressions, parameter sensitivity, blocking and ORM-generated SQL.">
-  <PageHero eyebrow="Secondary capability" title="SQL Server Performance Review" description="Evidence-led review of Query Store, plan changes, blocking, parameter sensitivity, indexing and application-generated SQL." />
+  <PageHero eyebrow="Secondary capability" title="SQL Server Performance Review" description="Evidence-led review of Query Store, plan changes, blocking, parameter sensitivity, indexing and application-generated SQL." primaryLabel="Request a SQL Server Review" primaryHref="/contact?offer=sqlserver&from=/sql-server-performance" />
   <section><div class="container grid three">
     <div class="card"><h3>Query Store</h3><p>Identify dominant statements, plan changes and regressions using historical workload evidence.</p></div>
     <div class="card"><h3>Blocking</h3><p>Review blocking chains, transaction scope and concurrency behavior before treating waits as isolated events.</p></div>
@@ -14,6 +14,7 @@ import { site } from '../config/site';
 
   <section><div class="container prose">
     <h2>Start with Query Store</h2>
+    <p>If you already know the one statement behind the slowdown, <a href="/query-rescue">Query Rescue</a> covers its execution context and validation plan.</p>
     <p>Query Store keeps per-plan runtime statistics inside the database, so it answers “what changed?” after the event. It is on by default for new databases in SQL Server 2022 and in Azure SQL Database; on older versions, check <code>sys.database_query_store_options</code> first. This ranks queries by total duration over the last seven days, which is usually more useful than the slowest single execution:</p>
 <pre><code>WITH totals AS (
   SELECT p.query_id,

@@ -1,0 +1,15 @@
+---
+import { focusedKeys, offers, contactHref } from '../data/offers';
+---
+<div class="grid two">
+  {focusedKeys.map(key => {
+    const offer = offers[key];
+    return <div class="card">
+      <h3><a href={offer.href}>{offer.name}</a></h3>
+      {key === 'query-rescue'
+        ? <p>One query slows an endpoint or report. Describe the timing and available plan. Get a written diagnosis, ranked options and a way to measure the change.</p>
+        : <p>A release changes SQL, indexes or schema. Describe the patch and rollout order. Get severity-ranked findings and checks to run before deployment.</p>}
+      <p class="topic-nav"><a href={offer.href}>See {offer.name} scope</a> · <a data-track="service_cta_click" href={contactHref(key, Astro.url.pathname)}>{offer.askLabel}</a></p>
+    </div>;
+  })}
+</div>

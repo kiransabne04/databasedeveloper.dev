@@ -71,7 +71,7 @@ WHERE e.extversion <> a.default_version;
 ALTER EXTENSION pg_stat_statements UPDATE;`}</code></pre>
   <p>Read each extension's release notes first. PostGIS, pgvector and similar extensions can change behavior or need an index rebuild between versions.</p>
 
-  <p>If the regression is confined to one statement, a <a href="/postgresql-query-rescue">review of its before-and-after plans</a> can identify the first material change in the execution path.</p>
+  <p>If the regression is confined to one statement, a <a href="/query-rescue">review of its before-and-after plans</a> can identify the first material change in the execution path.</p>
   <ArticleOffer offer="upgrade" title="Upgrade window coming up?" text="A readiness review captures the baseline, rehearses the upgrade on a copy and gives you the queries to compare in the first hour after cutover." />
 
   <h2>A checklist that prevents the morning-after regression</h2>

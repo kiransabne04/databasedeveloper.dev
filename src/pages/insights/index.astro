@@ -33,14 +33,14 @@ const groups = [
     intro: 'Version deadlines on RDS, Aurora and community PostgreSQL, and how to plan an upgrade that does not regress performance.',
     related: { label: 'PostgreSQL upgrade readiness', href: '/postgresql-upgrade-readiness' },
     items: [
-      { href: '/postgresql-14-eol', kicker: 'End of life · Updated', title: 'PostgreSQL 14 end of life: what changes on 12 November', text: 'What stops, RDS, Aurora and Azure dates, a tested inventory script, and choosing between 17 and 18.' },
+      { href: '/postgresql-14-eol', kicker: 'End of life · Updated', title: 'PostgreSQL 14 end of life: what changed on 12 November', text: 'What stopped, RDS, Aurora and Azure dates, a tested inventory script, and choosing between 17 and 18.' },
       { href: '/postgresql-14-upgrade-checklist', kicker: 'Checklist · New', title: 'PostgreSQL 14 upgrade checklist', text: 'Inventory, blockers, baseline, rehearsal, cutover and validation for RDS, Aurora and self-managed PG14.' },
-      { href: '/insights/rds-aurora-postgresql-14-extended-support-cost', kicker: 'RDS · Aurora · New', title: 'PostgreSQL 14 Extended Support: what it will cost', text: 'Billing from 1 March 2027 per vCPU-hour on every primary, standby and replica. How to list and price yours.' },
+      { href: '/insights/rds-aurora-postgresql-14-extended-support-cost', kicker: 'RDS · Aurora · Updated', title: 'PostgreSQL 14 Extended Support: what it will cost', text: 'Billing from 1 March 2027, with separate vCPU-hour and ACU-hour treatment. How to list and estimate your exposure.' },
       { href: '/insights/pg-upgrade-check-failures', kicker: 'Lab-tested · New', title: 'pg_upgrade --check failures and fixes', text: 'Real PG14 to PG18 output: checksum mismatch, prepared transactions and reg* columns, and what the check misses.' },
       { href: '/insights/postgresql-upgrade-logical-replication-slots', kicker: 'Lab-tested · New', title: 'pg_upgrade from 14 drops logical replication slots', text: 'The check passed with a CDC slot present; after the upgrade it was gone. RDS and Aurora block instead.' },
       { href: '/insights/rds-aurora-postgresql-14-to-18-blue-green', kicker: 'RDS · Aurora', title: 'RDS and Aurora 14 to 18: downtime and Blue/Green', text: 'In-place versus Blue/Green, and the logical replication limits that invalidate a green environment.' },
       { href: '/insights/postgresql-slow-after-major-upgrade', kicker: 'Lab-tested', title: 'Slow after a major upgrade? Check statistics first', text: 'A PG14 to PG17 pg_upgrade lost optimizer statistics and a join went from 222 ms to 904 ms.' },
-      { href: '/insights/postgresql-14-minor-version-deadlines', kicker: 'RDS · Oct 2026', title: 'RDS PostgreSQL 14.18/14.19 lose standard support on 31 October', text: 'Minor-version deadlines that arrive before the PG14 major-version dates, and how to check your instances.' }
+      { href: '/insights/postgresql-14-minor-version-deadlines', kicker: 'RDS · Aurora · Updated', title: 'Some PostgreSQL 14 minor-version deadlines have passed', text: 'RDS 14.18/14.19 ended standard support in October. Aurora 14.17/14.18 have separate November and December dates.' }
     ]
   },
   {

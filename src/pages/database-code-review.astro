@@ -1,0 +1,16 @@
+---
+import FocusedOfferLayout from '../layouts/FocusedOfferLayout.astro';
+---
+<FocusedOfferLayout service="database-code-review" title="Database Code Review for PostgreSQL & SQL Server | WalStack"
+  description="Independent review of one database pull request or migration for PostgreSQL or SQL Server. Get severity-ranked findings, rollout risks and validation checks."
+  headline="Find database performance and migration risks before they reach production."
+  fit="For engineering leads and agencies shipping a database-heavy feature. Choose one pull request or migration whose correctness, locking behavior or rollout sequence needs a second reading."
+  excludes="Application security audits, infrastructure reviews, unlimited PR reviews and production implementation require a different scope. Static review cannot establish how every change will behave under load.">
+  <Fragment slot="inputs"><p>Use a sanitized change summary in the enquiry. Include engine/version, approximate affected rows, deployment order and which old application versions may still be running.</p>
+    <p>After agreement, share the bounded patch or generated SQL through the agreed channel. Repository access and production credentials are unnecessary for initial scoping.</p></Fragment>
+  <p slot="result">Each finding points to the relevant statement, explains the correctness or performance risk, and identifies a test or evidence gap before release.</p>
+  <h2>Questions the patch should answer</h2>
+  <h3>Which statements and plans change?</h3><p>I review queries, stored procedures, functions and database-related ORM changes alongside the data-access patterns they serve. An index addition can speed a read and add write cost. An index removal needs evidence over a representative workload window.</p>
+  <h3>Who waits during rollout?</h3><p>For schema migrations and backfills I trace transaction boundaries, lock duration, retry behavior and rollback options. PostgreSQL concurrent index builds and SQL Server index operations have different restrictions. I check the engine version and, for SQL Server, edition before recommending a strategy. See the <a href="/insights/postgresql-create-index-concurrently-stuck">concurrent index build guide</a> for a PostgreSQL example.</p>
+  <h3>When does a review need production evidence?</h3><p>If the decision depends on actual wait time, parameter distribution or competing writers, the report names the missing observation. For a wider incident, request a separate <a href="/postgresql-performance-investigation">PostgreSQL investigation</a> or <a href="/sql-server-performance">SQL Server performance review</a>.</p>
+</FocusedOfferLayout>

@@ -11,12 +11,12 @@ const plausibleEnabled = Boolean(import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN);
   <section><div class="container prose">
     <p>If you contact WalStack, we receive the contact details and technical context you choose to send. We use that information to respond to your inquiry and discuss a possible engagement.</p>
     {formEndpointEnabled ? <p>The contact form sends your inquiry through Formspree, a form-handling service, which forwards it by email.</p> : <p>The contact form opens an email draft in your email app. Your message is sent only when you send that draft.</p>}
-    <p>If you arrive through a link with campaign tags, this tab keeps those tags and the first page you visited until the tab closes. They are included with an inquiry you choose to send so we can understand which link led you here.</p>
+    <p>If you arrive through a link with campaign tags, this tab keeps the first campaign and latest tagged campaign, plus their landing paths, until the tab closes. We also retain the internal page that led to the inquiry form. These optional fields are included only with an inquiry you choose to send so we can understand which shared link and page led you here.</p>
     <p>Do not submit passwords, credentials, database dumps or sensitive personal/customer data through the public website.</p>
     {gaEnabled && <>
       <h2>Analytics cookies</h2>
       <p>This site uses Google Analytics 4 to understand which pages are read and which lead to an inquiry. It loads only after you choose <strong>Accept analytics</strong> in the cookie banner. If you decline or ignore the banner, no analytics script runs and no analytics cookies are set.</p>
-      <p>When accepted, Google Analytics sets first-party cookies named <code>_ga</code> and <code>_ga_&lt;container-id&gt;</code> to distinguish visits. Google signals and ad personalization are turned off, and the data is not used for advertising. Google processes the data under its own <a href="https://policies.google.com/privacy">privacy policy</a>.</p>
+      <p>When accepted, Google Analytics sets first-party cookies named <code>_ga</code> and <code>_ga_&lt;container-id&gt;</code> to distinguish visits. The site removes query strings from the page URL and referrer it sends and passes recognized campaign tags separately. Google signals and ad personalization are turned off, and the data is not used for advertising. Google processes the data under its own <a href="https://policies.google.com/privacy">privacy policy</a>.</p>
       <p>You can change your choice at any time with <strong>Cookie settings</strong> in the site footer. Withdrawing consent removes the analytics cookies this site set.</p>
     </>}
     {plausibleEnabled && <p>Site analytics are also measured with Plausible, which does not use cookies.</p>}

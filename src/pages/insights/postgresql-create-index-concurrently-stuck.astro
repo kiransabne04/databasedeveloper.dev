@@ -102,7 +102,7 @@ ORDER BY idx.relname;`}</code></pre>
   </ol>
   <p>For a full evidence-to-decision example, see the <a href="/sample-report">synthetic sample report</a>. If the index is meant to address slow queries, the <a href="/postgresql-performance-investigation">performance investigation scope</a> shows what a bounded diagnosis includes. You can inspect a captured execution plan with <a href={site.planReaderPostgresUrl} data-track="planreader_click">PlanReader</a>; a plan by itself does not show why an index build is waiting.</p>
 
-  <p>For a planned index build, a <a href="/postgresql-pr-review">PostgreSQL migration review</a> can examine the transaction wrapper, retry path and deployment sequence before release.</p>
+  <p>For a planned index build, a <a href="/database-code-review">PostgreSQL migration review</a> can examine the transaction wrapper, retry path and deployment sequence before release.</p>
   <h2 id="sources">Sources and related guides</h2>
   <ul>
     <li><a href="https://www.postgresql.org/docs/18/sql-createindex.html#SQL-CREATEINDEX-CONCURRENTLY">PostgreSQL 18: building indexes concurrently</a> — scans, transaction waits, invalid indexes and transaction-block restrictions.</li>

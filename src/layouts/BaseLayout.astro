@@ -1,11 +1,12 @@
 ---
 import '../styles/global.css';
 import { contactHref } from '../data/offers';
-import { reviews, type ReviewKey } from '../data/reviews';
+import type { OfferKey } from '../data/offers';
 import { site, nav } from '../config/site';
+import { reviews } from '../data/reviews';
 
 interface Props {
-  reviewKey?: ReviewKey;
+  serviceId?: OfferKey;
   title?: string;
   description?: string;
   canonical?: string;
@@ -27,12 +28,12 @@ const {
   updated,
   noindex = false,
   schema,
-  reviewKey
+  serviceId
 } = Astro.props;
 
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site.url).toString();
-const navContact = reviewKey ? contactHref(reviewKey, reviews[reviewKey].href) : '/contact';
-const navContactLabel = reviewKey ? 'Request a Review' : 'Request an Investigation';
+const navContact = serviceId ? contactHref(serviceId, Astro.url.pathname) : '/contact';
+const navContactLabel = serviceId ? 'Request a Review' : 'Request an Investigation';
 const gaEnabled = Boolean(site.gaId);
 const isNotFound = Astro.url.pathname.replace(/\/$/, '') === '/404';
 const schemas = [
@@ -54,6 +55,8 @@ const schemas = [
     serviceType: [
       'PostgreSQL performance investigation',
       'PostgreSQL upgrade readiness',
+      'Query Rescue for PostgreSQL and SQL Server',
+      'Database Code Review for PostgreSQL and SQL Server',
       'SQL Server performance review',
       'pgvector performance review',
       'Snowflake query performance review'
@@ -91,7 +94,7 @@ const schemas = [
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     {schemas.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item)} />)}
   </head>
-  <body data-not-found={isNotFound ? 'true' : undefined}>
+  <body data-not-found={isNotFound ? 'true' : undefined} data-service-id={serviceId} data-ga-id={site.gaId} data-analytics-hosts={JSON.stringify(site.analyticsHosts)} data-plausible-domain={import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN}>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="container nav-shell">
@@ -102,14 +105,14 @@ const schemas = [
         <nav class="desktop-nav" aria-label="Primary navigation">
           {nav.map((item) => <a href={item.href}>{item.label}</a>)}
           <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-          <a class="nav-cta" data-track={reviewKey ? 'service_cta_click' : 'primary_cta_click'} href={navContact}>{navContactLabel}</a>
+          <a class="nav-cta" data-track={serviceId ? 'service_cta_click' : 'primary_cta_click'} href={navContact}>{navContactLabel}</a>
         </nav>
         <details class="mobile-menu">
           <summary>Menu</summary>
           <div class="mobile-menu-panel">
             {nav.map((item) => <a href={item.href}>{item.label}</a>)}
             <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-            <a href={navContact} data-track={reviewKey ? 'service_cta_click' : 'primary_cta_click'}>{navContactLabel}</a>
+            <a href={navContact} data-track={serviceId ? 'service_cta_click' : 'primary_cta_click'}>{navContactLabel}</a>
           </div>
         </details>
       </div>
@@ -169,7 +172,13 @@ const schemas = [
       </div>
     )}
 
-    <script is:inline define:vars={{ reviewKey: reviewKey ?? null, gaId: site.gaId, analyticsHosts: site.analyticsHosts, plausibleDomain: import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN }}>
+    <script>
+      // @ts-nocheck
+      import { resolveCampaignContext } from '../lib/campaign-context.mjs';
+      const serviceId = document.body.dataset.serviceId || null;
+      const gaId = document.body.dataset.gaId || '';
+      const analyticsHosts = JSON.parse(document.body.dataset.analyticsHosts || '[]');
+      const plausibleDomain = document.body.dataset.plausibleDomain || '';
       if (plausibleDomain) {
         window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments); };
         const s = document.createElement('script');
@@ -178,6 +187,11 @@ const schemas = [
         s.src = 'https://plausible.io/js/script.js';
         document.head.appendChild(s);
       }
+
+      // Keep first touch and the latest tagged visit separate within this tab.
+      let storage;
+      try { storage = window.sessionStorage; } catch { storage = null; }
+      const { campaignContext, cleanPage, cleanReferrer } = resolveCampaignContext(location, document.referrer, storage);
 
       // Google Analytics loads only after the visitor accepts analytics cookies.
       const consentKey = 'dd-analytics-consent';
@@ -192,7 +206,16 @@ const schemas = [
           ad_personalization: 'denied'
         });
         gtag('js', new Date());
-        gtag('config', gaId, { allow_google_signals: false, allow_ad_personalization_signals: false });
+        gtag('config', gaId, {
+          allow_google_signals: false,
+          allow_ad_personalization_signals: false,
+          page_location: cleanPage,
+          page_referrer: cleanReferrer(document.referrer),
+          campaign_source: campaignContext.utm_source || undefined,
+          campaign_medium: campaignContext.utm_medium || undefined,
+          campaign_name: campaignContext.utm_campaign || undefined,
+          campaign_content: campaignContext.utm_content || undefined
+        });
         const s = document.createElement('script');
         s.async = true;
         s.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
@@ -218,7 +241,7 @@ const schemas = [
           banner.hidden = true;
           if (granted) {
             loadGoogleAnalytics();
-            if (reviewKey) window.gtag('event', 'service_page_view', { source_page: location.pathname, ...campaignContext, service_id: reviewKey });
+            if (serviceId) window.gtag('event', 'service_page_view', { source_page: location.pathname, service_id: serviceId, ...campaignContext });
           }
           else clearAnalyticsCookies();
         });
@@ -234,18 +257,6 @@ const schemas = [
         });
       }
 
-      // Keep campaign context within this tab when a visitor follows an internal link.
-      const campaignKey = 'dd-campaign-context';
-      const params = new URLSearchParams(location.search);
-      const incoming = Object.fromEntries(['utm_source', 'utm_medium', 'utm_campaign'].map((key) => [key, (params.get(key) || '').trim().slice(0, 120)]));
-      let campaignContext = {};
-      try {
-        campaignContext = JSON.parse(sessionStorage.getItem(campaignKey) || '{}');
-        if (Object.values(incoming).some(Boolean)) {
-          campaignContext = { ...incoming, landing_page: location.pathname };
-          sessionStorage.setItem(campaignKey, JSON.stringify(campaignContext));
-        }
-      } catch { campaignContext = Object.values(incoming).some(Boolean) ? { ...incoming, landing_page: location.pathname } : {}; }
       function track(name, extra = {}) {
         const props = { source_page: location.pathname, ...campaignContext, ...extra };
         if (window.plausible) window.plausible(name, { props });
@@ -255,14 +266,14 @@ const schemas = [
       document.addEventListener('click', (event) => {
         const element = event.target instanceof Element ? event.target : null;
         const target = element?.closest('[data-track]');
-        if (target?.dataset.track) track(target.dataset.track, reviewKey ? { service_id: reviewKey } : {});
+        if (target?.dataset.track) track(target.dataset.track, serviceId ? { service_id: serviceId } : {});
         if (element?.closest('a[href^="mailto:"]')) track('email_click');
       });
       window.addEventListener('dd:track', (event) => {
         if (typeof event.detail === 'string') track(event.detail);
         else if (event.detail && typeof event.detail.name === 'string') track(event.detail.name, event.detail.props || {});
       });
-      if (reviewKey) track('service_page_view', { service_id: reviewKey });
+      if (serviceId) track('service_page_view', { service_id: serviceId });
       const path = location.pathname.replace(/\/$/, '') || '/';
       if (path === '/postgresql-performance-investigation') track('investigation_page_view');
       if (path === '/postgresql-upgrade-readiness') track('upgrade_page_view');

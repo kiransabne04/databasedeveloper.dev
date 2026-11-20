@@ -39,6 +39,7 @@ const faq = [
   faq={faq}
   ctaTitle="Too many indexes, write latency creeping up, and no one sure what is safe to drop?"
   ctaDescription="An investigation correlates index usage across the primary and every replica with the statements that need each index, then gives you a ranked drop list with rollback statements and the numbers to check afterwards."
+  offer="investigation"
 >
   <p class="notice"><strong>Short answer:</strong> an index is a drop candidate when <code>pg_stat_user_indexes.idx_scan</code> is 0 <em>on every server that runs queries</em>, the counters cover a full business cycle, and the index does not enforce a constraint. The primary alone is not enough evidence: in the test below, the index that served every reporting query on a replica showed zero scans on the primary.</p>
 
@@ -159,6 +160,7 @@ HAVING count(*) > 1;`}</code></pre>
   <p>Keep the one that backs a constraint or is unique, if either does: the query groups a unique and a non-unique index on the same columns together. The query only finds exact duplicates. An index on <code>(customer_id)</code> next to one on <code>(customer_id, created_at)</code> is often redundant too, but not always: the narrower index is smaller and can be cheaper to scan. Decide that from the query plans, not from the definitions.</p>
 
   <ArticleOffer offer="investigation" title="Dozens of indexes per table, several replicas, and a write path that keeps getting slower?" text="I collect index usage from every node, match it with pg_stat_statements and the plans that depend on each index, and give you a ranked drop list. Each item comes with its evidence, the rollback statement and the WAL and latency numbers to check afterwards." />
+  <p>If you have already identified one proposed index change and want its migration and rollout reviewed, see the bounded <a href="/database-code-review">Database Code Review</a> scope.</p>
 
   <h2 id="cost">What an unused index costs: HOT and WAL</h2>
   <p>Disk space is the visible cost. The bigger one is on writes. A heap-only tuple (HOT) update is possible only when the update changes no indexed column and the new row version fits on the same page. A single index on a frequently updated column, such as <code>updated_at</code>, <code>last_seen_at</code> or a status, prevents HOT for every update that changes it. Each of those updates then adds a new entry to <em>every</em> index on the table.</p>
