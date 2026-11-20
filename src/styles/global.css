@@ -83,6 +83,7 @@ button, input, textarea, select { font: inherit; }
 
 .hero { padding: 96px 0 72px; }
 .hero-grid { display:grid; grid-template-columns:minmax(0,1.45fr) minmax(280px,.55fr); gap:48px; align-items:end; }
+.hero-grid > * { min-width:0; }
 .eyebrow {
   display: inline-flex; align-items:center; gap:.5rem;
   color: var(--accent); font-size:.78rem; text-transform:uppercase; letter-spacing:.14em; font-weight:850;
@@ -274,6 +275,7 @@ textarea { min-height:145px; resize:vertical; }
   h1 { font-size:clamp(1.9rem, 8.5vw, 2.5rem); }
   section { padding:58px 0; }
   .grid.two,.grid.three,.grid.four,.form-grid,.footer-grid,.footer-links { grid-template-columns:1fr; }
+  .hero-grid .actions > * { max-width:100%; }
   .workflow { grid-template-columns:1fr; }
   .section-head { align-items:start; flex-direction:column; gap:.5rem; }
   .finding-grid { grid-template-columns:minmax(0,1fr); }

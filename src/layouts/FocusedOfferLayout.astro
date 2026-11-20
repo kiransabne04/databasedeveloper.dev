@@ -1,0 +1,46 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import PageHero from '../components/PageHero.astro';
+import { offers, contactHref, type FocusedOffer } from '../data/offers';
+import { site } from '../config/site';
+
+interface Props {
+  service: FocusedOffer;
+  title: string;
+  description: string;
+  headline: string;
+  fit: string;
+  excludes: string;
+}
+const { service, title, description, headline, fit, excludes } = Astro.props;
+const offer = offers[service];
+const ask = contactHref(service, offer.href);
+const url = site.url + offer.href;
+const schema = [{
+  '@context': 'https://schema.org', '@type': 'Service', name: offer.name,
+  serviceType: offer.name, description, url, provider: { '@id': site.url + '/#practice' }
+}, {
+  '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: site.url + '/' },
+    { '@type': 'ListItem', position: 2, name: offer.name, item: url }
+  ]
+}];
+---
+<BaseLayout {title} {description} canonical={url} {schema} serviceId={service}>
+  <PageHero eyebrow="PostgreSQL and SQL Server" title={offer.name} description={headline}
+    primaryLabel={offer.askLabel} primaryHref={ask} primaryTrack="service_cta_click"
+    secondaryLabel="See the written deliverables" secondaryHref="#deliverables" supportingText={offer.price}>
+    <p class="muted">{fit}</p>
+  </PageHero>
+  <section><div class="container grid two">
+    <div class="card"><h2>What to prepare</h2><slot name="inputs" /></div>
+    <div class="card" id="deliverables"><h2>What you receive</h2><ul>{offer.receive.map(item => <li>{item}</li>)}</ul><slot name="result" /></div>
+  </div></section>
+  <section><div class="container prose"><slot /></div></section>
+  <section><div class="container cta-panel">
+    <div><h2>Agree the scope before sharing evidence</h2><p>{offer.terms}. One written review and one clarification round. I confirm the fixed fee and delivery window before paid work begins.</p>
+    <p class="muted">{excludes}</p></div>
+    <div class="actions"><a class="button primary" data-track="service_cta_click" href={ask}>{offer.askLabel}</a></div>
+  </div></section>
+</BaseLayout>
+<style> #deliverables { scroll-margin-top: 6rem; } </style>

@@ -1,18 +1,18 @@
-// Only enter a public fee or delivery window here after business-owner approval.
+// Public fee and delivery settings remain empty until the owner approves them.
 export const reviews = {
   'query-rescue': {
-    name: 'PostgreSQL Query Rescue',
-    href: '/postgresql-query-rescue',
+    name: 'Query Rescue',
+    href: '/query-rescue',
     price: '',
     turnaround: '',
     cta: 'Request a Query Review',
   },
-  'pr-review': {
-    name: 'PostgreSQL PR & Migration Review',
-    href: '/postgresql-pr-review',
+  'database-code-review': {
+    name: 'Database Code Review',
+    href: '/database-code-review',
     price: '',
     turnaround: '',
-    cta: 'Request a Database Change Review',
+    cta: 'Request a Database Code Review',
   },
 } as const;
 

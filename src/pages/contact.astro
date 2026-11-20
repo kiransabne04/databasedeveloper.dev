@@ -14,8 +14,15 @@ const action = endpoint || `mailto:${site.email}`;
         <input type="hidden" name="utm_source" />
         <input type="hidden" name="utm_medium" />
         <input type="hidden" name="utm_campaign" />
+        <input type="hidden" name="utm_content" />
+        <input type="hidden" name="first_utm_source" />
+        <input type="hidden" name="first_utm_medium" />
+        <input type="hidden" name="first_utm_campaign" />
+        <input type="hidden" name="first_utm_content" />
         <input type="hidden" name="landing_page" />
+        <input type="hidden" name="latest_landing_page" />
         <input type="hidden" name="from_page" />
+        <input type="hidden" name="referring_page" />
         {endpoint && (
           <>
             <input type="hidden" name="_subject" value="Database investigation request" />
@@ -23,15 +30,15 @@ const action = endpoint || `mailto:${site.email}`;
           </>
         )}
         <div class="form-grid">
-          <div class="field full"><label for="offer">What are you asking about?</label><select id="offer" name="offer" required><option value="">Choose an option</option><option value="investigation">PostgreSQL Performance Investigation</option>{Object.entries(reviews).map(([key, review]) => <option value={key} data-review>{review.name}</option>)}<option value="upgrade">PostgreSQL Upgrade Readiness Review</option><option value="sprint">Remediation or migration validation sprint</option><option value="partnership">Technical partnership</option><option value="pgvector">pgvector review</option><option value="sqlserver">SQL Server review</option><option value="snowflake">Snowflake review</option><option value="other">Other or legacy inquiry</option></select></div>
+          <div class="field full"><label for="offer">What are you asking about?</label><select id="offer" name="offer" required><option value="">Choose an option</option>{Object.entries(reviews).map(([key, review]) => <option value={key} data-service>{review.name} — PostgreSQL or SQL Server</option>)}<option value="investigation">PostgreSQL Performance Investigation</option><option value="upgrade">PostgreSQL Upgrade Readiness Review</option><option value="sprint">Remediation or Migration Validation Sprint</option><option value="partnership">Technical partnership</option><option value="pgvector">pgvector review</option><option value="sqlserver">SQL Server Performance Review</option><option value="snowflake">Snowflake review</option></select></div>
           <div class="field"><label for="name">Name</label><input id="name" name="name" required autocomplete="name" /></div>
           <div class="field"><label for="email">Work email</label><input id="email" type="email" name="email" required autocomplete="email" /></div>
-          <div class="field full"><label for="problem">What is happening or what collaboration do you have in mind?</label><textarea id="problem" name="problem" required minlength="20" placeholder="The decision, business impact, and evidence or context available"></textarea></div>
+          <div class="field full"><label for="problem">What decision or problem should I review?</label><textarea id="problem" name="problem" required minlength="20" placeholder="A short, sanitized summary of the symptom or proposed change"></textarea></div>
           <details class="field full optional-fields">
             <summary>Add platform, impact or evidence (optional)</summary>
             <div class="form-grid">
               <div class="field"><label for="database">Database / platform</label><select id="database" name="database"><option value="">Select if known</option><option>PostgreSQL</option><option>AWS RDS PostgreSQL</option><option>Aurora PostgreSQL</option><option>SQL Server</option><option>pgvector</option><option>Snowflake</option><option>OLAP / analytical</option><option>Other</option></select></div>
-              <div class="field"><label for="version">Version</label><input id="version" name="version" placeholder="e.g. PostgreSQL 14.24" /></div>
+              <div class="field"><label for="version">Version</label><input id="version" name="version" placeholder="e.g. PostgreSQL 16" /></div>
               <div class="field full"><label for="evidence">Evidence available</label><input id="evidence" name="evidence" placeholder="pg_stat_statements, plans, Query Store, logs…" /></div>
               <div class="field"><label for="impact">Production impact</label><input id="impact" name="impact" placeholder="e.g. p95 latency or rising cost" /></div>
               <div class="field"><label for="timeline">Desired timeline</label><input id="timeline" name="timeline" placeholder="e.g. within 2 weeks" /></div>
@@ -64,18 +71,19 @@ const action = endpoint || `mailto:${site.email}`;
           <li>What evidence can be exported safely</li>
         </ul>
         <p class="muted">Used PlanReader? Mention the finding that prompted your request and whether it affects production. You can review and redact any plan or other evidence before sharing it separately.</p>
-        <p class="notice"><strong>Do not send credentials, production dumps or confidential customer data through this form.</strong></p>
+        <p class="notice"><strong>Keep credentials, SQL, proprietary source code, patches, production dumps and customer data out of this public form. A sanitized summary is enough to agree on fit.</strong></p>
         <p class="muted">The work is async-first. Calls fit US East mornings and EU afternoons.</p>
         <p>Email: <a id="inquiry-email" href={`mailto:${site.email}`}>{site.email}</a></p>
       </aside>
     </div>
   </section>
   <script>
+    import { successfulSubmissionEvent } from '../lib/campaign-context.mjs';
     const form = document.querySelector<HTMLFormElement>('#inquiry-form');
     if (form) {
       try {
-        const context = JSON.parse(sessionStorage.getItem('dd-campaign-context') || '{}');
-        for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'landing_page']) {
+        const context = JSON.parse(sessionStorage.getItem('walstack-campaign-context') || '{}');
+        for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'first_utm_source', 'first_utm_medium', 'first_utm_campaign', 'first_utm_content', 'landing_page', 'latest_landing_page', 'referring_page']) {
           const input = form.elements.namedItem(key);
           if (input instanceof HTMLInputElement && typeof context[key] === 'string') input.value = context[key];
         }
@@ -99,45 +107,34 @@ const action = endpoint || `mailto:${site.email}`;
       } catch { fromPage = ''; }
       const offerInput = form.querySelector<HTMLSelectElement>('#offer');
       const fromInput = form.elements.namedItem('from_page');
-      if (offerInput instanceof HTMLSelectElement && [...offerInput.options].some((option) => option.value === offer)) offerInput.value = offer;
+      const normalizedOffer = offer === 'pr-review' ? 'database-code-review' : offer;
+      if (offerInput instanceof HTMLSelectElement && [...offerInput.options].some((option) => option.value === normalizedOffer)) offerInput.value = normalizedOffer;
       if (fromInput instanceof HTMLInputElement && fromPage.startsWith('/')) fromInput.value = fromPage;
       const database = form.elements.namedItem('database');
       const platformForOffer: Record<string, string> = { pgvector: 'pgvector', sqlserver: 'SQL Server', snowflake: 'Snowflake' };
       if (database instanceof HTMLSelectElement && platformForOffer[offer]) database.value = platformForOffer[offer];
-      const reviewOption = () => {
+      const serviceOption = () => {
         const option = offerInput?.selectedOptions[0];
-        return option?.hasAttribute('data-review') ? option : undefined;
-      };
-      function trackReview(name: string, serviceId = reviewOption()?.value) {
-        if (serviceId) window.dispatchEvent(new CustomEvent('dd:track', { detail: { name, props: { service_id: serviceId } } }));
+        return option?.hasAttribute('data-service') ? option : undefined;
       }
-      const emailLink = document.querySelector<HTMLAnchorElement>('#inquiry-email');
-      function updateEmailLink() {
-        const selected = reviewOption();
-        if (emailLink) emailLink.href = 'mailto:' + form?.dataset.email + (selected ? '?subject=' + encodeURIComponent(selected.text) : '');
-      }
-      updateEmailLink();
-      emailLink?.addEventListener('click', () => trackReview('service_contact_email_click'));
       let started = false;
-      const startedReviews = new Set<string>();
       function startForm() {
         if (!started) {
-          window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_start' }));
+          const serviceId = serviceOption()?.value;
+          window.dispatchEvent(new CustomEvent('dd:track', { detail: { name: 'contact_start', props: serviceId ? { service_id: serviceId } : {} } }));
           started = true;
-        }
-        const serviceId = reviewOption()?.value;
-        if (serviceId && !startedReviews.has(serviceId)) {
-          trackReview('service_form_start', serviceId);
-          startedReviews.add(serviceId);
         }
       }
       form.addEventListener('focusin', startForm);
-      offerInput?.addEventListener('change', () => { startForm(); updateEmailLink(); });
+      offerInput?.addEventListener('change', () => {
+        const database = form.elements.namedItem('database');
+        if (database instanceof HTMLSelectElement && serviceOption()) database.value = '';
+      });
       form.addEventListener('submit', (event) => {
         event.preventDefault();
         if (!form.reportValidity()) return;
         const selectedOffer = offerInput instanceof HTMLSelectElement ? offerInput.value : '';
-        const serviceId = reviewOption()?.value;
+        const serviceId = serviceOption()?.value;
         if (form.dataset.mailtoFallback !== 'true') {
           const status = form.querySelector<HTMLElement>('#form-status');
           const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
@@ -146,11 +143,8 @@ const action = endpoint || `mailto:${site.email}`;
           if (status) status.textContent = 'Sending…';
           fetch(form.action, { method: 'POST', body: new FormData(form), headers: { Accept: 'application/json' } })
             .then((response) => {
-              if (!response.ok) throw new Error(String(response.status));
-              if (serviceId) trackReview('service_lead_submit', serviceId);
-              window.dispatchEvent(new CustomEvent('dd:track', { detail: { name: 'contact_submit', props: { offer: selectedOffer, from_page: fromPage.startsWith('/') ? fromPage : undefined } } }));
+              window.dispatchEvent(successfulSubmissionEvent(response, { offer: selectedOffer, service_id: serviceId, from_page: fromPage.startsWith('/') ? fromPage : undefined }));
               form.reset();
-              updateEmailLink();
               if (status) { status.textContent = 'Thanks. Your inquiry was sent. I will review it and respond by email if there is a fit.'; status.focus(); }
             })
             .catch((error) => {
@@ -159,14 +153,14 @@ const action = endpoint || `mailto:${site.email}`;
             .finally(() => { if (button) button.disabled = false; });
           return;
         }
-        trackReview('service_contact_email_click');
-        window.dispatchEvent(new CustomEvent('dd:track', { detail: 'contact_draft_open' }));
         const fields = new FormData(form);
         const labels: Record<string, string> = {
           name: 'Name', email: 'Email', database: 'Database / platform', version: 'Version',
           problem: 'Problem', evidence: 'Evidence available', impact: 'Production impact', timeline: 'Desired timeline',
-          utm_source: 'Source', utm_medium: 'Medium', utm_campaign: 'Campaign', landing_page: 'Landing page',
-          offer: 'Offer', from_page: 'Came from'
+          utm_source: 'Latest source', utm_medium: 'Latest medium', utm_campaign: 'Latest campaign', utm_content: 'Latest campaign content',
+          first_utm_source: 'First source', first_utm_medium: 'First medium', first_utm_campaign: 'First campaign', first_utm_content: 'First campaign content',
+          landing_page: 'First landing page', latest_landing_page: 'Latest tagged landing page', referring_page: 'Previous page',
+          offer: 'Offer', from_page: 'Service or article that opened contact'
         };
         const body = Object.entries(labels)
           .filter(([key]) => String(fields.get(key) ?? '').trim())

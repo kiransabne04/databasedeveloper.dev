@@ -1,134 +1,54 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import CapabilityGrid from '../components/CapabilityGrid.astro';
-import ProblemGrid from '../components/ProblemGrid.astro';
-import InvestigationWorkflow from '../components/InvestigationWorkflow.astro';
-import CTA from '../components/CTA.astro';
+import FocusedReviews from '../components/FocusedReviews.astro';
 import { site } from '../config/site';
 import { pg14Facts } from '../data/facts';
 ---
-<BaseLayout
-  title="PostgreSQL Performance Investigations & Upgrade Reviews | WalStack"
-  description="Independent PostgreSQL performance investigations and upgrade-readiness reviews for SaaS engineering teams on RDS, Aurora and self-managed PostgreSQL."
->
-  <div class="container hero">
-    <div class="hero-grid">
-      <div>
-        <span class="eyebrow"><span>PostgreSQL performance for <span class="keep-case">SaaS</span> teams</span></span>
-        <h1>Find the database bottleneck. Make the next change with confidence.</h1>
-        <p class="lede">
-          Independent PostgreSQL performance investigations and upgrade-readiness reviews for SaaS engineering
-          teams on RDS, Aurora and self-managed PostgreSQL.
-        </p>
-        <p class="notice hero-deadline">
-          <strong>PostgreSQL 14 stops getting fixes on {pg14Facts.communityEol}.</strong>{' '}
-          On RDS and Aurora, Extended Support charges start {pg14Facts.rdsExtendedSupportYear1Start}.{' '}
-          <a href="/postgresql-14-eol">See the dates →</a>
-        </p>
-        <div class="actions">
-          <a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/">Request an Investigation</a>
-          <a class="button ghost" data-track="sample_report_click" href="/sample-report">See a Sample Report</a>
-        </div>
-        <p class="small">Work directly with Kiran Sabne, a database and backend engineer with about 8 years of experience. <a href="/about">See my background →</a></p>
-        <p class="small muted">One cluster and its dominant workload · client-run, read-only evidence · written findings and review call</p>
+<BaseLayout title="PostgreSQL Performance Investigations & Upgrade Reviews | WalStack"
+  description="Independent PostgreSQL performance investigations for SaaS teams on RDS, Aurora and self-managed databases. Scope a workload investigation, query review or migration review.">
+  <div class="container hero hero-grid">
+    <div>
+      <span class="eyebrow">Independent PostgreSQL consulting</span>
+      <h1>Find what’s slowing down production PostgreSQL.</h1>
+      <p class="lede">For SaaS teams facing latency after a release, blocking or rising database load on RDS, Aurora or self-managed PostgreSQL. I trace the symptom to workload evidence and give your team a ranked change plan.</p>
+      <div class="actions">
+        <a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/">Request an Investigation</a>
+        <a class="button ghost" data-track="sample_report_click" href="/sample-report">See Sample Report</a>
       </div>
-      <aside class="hero-proof">
-        <span class="eyebrow">The deliverable</span>
-        <h2>A decision your team can use</h2>
-        <ul class="signal-list">
-          <li>Ranked findings linked to workload evidence</li>
-          <li>Trade-offs across reads, writes and concurrency</li>
-          <li>Implementation risk and rollback considerations</li>
-          <li>Before-and-after checks for meaningful changes</li>
-        </ul>
-        <p class="small muted">Want help making the changes? A <a href="/pricing">remediation sprint</a> pairs with your team to implement and validate them.</p>
-      </aside>
+      <p class="small muted">Work directly with <a href="/about">Kiran Sabne</a>. Fixed quote after fit review.</p>
     </div>
+    <aside class="hero-proof"><h2>What changed in production?</h2>
+      <ul class="signal-list">
+        <li><a href="/problems/postgresql-plan-regression">A query plan changed after a release</a></li>
+        <li><a href="/query-rescue">One expensive statement dominates latency</a></li>
+        <li><a href="/postgresql-concurrency-and-locking-a-comprehensive-guide">Sessions block or deadlock under load</a></li>
+        <li><a href="/database-code-review">A schema migration could interrupt writes</a></li>
+        <li><a href="/postgresql-upgrade-readiness">A major upgrade needs a regression baseline</a></li>
+      </ul>
+    </aside>
   </div>
-
-  <section>
-    <div class="container">
-      <div class="section-head">
-        <div><span class="eyebrow">Symptoms</span><h2>Start with what production is doing.</h2></div>
-        <p>Performance is rarely one isolated SQL statement. The useful question is which evidence explains the workload behavior and what change is safe to test first.</p>
-      </div>
-      <ProblemGrid />
+  <section><div class="container">
+    <div class="section-head"><div><span class="eyebrow">PostgreSQL and SQL Server</span><h2>Start with a focused review</h2></div>
+    <p>Choose the smallest paid review that answers the decision in front of your team.</p></div>
+    <FocusedReviews />
+  </div></section>
+  <section><div class="container prose">
+    <h2>When the decision spans a workload</h2>
+    <p><a href="/postgresql-performance-investigation">PostgreSQL Performance Investigation</a> covers a cluster and its dominant workload. Bring latency, CPU, connection pressure or locks that affect several requests.</p>
+    <p><a href="/postgresql-upgrade-readiness">PostgreSQL Upgrade Readiness</a> covers compatibility, workload baselines, potential regressions and go/no-go checks for a version change. Community support for PostgreSQL 14 ended on {pg14Facts.communityEol}. <a href="/postgresql-14-eol">Check the managed-service dates</a>.</p>
+    <p><a href="/sql-server-performance">SQL Server Performance Review</a> uses Query Store, waits and blocking evidence when the issue crosses statements or application paths.</p>
+  </div></section>
+  <section><div class="container grid two">
+    <div class="prose"><h2>Inspect the work</h2>
+      <p>Trace a <a href="/case-studies/lab-generic-plan-regression">prepared-plan regression</a> or a <a href="/case-studies/lab-lock-queue">DDL lock queue</a> through reproducible labs. The <a data-track="sample_report_click" href="/sample-report">synthetic report</a> shows how I present evidence, uncertainty and a validation decision.</p>
+      <p class="small muted">The lab cases use generated data; their measurements are not customer results.</p>
+      <p>I built <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a> for inspecting execution plans and the experimental <a href="https://github.com/kiransabne04/pg_stat_index_queries">pg_stat_index_queries</a> project for connecting PostgreSQL indexes to the queries that use them.</p>
     </div>
-  </section>
-
-  <section>
-    <div class="container">
-      <div class="section-head">
-        <div><span class="eyebrow">Method</span><h2>Evidence → judgment → validation.</h2></div>
-        <p>AI can explain an execution plan. The investigation is about what surrounds that plan: workload concentration, locks, connections, statistics, indexing and deployment context.</p>
-      </div>
-      <InvestigationWorkflow />
-    </div>
-  </section>
-
-  <section>
-    <div class="container">
-      <div class="section-head">
-        <div><span class="eyebrow">Deliverable</span><h2>A ranked change plan, not a dump of findings.</h2></div>
-        <p>Every finding is tied to evidence, confidence, risk and a validation step so your engineering team can make an informed change.</p>
-      </div>
-      <div class="grid three">
-        <div class="card"><span class="kicker">Evidence</span><h3>Why this finding exists</h3><p>Plans, workload statistics, waits/locks, schema/indexes and relevant configuration.</p></div>
-        <div class="card"><span class="kicker">Decision</span><h3>What matters first</h3><p>Findings are ranked by expected impact, confidence, risk and effort—not by how impressive they sound.</p></div>
-        <div class="card"><span class="kicker">Validation</span><h3>How to know it worked</h3><p>Each recommendation includes a measurable verification path and rollback consideration.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="container">
-      <div class="section-head">
-        <div><span class="eyebrow">Capabilities</span><h2>PostgreSQL first. Broader where the workload demands it.</h2></div>
-        <p>PostgreSQL is the core service. Specialist reviews cover transactional, vector and analytical workloads where the problem calls for them.</p>
-      </div>
-      <CapabilityGrid />
-      <p class="topic-nav">For a narrower decision, request <a href="/postgresql-query-rescue">diagnosis of one slow PostgreSQL query</a> or a <a href="/postgresql-pr-review">pre-deployment SQL and migration review</a>.</p>
-    </div>
-  </section>
-
-  <section>
-    <div class="container">
-      <div class="section-head">
-        <div><span class="eyebrow">See the work</span><h2>Review the method before you get in touch.</h2></div>
-        <p>Explore two reproduced PostgreSQL problems and a sample report. The captured plans, waits and timings show how evidence leads to a safer decision.</p>
-      </div>
-      <div class="grid two">
-        <a class="card card-link" href="/case-studies/lab-generic-plan-regression">
-          <span class="kicker">Measured lab</span><h3>Generic plan regression under prepared statements</h3>
-          <p>A role-level plan setting slowed small tenants. See the plan evidence and tested response.</p>
-        </a>
-        <a class="card card-link" href="/case-studies/lab-lock-queue">
-          <span class="kicker">Measured lab</span><h3>DDL lock queue behind an idle transaction</h3>
-          <p>A catalog-only ALTER TABLE stalled eight readers for 14 seconds. See the blocking chain and timeout test.</p>
-        </a>
-      </div>
-      <p class="small muted">Both examples are synthetic labs using generated data; their measurements are not client results.</p>
-      <h3>Public tools I built</h3>
-      <div class="grid two">
-        <a class="card card-link" href={site.planReaderUrl} data-track="planreader_click">
-          <span class="kicker">Free tool</span><h3>PlanReader ↗</h3>
-          <p>Execution-plan analyzer for PostgreSQL, SQL Server and Snowflake. Plans are analyzed in the browser and not uploaded.</p>
-        </a>
-        <a class="card card-link" href="https://github.com/kiransabne04/pg_stat_index_queries">
-          <span class="kicker">Open source · experimental</span><h3>pg_stat_index_queries ↗</h3>
-          <p>Which queries use this index? A PostgreSQL extension (C for self-hosted 15–18, SQL edition for RDS/Aurora) with a HypoPG drop-impact check.</p>
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="container"><CTA /></div>
-  </section>
-  <section>
-    <div class="container cta-panel">
-      <div><span class="eyebrow">For delivery partners</span><h2>Need a database specialist for a client engagement?</h2><p class="muted">I work with fractional CTOs, cloud and DevOps firms, and software agencies on scoped investigations and upgrade validation.</p></div>
-      <div class="actions"><a class="button" data-track="partner_cta_click" href="/partners">Explore a Technical Partnership</a></div>
-    </div>
-  </section>
+    <div class="card"><h2>How an engagement works</h2><ol>
+      <li>Describe the symptom or planned change.</li><li>I confirm fit and send the scope, fee and delivery window.</li>
+      <li>Your team shares approved, redacted evidence.</li><li>You receive written findings and checks to run before and after a change.</li>
+    </ol><a class="button" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/">Request an Investigation</a></div>
+  </div></section>
+  <section><div class="container cta-panel"><div><h2>Delivering a database change for a client?</h2><p>Agencies and fractional CTOs can bring me in for one database PR, a workload investigation or an upgrade review. We agree who owns client communication and production changes.</p></div>
+    <a class="button" data-track="partner_cta_click" href="/partners">Explore a Technical Partnership</a></div></section>
 </BaseLayout>

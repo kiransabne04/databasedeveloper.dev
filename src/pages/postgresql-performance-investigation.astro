@@ -23,7 +23,7 @@ const schema = {
   <PageHero
     eyebrow="Core offer"
     title="PostgreSQL Performance Investigation"
-    description="A bounded investigation of one production PostgreSQL cluster and its dominant workload—using read-only evidence, human-reviewed findings and a measurable validation plan."
+    description="For engineering teams seeing latency, CPU or blocking across several requests. I investigate one PostgreSQL cluster, rank causes by evidence and give your team a written plan to validate changes."
     primaryHref="/contact?offer=investigation&from=/postgresql-performance-investigation"
     secondaryLabel="See sample report"
     secondaryHref="/sample-report"
@@ -68,7 +68,7 @@ const schema = {
     <div class="container">
       <div class="section-head"><div><span class="eyebrow">Process</span><h2>Bounded and async-first.</h2></div><p>Target report in {site.investigationTurnaround} after receiving usable evidence, subject to availability. No 24×7 incident response or production write access.</p></div>
       <InvestigationWorkflow />
-      <p class="topic-nav">Already isolated one slow statement? See <a href="/postgresql-query-rescue">PostgreSQL query performance diagnosis</a>. If the decision concerns a proposed change, see the <a href="/postgresql-pr-review">database pull request review</a>.</p>
+      <p class="topic-nav">Already isolated one slow statement? See <a href="/query-rescue">PostgreSQL query performance diagnosis</a>. If the decision concerns a proposed change, see the <a href="/database-code-review">database pull request review</a>.</p>
     </div>
   </section>
 
@@ -145,5 +145,5 @@ const schema = {
     </div>
   </section>
 
-  <section><div class="container"><CTA /></div></section>
+  <section><div class="container"><CTA primaryHref="/contact?offer=investigation&amp;from=/postgresql-performance-investigation" /></div></section>
 </BaseLayout>

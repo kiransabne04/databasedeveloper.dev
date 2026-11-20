@@ -1,4 +1,3 @@
-import type { ReviewKey } from './reviews';
 import { site } from '../config/site';
 
 /**
@@ -6,7 +5,7 @@ import { site } from '../config/site';
  * `offer` prop so the header line, in-article box and closing panel all match
  * the problem the reader came with.
  */
-export type OfferKey = 'investigation' | 'upgrade' | 'pgvector' | 'sqlserver' | 'snowflake';
+export type OfferKey = 'query-rescue' | 'database-code-review' | 'investigation' | 'upgrade' | 'pgvector' | 'sqlserver' | 'snowflake';
 
 export interface Offer {
   name: string;
@@ -20,6 +19,28 @@ export interface Offer {
 }
 
 export const offers: Record<OfferKey, Offer> = {
+  'query-rescue': {
+    name: 'Query Rescue',
+    href: '/query-rescue',
+    price: 'Fixed quote after fit review',
+    terms: 'One query and its directly relevant execution context',
+    receive: ['A short written diagnosis with plan evidence and remaining uncertainties',
+      'SQL or index options ranked by expected impact and risk', 'A before/after validation plan'],
+    send: 'the engine, the latency you observe and whether a redacted plan is available',
+    askLabel: 'Request a Query Review',
+    magnet: { label: 'See a sample report', href: '/sample-report', track: 'sample_report_click' }
+  },
+  'database-code-review': {
+    name: 'Database Code Review',
+    href: '/database-code-review',
+    price: 'Fixed quote after fit review',
+    terms: 'One agreed database PR or change set at a named revision',
+    receive: ['Prioritized findings with severity and rationale', 'Suggested changes and reproduction guidance',
+      'Deployment, rollback and validation checks for the agreed patch'],
+    send: 'a sanitized summary of the change, the database engine and the deployment decision',
+    askLabel: 'Request a Database Code Review',
+    magnet: { label: 'Read the locking lab', href: '/case-studies/lab-lock-queue', track: 'lab_click' }
+  },
   investigation: {
     name: 'PostgreSQL performance investigation',
     href: '/postgresql-performance-investigation',
@@ -93,7 +114,10 @@ export const offers: Record<OfferKey, Offer> = {
 };
 
 /** Contact link that tells the form which guide and offer the reader came from. */
-export function contactHref(offer: OfferKey | ReviewKey, fromPath: string): string {
+export function contactHref(offer: OfferKey, fromPath: string): string {
   const params = new URLSearchParams({ offer, from: fromPath });
   return `/contact?${params.toString()}`;
 }
+
+export const focusedKeys = ['query-rescue', 'database-code-review'] as const;
+export type FocusedOffer = typeof focusedKeys[number];

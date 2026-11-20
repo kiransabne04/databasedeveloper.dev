@@ -3,8 +3,8 @@ import ArticleLayout from '../layouts/ArticleLayout.astro';
 import ArticleOffer from '../components/ArticleOffer.astro';
 import { pg14Facts as f } from '../data/facts';
 
-const title = 'PostgreSQL 14 End of Life: What Changes on 12 November 2026';
-const description = 'PostgreSQL 14 gets its final community release on 12 November 2026. What stops, what keeps running, the RDS, Aurora and Azure dates that follow, a tested inventory script, and how to choose a target version.';
+const title = 'PostgreSQL 14 End of Life: What Changed on 12 November 2026';
+const description = 'PostgreSQL 14 received its final community release on 12 November 2026. What changed, what keeps running, the RDS, Aurora and Azure dates that follow, a tested inventory script, and how to choose a target version.';
 
 const faq = [
   {
@@ -87,7 +87,7 @@ const faq = [
   <ul>
     <li><strong>Your servers keep running.</strong> Nothing in PostgreSQL checks a date. Connections, replication and backups behave exactly as before.</li>
     <li><strong>No new fixes.</strong> A security vulnerability or data-corruption bug found after {f.communityEol} is fixed in 15 to 18 only. The fix and its description are public, which makes an unpatched 14 server easier to target over time, not harder.</li>
-    <li><strong>Run the final minor first.</strong> As of {f.verifiedOn}, the latest 14 release is {f.latestMinorBeforeEol}. Any 14 minor published with the 12 November release round is the last one; apply it when it appears. Upgrading within a major version replaces binaries only and needs no dump or pg_upgrade, which makes it the cheapest risk reduction available. Read the release notes of every minor you skip for post-upgrade steps such as reindexing.</li>
+    <li><strong>Run the final community minor.</strong> As of {f.verifiedOn}, PostgreSQL {f.latestMinorAtEol} is the final community release in the 14 branch. Managed services can publish supported minor versions on separate schedules, so check the current engine version and provider release notes. An in-major upgrade replaces binaries without a dump or <code>pg_upgrade</code>; read release notes for any required follow-up such as reindexing.</li>
     <li><strong>The ecosystem moves on gradually.</strong> Extension authors, drivers, ORMs, monitoring agents and CDC tools drop older branches at their own pace. Expect new extension releases to stop being built for 14.</li>
     <li><strong>Audit findings.</strong> Vulnerability scanners and security questionnaires commonly flag unsupported database versions. If you sell to companies that run vendor reviews, "PostgreSQL 14 after end of life" tends to become a written finding with a remediation date.</li>
     <li><strong>Distribution packages are a separate question.</strong> A Linux distribution that ships PostgreSQL 14 in a long-term release may keep patching its own package under its own policy. That applies to that vendor's package, not to the PGDG repository packages or the community Docker image.</li>
@@ -110,7 +110,7 @@ const faq = [
   --output table
 
 # Valid upgrade targets for your exact source minor
-aws rds describe-db-engine-versions --engine postgres --engine-version 14.24 \\
+aws rds describe-db-engine-versions --engine postgres --engine-version 14.25 \\
   --query 'DBEngineVersions[].ValidUpgradeTarget[?IsMajorVersionUpgrade == \`true\`].EngineVersion' \\
   --output text`}</code></pre>
   <p class="small muted">Run the first command per region. For Aurora targets use <code>--engine aurora-postgresql</code> and your cluster's version.</p>
