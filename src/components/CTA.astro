@@ -6,6 +6,7 @@ const {
   description = 'Start with the problem and the evidence you already have. You will get a direct answer on whether a scoped investigation is the right next step.',
   primaryLabel = 'Request an Investigation',
   primaryHref = '/contact',
+  primaryTrack = 'primary_cta_click',
   secondaryLabel = 'See sample report',
   secondaryHref = '/sample-report'
 } = Astro.props;
@@ -20,7 +21,7 @@ const {
     )}
   </div>
   <div class="actions">
-    <a class="button primary" data-track="primary_cta_click" href={primaryHref}>{primaryLabel}</a>
+    <a class="button primary" data-track={primaryTrack} href={primaryHref}>{primaryLabel}</a>
     <a class="button" data-track="sample_report_click" href={secondaryHref}>{secondaryLabel}</a>
   </div>
 </div>

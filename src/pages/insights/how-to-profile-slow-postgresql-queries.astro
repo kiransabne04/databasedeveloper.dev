@@ -66,6 +66,7 @@ ROLLBACK;`}</code></pre>
   <h2>4. Change one thing, then measure the same numbers</h2>
   <p>Make a single change, such as an index, an <code>ANALYZE</code>, extended statistics or a query rewrite, then repeat steps 3 and 1: the plan and timing for the slow parameter values, and the statement's share of total time across the workload. An index that speeds up one query also costs every write to that table, so check the write-heavy statements in <code>pg_stat_statements</code> too. If the share of total time did not fall, the change did not fix the problem the users felt.</p>
 
+  <p>If you have isolated one statement and need a second reading of the plan, see the <a href="/postgresql-query-rescue">fixed-scope query diagnosis</a>.</p>
   <h2>Short version</h2>
   <ol>
     <li><code>pg_stat_statements</code>: which statements cost the most total time, and is the time even in the database.</li>

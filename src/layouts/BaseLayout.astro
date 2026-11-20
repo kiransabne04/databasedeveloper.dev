@@ -1,8 +1,11 @@
 ---
 import '../styles/global.css';
+import { contactHref } from '../data/offers';
+import { reviews, type ReviewKey } from '../data/reviews';
 import { site, nav } from '../config/site';
 
 interface Props {
+  reviewKey?: ReviewKey;
   title?: string;
   description?: string;
   canonical?: string;
@@ -23,16 +26,20 @@ const {
   published,
   updated,
   noindex = false,
-  schema
+  schema,
+  reviewKey
 } = Astro.props;
 
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site.url).toString();
+const navContact = reviewKey ? contactHref(reviewKey, reviews[reviewKey].href) : '/contact';
+const navContactLabel = reviewKey ? 'Request a Review' : 'Request an Investigation';
 const gaEnabled = Boolean(site.gaId);
 const isNotFound = Astro.url.pathname.replace(/\/$/, '') === '/404';
 const schemas = [
   {
     '@context': 'https://schema.org',
     '@type': 'ProfessionalService',
+    '@id': site.url + '/#practice',
     name: site.brand,
     url: site.url,
     description: site.description,
@@ -95,14 +102,14 @@ const schemas = [
         <nav class="desktop-nav" aria-label="Primary navigation">
           {nav.map((item) => <a href={item.href}>{item.label}</a>)}
           <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-          <a class="nav-cta" data-track="primary_cta_click" href="/contact">Request an Investigation</a>
+          <a class="nav-cta" data-track={reviewKey ? 'service_cta_click' : 'primary_cta_click'} href={navContact}>{navContactLabel}</a>
         </nav>
         <details class="mobile-menu">
           <summary>Menu</summary>
           <div class="mobile-menu-panel">
             {nav.map((item) => <a href={item.href}>{item.label}</a>)}
             <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-            <a href="/contact" data-track="primary_cta_click">Request an Investigation</a>
+            <a href={navContact} data-track={reviewKey ? 'service_cta_click' : 'primary_cta_click'}>{navContactLabel}</a>
           </div>
         </details>
       </div>
@@ -128,6 +135,7 @@ const schemas = [
             <strong>Work</strong>
             <a href="/postgresql-performance-investigation">Investigation</a>
             <a href="/postgresql-upgrade-readiness">Upgrade readiness</a>
+            {Object.values(reviews).map(review => <a href={review.href}>{review.name}</a>)}
             <a href="/pricing">Pricing</a>
           </div>
           <div>
@@ -161,8 +169,9 @@ const schemas = [
       </div>
     )}
 
-    <script is:inline define:vars={{ gaId: site.gaId, analyticsHosts: site.analyticsHosts, plausibleDomain: import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN }}>
+    <script is:inline define:vars={{ reviewKey: reviewKey ?? null, gaId: site.gaId, analyticsHosts: site.analyticsHosts, plausibleDomain: import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN }}>
       if (plausibleDomain) {
+        window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments); };
         const s = document.createElement('script');
         s.defer = true;
         s.dataset.domain = plausibleDomain;
@@ -207,7 +216,10 @@ const schemas = [
           const granted = button.getAttribute('data-consent') === 'granted';
           localStorage.setItem(consentKey, granted ? 'granted' : 'denied');
           banner.hidden = true;
-          if (granted) loadGoogleAnalytics();
+          if (granted) {
+            loadGoogleAnalytics();
+            if (reviewKey) window.gtag('event', 'service_page_view', { source_page: location.pathname, ...campaignContext, service_id: reviewKey });
+          }
           else clearAnalyticsCookies();
         });
         document.querySelector('[data-consent-reset]')?.addEventListener('click', () => {
@@ -243,13 +255,14 @@ const schemas = [
       document.addEventListener('click', (event) => {
         const element = event.target instanceof Element ? event.target : null;
         const target = element?.closest('[data-track]');
-        if (target?.dataset.track) track(target.dataset.track);
+        if (target?.dataset.track) track(target.dataset.track, reviewKey ? { service_id: reviewKey } : {});
         if (element?.closest('a[href^="mailto:"]')) track('email_click');
       });
       window.addEventListener('dd:track', (event) => {
         if (typeof event.detail === 'string') track(event.detail);
         else if (event.detail && typeof event.detail.name === 'string') track(event.detail.name, event.detail.props || {});
       });
+      if (reviewKey) track('service_page_view', { service_id: reviewKey });
       const path = location.pathname.replace(/\/$/, '') || '/';
       if (path === '/postgresql-performance-investigation') track('investigation_page_view');
       if (path === '/postgresql-upgrade-readiness') track('upgrade_page_view');

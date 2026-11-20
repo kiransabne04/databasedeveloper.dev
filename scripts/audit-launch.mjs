@@ -40,6 +40,31 @@ for (const [route, html] of allHtml) {
   }
 }
 const page = (route) => allHtml.find(([path]) => path === route)?.[1] || '';
+const reviewPages = [
+  ['query-rescue', 'PostgreSQL Query Performance Diagnosis', 'PostgreSQL Query Optimization &amp; Diagnosis | WalStack'],
+  ['pr-review', 'PostgreSQL Schema, SQL Code &amp; Migration Review', 'PostgreSQL Migration &amp; SQL Code Review | WalStack'],
+];
+for (const [key, heading, title] of reviewPages) {
+  const route = '/postgresql-' + key;
+  const url = 'https://walstack.io' + route;
+  const html = page(route);
+  assert.equal(html.match(/<h1\b/g)?.length, 1);
+  assert(html.includes('<h1>' + heading + '</h1>') && html.includes('<title>' + title + '</title>'), route + ' heading/title');
+  assert(html.includes('property="og:url" content="' + url + '"') && html.includes('name="twitter:title" content="' + title + '"'), route + ' social metadata');
+  assert(!/<meta name="robots"[^>]*noindex/i.test(html), route + ' blocked from indexing');
+  assert(html.includes('Fixed quote after scope confirmation.'), route + ' expected quote-first terms');
+  const nodes = [...html.matchAll(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/gs)].map(m => JSON.parse(m[1]));
+  const service = nodes.find(n => n['@type'] === 'Service');
+  assert.equal(service?.url, url);
+  assert.equal(nodes.filter(n => n['@id'] === service.provider['@id']).length, 1);
+  assert(!service.offers && !nodes.some(n => n['@type'] === 'AggregateRating'));
+  assert.deepEqual(nodes.find(n => n['@type'] === 'BreadcrumbList')?.itemListElement.map(i => [i.position, i.item]), [[1, 'https://walstack.io/'], [2, url]]);
+  for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) assert(html.includes('id="' + id + '"'), route + ' missing #' + id);
+  const params = new URLSearchParams({ offer: key, from: route });
+  assert(html.includes('href="/contact?' + params.toString().replaceAll('&', '&amp;') + '"'), route + ' enquiry attribution');
+  assert(page('/contact').includes('value="' + key + '"'), route + ' contact option');
+}
+
 const indexWaitGuide = page('/insights/postgresql-create-index-concurrently-stuck');
 assert(indexWaitGuide.includes('"@type":"Article"'), 'Concurrent index guide lost Article structured data');
 for (const section of ['progress', 'waits', 'working', 'failed-build', 'rds-aurora', 'response', 'sources']) {
