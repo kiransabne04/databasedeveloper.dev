@@ -17,11 +17,13 @@ Keep the working copy in the approved private workspace. This repository contain
 | Priority guide visibility | | | Per-page clicks/impressions plus position for the same relevant query and page across windows |
 | Migration and indexing issues | | | Sample both domains, representative old redirects, chosen canonicals and sitemap/indexing status of new services |
 | Landing-page sessions | | | GA4 session counts by landing path and session source/medium or campaign |
+| PostgreSQL.org directory referral sessions | | | GA4 sessions with PostgreSQL.org as the session referrer/source; visits are traffic, not leads |
 | Service views and article-to-service journeys | | | Service views by offer, internal referrer and original landing page. Inspect article offer clicks separately. |
 | CTA clicks, form starts and accepted submissions | | | GA4 event counts by offer and landing page. Reconcile accepted forms with Formspree. |
 | Session enquiry rate by landing page | | | Sessions with at least one accepted submission divided by observed sessions landing on that path. Include both counts. |
 | Qualified organic enquiries | | | Distinct owner-qualified buyer enquiries with supported organic origin |
 | Qualified outreach-sourced enquiries | | | Distinct owner-qualified buyer enquiries with supported outreach origin |
+| Qualified PostgreSQL.org-referred enquiries | | | Distinct owner-qualified buyer enquiries where the submitted/CRM referral source is `postgresql.org`; reconcile the enquiry, do not count directory visits or CTA clicks |
 | Qualified enquiries from other or unknown sources | | | Retain unattributed opportunities and conflicting evidence for manual review |
 | Discovery calls confirmed | | | CRM or calendar-confirmed bookings, using confirmation date and excluding canceled/rescheduled duplicates |
 | Proposals submitted | | | Distinct opportunities receiving a written proposal during the period |

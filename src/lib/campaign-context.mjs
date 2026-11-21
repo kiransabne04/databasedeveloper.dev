@@ -19,6 +19,14 @@ export function resolveCampaignContext(location, referrer = '', storage = null) 
   const cleanPage = `${location.origin}${location.pathname}`;
   let context = {};
   let previousPage = '';
+  let directoryReferral = '';
+  try {
+    const referrerUrl = new URL(referrer);
+    const hostname = referrerUrl.hostname.toLowerCase().replace(/^www\./, '');
+    if (referrerUrl.origin !== location.origin && (hostname === 'postgresql.org' || hostname.endsWith('.postgresql.org'))) {
+      directoryReferral = 'postgresql.org';
+    }
+  } catch { /* Referrer attribution is optional. */ }
 
   try {
     context = JSON.parse(storage?.getItem('walstack-campaign-context') || '{}');
@@ -26,6 +34,10 @@ export function resolveCampaignContext(location, referrer = '', storage = null) 
   } catch { /* Attribution is optional; storage restrictions do not block the page. */ }
 
   if (!context.landing_page) context.landing_page = location.pathname;
+  if (directoryReferral && !context.referral_source) {
+    context.referral_source = directoryReferral;
+    context.referral_landing_page = location.pathname;
+  }
   if (hasIncoming) {
     for (const key of campaignFields) {
       if (incoming[key] && !context[`first_${key}`]) context[`first_${key}`] = incoming[key];

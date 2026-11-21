@@ -16,6 +16,8 @@ Review the draft PR and the locally built pages together. Record commercial deci
 - [ ] **Privacy.** Review the disclosure for campaign context, analytics consent and the form processor. Try declining analytics and disabling browser storage. Confirm the enquiry remains usable. Check event payloads and campaign links for identifying data.
 - [ ] **Analytics.** Confirm the intended GA4 property, measurement configuration, dimensions and single enquiry-success event in the [measurement plan](../analytics/MEASUREMENT_PLAN.md). Keep booking interest separate from a confirmed meeting. Review any existing campaign codes outside the [outreach conventions](OUTREACH_ATTRIBUTION.md) before using them.
 - [ ] **CRM handoff.** Identify who reconciles accepted forms, matches existing contacts, filters solicitations and records confirmed stages. Approve any new integration or vendor separately.
+- [ ] **PostgreSQL.org listing facts.** Confirm the displayed business name (`WAL Stack Labs`), employee count (`3`), office location (`Pune, India`) and the specific “about 8 years with production PostgreSQL” experience statement. The About page confirms a founder-led practice and about 8 years as a database/backend engineer; it does not confirm the directory's headcount or Pune office. Do not change the external listing through this PR.
+- [ ] **Directory referral attribution.** Confirm the form carries `postgresql.org` and the original WalStack landing path through internal service navigation. Count a lead only after private CRM review confirms it is qualified.
 
 ## Publication decision
 

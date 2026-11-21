@@ -44,6 +44,7 @@ HubSpot can associate browsing with a contact when its tracking code, permitted 
 | `landing_page`, `first_utm_source`, `first_utm_medium`, `first_utm_campaign`, `first_utm_content` | First observed landing context. Keep the original values even when later links carry different tags. |
 | `utm_source`, `utm_medium`, `utm_campaign`, `utm_content` | Latest recorded campaign context for this visit. Store alongside the original fields. |
 | `from_page` | Internal page associated with opening the form. Use it to identify the article or service that led to intake. |
+| `referral_source`, `referral_landing_page` | When the referring host is PostgreSQL.org, the domain and first WalStack landing path. The directory URL itself is not stored. |
 
 1. Open the accepted submission in the approved inbox or Formspree workspace. Classify the inbound item as a buyer enquiry, partner enquiry, unrelated solicitation or spam. Keep outreach replies as a separate origin. Exclude internal tests and solicitations from buyer counts.
 2. Look up the submitted work email in HubSpot, including known secondary addresses. If there is a clear match, associate the enquiry with the existing contact. Check ambiguous aliases manually. Only create a new contact through an approved process when the sender is distinct. Avoid matching on an anonymous URL visit or company domain alone. [HubSpot deduplication](https://knowledge.hubspot.com/records/deduplication-of-records)
