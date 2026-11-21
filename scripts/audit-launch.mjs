@@ -103,6 +103,12 @@ assert(page('/partners').includes('href="/contact?offer=partnership&amp;from=/pa
 assert(page('/postgresql-upgrade-readiness').includes('href="/contact?offer=upgrade&amp;from=/postgresql-upgrade-readiness"'), 'Upgrade CTA missing offer attribution');
 assert(page('/sample-upgrade-readiness-report').includes('Synthetic'), 'Upgrade sample lost synthetic label');
 assert(page('/contact').includes('name="offer"') && page('/contact').includes('name="_gotcha"'), 'Contact offer or spam field missing');
+const directoryUrl = 'https://www.postgresql.org/support/professional_support/asia/';
+for (const route of ['/', '/about', '/postgresql-performance-investigation']) {
+  const html = page(route);
+  assert(html.includes(`href="${directoryUrl}"`) && html.includes("PostgreSQL.org's Professional Services directory"), `${route} directory reference missing`);
+  assert(!/PostgreSQL[^<]*(?:certified|endorsed|officially partnered|approved)/i.test(html), `${route} overstates directory status`);
+}
 for (const key of ['query-rescue', 'database-code-review']) {
   assert(page('/contact').includes(`value="${key}"`), `Contact missing service option: ${key}`);
   assert(page('/').includes(`href="/${key}"`), `Homepage missing service path: ${key}`);
@@ -117,6 +123,7 @@ for (const route of ['/query-rescue', '/database-code-review']) {
 const contactSource = readFileSync(join(root, 'src/pages/contact.astro'), 'utf8');
 assert(contactSource.includes('successfulSubmissionEvent(response') && campaignSource.includes('if (!response.ok) throw'), 'Form submission must count only a successful response');
 assert(contactSource.includes("name: 'contact_start'") && contactSource.includes("data-track=\"booking_click\""), 'Contact start and booking click must remain distinct');
+assert(contactSource.includes('name="referral_source"') && contactSource.includes('name="referral_landing_page"'), 'Contact form must preserve directory referral attribution');
 assert(!contactSource.includes('contact_draft_open'), 'Email draft must not count as submitted lead');
 assert(baseSource.includes('page_location: cleanPage') && baseSource.includes('cleanReferrer(document.referrer)'), 'Analytics page URLs/referrers must be query-free');
 assert(baseSource.includes("window.gtag('event', 'service_page_view'") && (baseSource.match(/track\('service_page_view'/g) || []).length === 1, 'Consent should not duplicate the Plausible service view');
@@ -132,6 +139,16 @@ assert.equal(nextVisit.campaignContext.first_utm_source, 'outbound');
 assert.equal(nextVisit.campaignContext.utm_source, 'partner');
 assert.equal(nextVisit.campaignContext.referring_page, '/insights/slow-query');
 assert(!JSON.stringify(nextVisit).includes('secret'));
+const directoryVisit = resolveCampaignContext({ origin: 'https://walstack.io', pathname: '/query-rescue', search: '' }, 'https://www.postgresql.org/support/professional_support/asia/?utm_source=ignored', storage);
+assert.equal(directoryVisit.campaignContext.referral_source, 'postgresql.org');
+assert.equal(directoryVisit.campaignContext.referral_landing_page, '/query-rescue');
+let previousPath = '/query-rescue';
+for (const path of ['/postgresql-performance-investigation', '/postgresql-upgrade-readiness', '/contact']) {
+  const internalVisit = resolveCampaignContext({ origin: 'https://walstack.io', pathname: path, search: '' }, `https://walstack.io${previousPath}`, storage);
+  assert.equal(internalVisit.campaignContext.referral_source, 'postgresql.org');
+  assert.equal(internalVisit.campaignContext.referral_landing_page, '/query-rescue');
+  previousPath = path;
+}
 let submissions = 0;
 globalThis.CustomEvent ??= class CustomEvent { constructor(type, init) { this.type = type; this.detail = init.detail; } };
 assert.throws(() => successfulSubmissionEvent({ ok: false, status: 500 }), /500/);

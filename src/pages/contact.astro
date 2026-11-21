@@ -23,6 +23,8 @@ const action = endpoint || `mailto:${site.email}`;
         <input type="hidden" name="latest_landing_page" />
         <input type="hidden" name="from_page" />
         <input type="hidden" name="referring_page" />
+        <input type="hidden" name="referral_source" />
+        <input type="hidden" name="referral_landing_page" />
         {endpoint && (
           <>
             <input type="hidden" name="_subject" value="Database investigation request" />
@@ -83,7 +85,7 @@ const action = endpoint || `mailto:${site.email}`;
     if (form) {
       try {
         const context = JSON.parse(sessionStorage.getItem('walstack-campaign-context') || '{}');
-        for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'first_utm_source', 'first_utm_medium', 'first_utm_campaign', 'first_utm_content', 'landing_page', 'latest_landing_page', 'referring_page']) {
+        for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'first_utm_source', 'first_utm_medium', 'first_utm_campaign', 'first_utm_content', 'landing_page', 'latest_landing_page', 'referring_page', 'referral_source', 'referral_landing_page']) {
           const input = form.elements.namedItem(key);
           if (input instanceof HTMLInputElement && typeof context[key] === 'string') input.value = context[key];
         }
@@ -160,6 +162,7 @@ const action = endpoint || `mailto:${site.email}`;
           utm_source: 'Latest source', utm_medium: 'Latest medium', utm_campaign: 'Latest campaign', utm_content: 'Latest campaign content',
           first_utm_source: 'First source', first_utm_medium: 'First medium', first_utm_campaign: 'First campaign', first_utm_content: 'First campaign content',
           landing_page: 'First landing page', latest_landing_page: 'Latest tagged landing page', referring_page: 'Previous page',
+          referral_source: 'External referral source', referral_landing_page: 'Referral landing page',
           offer: 'Offer', from_page: 'Service or article that opened contact'
         };
         const body = Object.entries(labels)
