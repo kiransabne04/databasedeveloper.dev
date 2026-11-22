@@ -51,7 +51,7 @@ for (const route of legacyArticles) {
   }
 }
 
-const interview = redirects.find((item) => item.source === '/crack-sql-interviews-with-these-postgresql-internals-and-real-questions');
+const interview = redirects.find((item) => item.source === '/crack-sql-interviews-with-these-postgresql-internals-and-real-questions' && !item.has);
 assert(interview?.permanent && interview.destination.startsWith('https://kiransabne.dev/'), 'Missing permanent interview redirect');
 assert(!existsSync(join(root, 'dist', interview.source.slice(1), 'index.html')), 'Redirected interview URL should not have a local page');
 assert(!sitemap.includes(`<loc>${origin}${interview.source}</loc>`), 'Redirect URL should not be in the sitemap');
