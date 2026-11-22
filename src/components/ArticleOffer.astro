@@ -1,5 +1,6 @@
 ---
-import { offers, contactHref, type OfferKey } from '../data/offers';
+import { site } from '../config/site';
+import { offers, type OfferKey } from '../data/offers';
 
 interface Props {
   offer: OfferKey;
@@ -10,15 +11,12 @@ interface Props {
 
 const { offer, title, text } = Astro.props;
 const details = offers[offer];
-const ask = contactHref(offer, Astro.url.pathname);
+
 ---
 <aside class="article-offer" aria-label={`About the ${details.name}`}>
   <p class="article-offer-title"><strong>{title}</strong></p>
   <p>{text}</p>
   <p class="small">
-    <a data-track="article_offer_click" href={ask}>{details.askLabel}</a>
-    <span aria-hidden="true"> · </span>
-    <a href={details.href}>How the {details.name} works</a>
-    <span class="muted"> · {details.price}</span>
+    <a href="/snapshot" data-track="primary_cta_click">Get a free PostgreSQL snapshot review</a> · <a href={site.bookingUrl} data-track="book_call_click">Book a call</a>
   </p>
 </aside>

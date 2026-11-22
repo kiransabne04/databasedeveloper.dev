@@ -1,0 +1,8 @@
+---
+import { site } from '../config/site';
+const { primary = 'Get a free snapshot review', call = site.callLabel, href = '/snapshot' } = Astro.props;
+---
+<div class="actions">
+  <a class="button primary" data-track="primary_cta_click" href={href}>{primary}</a>
+  <a class="button" data-track="book_call_click" href={site.bookingUrl}>{call}</a>
+</div>

@@ -6,9 +6,9 @@ import CTA from '../../components/CTA.astro';
 <BaseLayout title="High PostgreSQL CPU — WalStack" description="High CPU is a symptom, not a diagnosis. Practical evidence to collect, common wrong assumptions and when a deeper investigation is justified.">
   <PageHero eyebrow="Problem guide" title="High PostgreSQL CPU" description="High CPU is a symptom, not a diagnosis." />
   <section><div class="container grid three">
-    <div class="card"><h3>Workload concentration</h3><p>Rank statements by total workload cost, not only worst single latency.</p></div>
-<div class="card"><h3>Wait / I/O context</h3><p>Check whether CPU is actually the primary constraint or merely correlated with another bottleneck.</p></div>
-<div class="card"><h3>Application amplification</h3><p>Retries, connection storms and N+1 behavior can multiply database work after a release.</p></div>
+    <div class="card"><h2 class="card-heading">Workload concentration</h2><p>Rank statements by total workload cost, not only worst single latency.</p></div>
+<div class="card"><h2 class="card-heading">Wait / I/O context</h2><p>Check whether CPU is actually the primary constraint or merely correlated with another bottleneck.</p></div>
+<div class="card"><h2 class="card-heading">Application amplification</h2><p>Retries, connection storms and N+1 behavior can multiply database work after a release.</p></div>
   </div></section>
   <section><div class="container prose">
     <h2>Investigation principle</h2>

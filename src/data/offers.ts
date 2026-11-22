@@ -22,7 +22,7 @@ export const offers: Record<OfferKey, Offer> = {
   'query-rescue': {
     name: 'Query Rescue',
     href: '/query-rescue',
-    price: 'Fixed quote after fit review',
+    price: '',
     terms: 'One query and its directly relevant execution context',
     receive: ['A short written diagnosis with plan evidence and remaining uncertainties',
       'SQL or index options ranked by expected impact and risk', 'A before/after validation plan'],
@@ -33,7 +33,7 @@ export const offers: Record<OfferKey, Offer> = {
   'database-code-review': {
     name: 'Database Code Review',
     href: '/database-code-review',
-    price: 'Fixed quote after fit review',
+    price: '',
     terms: 'One agreed database PR or change set at a named revision',
     receive: ['Prioritized findings with severity and rationale', 'Suggested changes and reproduction guidance',
       'Deployment, rollback and validation checks for the agreed patch'],
@@ -45,7 +45,7 @@ export const offers: Record<OfferKey, Offer> = {
     name: 'PostgreSQL performance investigation',
     href: '/postgresql-performance-investigation',
     price: site.investigationOffer.display,
-    terms: `Target report in ${site.investigationTurnaround} after usable evidence, subject to availability`,
+    terms: `Report in ${site.investigationTurnaround} after access or receipt of script output`,
     receive: [
       'The statements and causes behind the slowdown, ranked by impact',
       'Evidence, risk and rollback for each recommended change',
@@ -72,7 +72,7 @@ export const offers: Record<OfferKey, Offer> = {
   pgvector: {
     name: 'pgvector performance review',
     href: '/pgvector-performance',
-    price: 'Fixed price agreed after a free fit review',
+    price: '',
     terms: 'Measured recall and latency on your data, not a benchmark from elsewhere',
     receive: [
       'Recall and latency measured against an exact baseline',
@@ -86,7 +86,7 @@ export const offers: Record<OfferKey, Offer> = {
   sqlserver: {
     name: 'SQL Server performance review',
     href: '/sql-server-performance',
-    price: 'Fixed price agreed after a free fit review',
+    price: '',
     terms: 'Read-only evidence from Query Store and DMVs',
     receive: [
       'Regressed queries and their causes, ranked by impact',
@@ -100,7 +100,7 @@ export const offers: Record<OfferKey, Offer> = {
   snowflake: {
     name: 'Snowflake performance and cost review',
     href: '/snowflake-performance',
-    price: 'Fixed price agreed after a free fit review',
+    price: '',
     terms: 'Read-only evidence from ACCOUNT_USAGE views',
     receive: [
       'The warehouses and statements behind the credits, ranked by cost',

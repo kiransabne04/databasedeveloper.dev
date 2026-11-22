@@ -1,56 +1,22 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHero from '../components/PageHero.astro';
+import ConversionActions from '../components/ConversionActions.astro';
+import Portrait from '../components/Portrait.astro';
 import { site } from '../config/site';
 ---
-<BaseLayout title="About WalStack — Kiran Sabne" description="WalStack is the founder-led practice of Kiran Sabne, a database and backend engineer with about 8 years of experience.">
-  <PageHero eyebrow="About" title="I'm Kiran Sabne. You work directly with me." description="I'm a database and backend engineer with about 8 years of experience. My focus includes PostgreSQL performance, AWS RDS/Aurora, SQL Server and the systems around them. I review your evidence and write the recommendations myself." primaryLabel="Request an Investigation" primaryHref="/contact" secondaryLabel="Read the technical guides" secondaryHref="/insights" />
-  <section><div class="container prose">
-    <h2>Background</h2>
-    <p>Most of my work starts with two questions: why is this slow, and what changed? I use plans, workload statistics, waits, schema and deployment context to separate supported findings from hypotheses.</p>
-
-    <h2>Production work</h2>
-    <ul>
-      <li><strong>Query and plan performance</strong> across PostgreSQL, SQL Server and Snowflake: index strategy, planner behaviour, and plans that differ between environments.</li>
-      <li><strong>Database migrations</strong> from SQL Server, MongoDB and DynamoDB to PostgreSQL, and from Aurora PostgreSQL to Snowflake. That work covers schema and data-model translation, bulk loads with delta sync, idempotent and rollback-safe load scripts, and cutovers inside fixed maintenance windows.</li>
-      <li><strong>Change data capture and replication:</strong> logical replication with <code>pgoutput</code>, Debezium Server to S3, Snowpipe ingestion, and managing replication-slot and WAL-retention risk with <code>max_slot_wal_keep_size</code> and per-slot lag alerting.</li>
-      <li><strong>Partitioning and archival</strong> of tables with 100M+ rows: hash-partitioned archive designs with foreign-key-safe cutover and support for reopening archived records.</li>
-      <li><strong>Release and upgrade confidence:</strong> per-release load testing and query replay (pgreplay, JMeter), and major-version upgrade planning with a real rollback path.</li>
-      <li><strong>PostgreSQL internals:</strong> MVCC, vacuum and bloat, XID wraparound, replication slots, and C extensions.</li>
-      <li><strong>Backend engineering</strong> in Go, C#/.NET with EF Core, and Python, including multi-tenant PostgreSQL schema design.</li>
-    </ul>
-
-    <h2>AI and vector workloads</h2>
-    <p>I have built semantic-search services that store Sentence-BERT embeddings in PostgreSQL with pgvector, so I look at AI features the way I look at any other workload: what the index does, what the planner chooses, and what happens to latency and recall as data and filters grow. I write about the trade-offs that show up in production, such as <a href="/insights/pgvector-hnsw-vs-ivfflat">HNSW vs IVFFlat</a> and <a href="/insights/pgvector-filtered-search-missing-results">filtered vector queries that silently return fewer rows</a>. See <a href="/pgvector-performance">pgvector performance reviews</a>.</p>
-    <p>I also use AI in my own work, with clear limits. It helps me summarise evidence, draft and cross-check. It does not decide findings, raise confidence or recommend production changes; I verify every finding against your evidence. Your evidence is never sent to an AI service without your written consent. Why the human part matters: <a href="/insights/what-ai-misses-postgresql">what AI misses in a production PostgreSQL diagnosis</a>.</p>
-
-    <h2>Public work you can inspect</h2>
-    <p>WalStack is <a href="https://www.postgresql.org/support/professional_support/asia/" rel="external">listed in PostgreSQL.org's Professional Services directory</a>.</p>
-    <ul>
-      <li><a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>: a free execution-plan analyzer for PostgreSQL, SQL Server and Snowflake. Plans are analyzed in the browser and not uploaded.</li>
-      <li><a href="/evidence-collection">The evidence collector</a>: the read-only SQL script I use in investigations, published in full so your team can review every query before running it.</li>
-      <li><a href="/case-studies">Lab case studies</a>: measured PostgreSQL runs (plan regression, DDL lock queue) with the scripts and outputs behind each finding.</li>
-      <li><strong>pgsuite</strong> (in development): a read-only Go tool for PostgreSQL replication/CDC risk, MVCC and vacuum health, pgvector workload health, and connection and lock problems, built around catalog-only reads, a <code>pg_monitor</code> role and strict timeouts.</li>
-      <li><a href={site.sqlServerBlogUrl}>MSSQLServer.dev ↗</a>: my SQL Server tutorials.</li>
-      <li><a href={site.personalSiteUrl}>kiransabne.dev ↗</a>: broader backend and database writing.</li>
-      <li><a href={site.githubUrl}>GitHub ↗</a> and <a href={site.linkedinUrl}>LinkedIn ↗</a>.</li>
-    </ul>
-
-    <h2>Capability</h2>
-    <p>PostgreSQL is my primary focus, especially on AWS RDS and Aurora. I take on SQL Server, pgvector, Snowflake and OLAP/analytical work where the problem matches real experience. If it does not, I will say so.</p>
-
-    <h2>How the work runs</h2>
-    <p>Your team describes the symptom and runs agreed read-only evidence collection. I review the workload, write ranked findings with risks and validation steps, then walk through the recommendations with your team. The work is async-first, with scheduled review calls. Scope, price and delivery date are agreed in writing before work starts.</p>
-
-    <h2>What I don't take on</h2>
-    <ul>
-      <li>24×7 on-call or emergency incident response</li>
-      <li>Production write access or executing changes on your systems</li>
-      <li>Full application rebuilds presented as a database review</li>
-      <li>Work that would conflict with existing professional commitments</li>
-    </ul>
-
-    <h2>Confidentiality</h2>
-    <p>I describe my experience without employer or client names, figures or data. Proprietary data is never used as public proof. Public examples use generated data and measured lab runs. Client work is shared only with explicit, written permission.</p>
+<BaseLayout title="About Kiran Sabne, PostgreSQL Performance Engineer | WalStack" description="I’m Kiran Sabne, an independent PostgreSQL engineer in Pune, India. I investigate slow databases myself and work asynchronously with SaaS engineering teams.">
+  <header class="container hero intro"><div><p class="eyebrow">Pune, India</p><h1>I'm Kiran Sabne.</h1>
+    <p class="lede">When a release slows your product down, you want to know what changed and what you can safely undo. That's the question I started WalStack to answer.</p></div><Portrait /></header>
+  <section><div class="container prose"><h2>My background</h2>
+    <p>I've worked in database and backend engineering for about 8 years. About 6 of those years have focused on PostgreSQL in production, including RDS and Aurora.</p>
+    <p>I've moved large tables, split them into smaller pieces called partitions, and upgraded databases between major versions. I've built pipelines that copy changes as they happen so other systems stay in sync.</p>
+    <h2>What working with me looks like</h2>
+    <p>I work alone, part-time, alongside a full-time job. I take a few engagements each month. I read the output, investigate the cause and write your report myself.</p>
+    <p>I start with read-only information. You can run my scripts, inspect the output and remove sensitive details before sharing it.</p>
+    <p>I'm based in Pune, India. Most work happens by email, with overlap for calls during US mornings and UK/EU afternoons.</p>
+    <h2>Where to find my work</h2>
+    <p>I built <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a> to help engineers read query plans. My experimental PostgreSQL extension, <a href={site.extensionUrl}>pg_stat_index_queries</a>, connects indexes to the queries that use them.</p>
+    <p>WalStack is <a href={site.directoryUrl}>listed in PostgreSQL.org's Professional Services directory</a>. You can also find me on <a href={site.linkedinUrl}>LinkedIn</a> and <a href={site.githubUrl}>GitHub</a>.</p>
+    <ConversionActions />
   </div></section>
 </BaseLayout>

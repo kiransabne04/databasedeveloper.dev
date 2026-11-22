@@ -1,9 +1,10 @@
 ---
+import { site } from '../config/site';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 ---
 <BaseLayout title="Synthetic PostgreSQL Upgrade Readiness Report | WalStack" description="Synthetic PostgreSQL 14 to 18 upgrade-readiness report using a reproducible self-managed lab. Inventory, blockers, risk register and go/no-go criteria.">
-  <PageHero eyebrow="Synthetic lab report" title="PostgreSQL 14 → 18: an upgrade decision record" description="An illustrative readiness report based on a reproducible self-managed lab. Generated data only; this is not a customer engagement or an RDS/Aurora rehearsal." primaryLabel="Ask about upgrade readiness" primaryHref="/contact?offer=upgrade&from=/sample-upgrade-readiness-report" secondaryLabel="View lab method" secondaryHref="/insights/pg-upgrade-check-failures" />
+  <PageHero eyebrow="Synthetic lab report" title="PostgreSQL 14 → 18: an upgrade decision record" description="An illustrative readiness report based on a reproducible self-managed lab. Generated data only; this is not a customer engagement or an RDS/Aurora rehearsal." primaryLabel="Book a 15-minute call" primaryHref={site.bookingUrl} primaryTrack="book_call_click" secondaryLabel="View lab method" secondaryHref="/insights/pg-upgrade-check-failures" />
   <section><div class="container prose">
     <p class="notice"><strong>Synthetic example.</strong> The recorded observations below come from the <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs/pg-upgrade-14-to-18">published lab script and output</a> run on 21 October 2026. No client data or client outcome is represented.</p>
     <h2>Scope and inventory</h2>

@@ -5,7 +5,7 @@ import { problems } from '../data/problems';
   {problems.map((item) => (
     <a class="card card-link" href={item.href}>
       <span class="kicker">Problem guide</span>
-      <h3>{item.title}</h3>
+      <h2 class="card-heading">{item.title}</h2>
       <p>{item.description}</p>
     </a>
   ))}

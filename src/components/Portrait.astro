@@ -1,0 +1,6 @@
+---
+import { existsSync } from 'node:fs';
+const photo = '/images/kiran-sabne.webp';
+const available = existsSync(process.cwd() + '/public' + photo);
+---
+{available && <img class="portrait" src={photo} alt="Kiran Sabne" width="240" height="240" />}

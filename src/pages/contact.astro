@@ -2,6 +2,7 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import { site } from '../config/site';
+import { campaignFields } from '../lib/campaign-context.mjs';
 import { reviews } from '../data/reviews';
 const endpoint = site.contactEndpoint;
 const action = endpoint || `mailto:${site.email}`;
@@ -11,20 +12,8 @@ const action = endpoint || `mailto:${site.email}`;
   <section>
     <div class="container grid two">
       <form id="inquiry-form" class="card" action={action} method="POST" enctype={endpoint ? undefined : "text/plain"} data-email={site.email} data-mailto-fallback={endpoint ? "false" : "true"}>
-        <input type="hidden" name="utm_source" />
-        <input type="hidden" name="utm_medium" />
-        <input type="hidden" name="utm_campaign" />
-        <input type="hidden" name="utm_content" />
-        <input type="hidden" name="first_utm_source" />
-        <input type="hidden" name="first_utm_medium" />
-        <input type="hidden" name="first_utm_campaign" />
-        <input type="hidden" name="first_utm_content" />
-        <input type="hidden" name="landing_page" />
-        <input type="hidden" name="latest_landing_page" />
+        {[...campaignFields, ...campaignFields.map(key => 'first_' + key), 'landing_page', 'latest_landing_page', 'referring_page', 'referral_source', 'referral_landing_page'].map(key => <input type="hidden" name={key} data-campaign />)}
         <input type="hidden" name="from_page" />
-        <input type="hidden" name="referring_page" />
-        <input type="hidden" name="referral_source" />
-        <input type="hidden" name="referral_landing_page" />
         {endpoint && (
           <>
             <input type="hidden" name="_subject" value="Database investigation request" />
@@ -57,14 +46,14 @@ const action = endpoint || `mailto:${site.email}`;
         {site.bookingUrl && (
           <>
             <span class="kicker">Prefer a call?</span>
-            <h3>Book a {site.triageCallMinutes}-minute triage call</h3>
+            <h2 class="card-heading">{site.callLabel}</h2>
             <p class="muted">Pick a time that suits you. The call covers what is happening, what evidence exists and whether a fixed-scope review fits. It is not a free diagnosis.</p>
-            <div class="actions"><a class="button primary" href={site.bookingUrl} target="_blank" rel="noopener" data-track="booking_click">Choose a time</a></div>
+            <div class="actions"><a class="button primary" href={site.bookingUrl} target="_blank" rel="noopener" data-track="book_call_click">Choose a time</a></div>
             <hr />
           </>
         )}
         <span class="kicker">Before sending</span>
-        <h3>Useful context if you have it</h3>
+        <h2 class="card-heading">Useful context if you have it</h2>
         <ul class="muted">
           <li>Database/version and hosting platform</li>
           <li>What changed or when the symptom started</li>
@@ -83,13 +72,6 @@ const action = endpoint || `mailto:${site.email}`;
     import { successfulSubmissionEvent } from '../lib/campaign-context.mjs';
     const form = document.querySelector<HTMLFormElement>('#inquiry-form');
     if (form) {
-      try {
-        const context = JSON.parse(sessionStorage.getItem('walstack-campaign-context') || '{}');
-        for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'first_utm_source', 'first_utm_medium', 'first_utm_campaign', 'first_utm_content', 'landing_page', 'latest_landing_page', 'referring_page', 'referral_source', 'referral_landing_page']) {
-          const input = form.elements.namedItem(key);
-          if (input instanceof HTMLInputElement && typeof context[key] === 'string') input.value = context[key];
-        }
-      } catch { /* Contact still works when session storage is unavailable. */ }
       // Guides link here with ?offer=…&from=… so the inquiry shows which page produced it.
       const params = new URLSearchParams(location.search);
       const offer = (params.get('offer') || '').slice(0, 40);
