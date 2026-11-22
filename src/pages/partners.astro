@@ -1,12 +1,41 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import { site } from '../config/site';
+const enquiry = '/contact?offer=partnership&from=%2Fpartners';
 ---
-<BaseLayout title="PostgreSQL Reviews for Agencies and Fractional CTOs | WalStack" description="Bring me a client with slow PostgreSQL. I’ll do the first review free under your name, so you can see the work before deciding anything.">
+<BaseLayout title="PostgreSQL Consultant for Agencies and Fractional CTOs | WalStack" description="A specialist PostgreSQL and SQL Server engineer for agencies and fractional CTOs. Read-only reviews, upgrade assessments and migration reviews, scoped before work starts.">
   <header class="container hero"><p class="eyebrow">For agencies and fractional CTOs</p>
     <h1>Bring me a client whose Postgres is slow.</h1>
     <p class="lede">I'll do the first review free, under your name, so you can see the work before deciding anything.</p>
     <p>You keep the client relationship. I review the read-only output you have permission to share and write up what stands out.</p>
-    <div class="actions"><a class="button primary" href={site.bookingUrl} data-track="book_call_click">Book a call</a><a class="button" href="/snapshot">Get a free snapshot review</a></div>
+    <div class="actions"><a class="button primary" href={site.bookingUrl} data-track="book_call_click" data-offer="partnership">Book a call</a><a class="button" href={enquiry} data-track="primary_cta_click" data-offer="partnership">Send a partnership enquiry</a></div>
   </header>
+  <section><div class="container prose">
+    <h2>Who this is for</h2>
+    <ul><li>Development agencies that build and run SaaS products on PostgreSQL but don't have a database specialist on the team.</li>
+      <li>Fractional CTOs who need a second opinion on a client's database before recommending spend, a rewrite or a hire.</li>
+      <li>DevOps and cloud consultancies handling RDS or Aurora estates where the open question is the database, not the infrastructure.</li></ul>
+    <h2>When it makes sense to bring me in</h2>
+    <ul><li>A client reports slow pages or a rising RDS or Aurora bill and your team can't point to the cause.</li>
+      <li>A client is still on PostgreSQL 14 or planning another major-version upgrade and needs the risks written down.</li>
+      <li>A migration, backfill or schema change is about to ship and nobody has checked what it locks.</li>
+      <li>A SQL Server client has a plan regression or blocking problem that Query Store should explain.</li></ul>
+    <h2>How the first review works</h2>
+    <p>The free first review uses the same read-only <a href="/snapshot">snapshot script</a> and format as the public snapshot review: one database, the output your client has authorised you to share, and three written findings. It counts toward the same monthly limit. Anything beyond that is scoped and priced before it starts.</p>
+    <h2>Roles and confidentiality</h2>
+    <ul><li><strong>Authorisation.</strong> You confirm that your client has agreed to share the output with a subcontractor. I don't need credentials for the first review.</li>
+      <li><strong>Client communication.</strong> By default you talk to the client and I talk to you. I join client calls only when you ask.</li>
+      <li><strong>White label.</strong> The free first review goes out under your name. For paid work, a white-label report is agreed in writing per engagement; otherwise it names me as the reviewing engineer.</li>
+      <li><strong>Confidentiality.</strong> Send your NDA or your client's for review before any evidence is shared. Output is used only for that client's report and deleted after {site.retentionDays} days unless the engagement says otherwise.</li>
+      <li><strong>Production changes.</strong> Your team or the client's team makes them. My reports include the risk, rollback and validation for each change.</li></ul>
+    <h2>Paid work you can resell or refer</h2>
+    <ul><li><a href="/postgresql-performance-investigation">PostgreSQL slowdown investigation</a>: {site.investigationOffer.display}.</li>
+      <li><a href="/postgresql-upgrade-readiness">PostgreSQL upgrade readiness review</a>: {site.upgradeOffer.display}.</li>
+      <li><a href="/query-rescue">Query Rescue</a> and <a href="/database-code-review">Database Code Review</a> for one query or one change set, quoted per scope.</li>
+      <li><a href="/sql-server-performance">SQL Server performance review</a>, quoted per scope.</li></ul>
+    <p>Each engagement has a written scope, a fixed fee and a delivery date before work starts. You can see the format in the <a href="/sample-report" data-track="sample_report_click">sample report</a>, built on a demo database.</p>
+    <h2>Who you'd be working with</h2>
+    <p>I'm <a href="/about">{site.personName}</a>. I work alone, with about 8 years in database and backend engineering. WalStack is <a href={site.directoryUrl}>listed in PostgreSQL.org's Professional Services directory</a>, and I built <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a>. The <a href="/partner-kit">partner kit</a> has a one-page summary you can share internally.</p>
+    <div class="actions"><a class="button primary" href={site.bookingUrl} data-track="book_call_click" data-offer="partnership">Book a call</a><a class="button" href={enquiry} data-track="primary_cta_click" data-offer="partnership">Send a partnership enquiry</a></div>
+  </div></section>
 </BaseLayout>
