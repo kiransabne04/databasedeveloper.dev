@@ -19,10 +19,38 @@ Start the 30 days when the public snapshot script, upload delivery and booking c
 | --- | --- |
 | snapshot_page_view | Visit to /snapshot |
 | script_download | Click on the actual snapshot SQL download |
-| snapshot_submitted | Formspree accepted the multipart request. Visiting or refreshing the receipt URL adds no submission. |
+| snapshot_submitted | Formspree returned 2xx for the multipart request. The page waits for Plausible's callback (at most 1.5 s) before opening the receipt, so the event is not lost on navigation. Visiting or refreshing the receipt URL adds no submission. |
 | book_call_click | Click on Kiran’s scheduling link, including the upgrade and partner buttons |
 | sample_report_view | Visit to /sample-report |
 | pricing_view | Visit to /pricing |
+
+Click events carry `source_page`, campaign fields, `service_id` on service pages and, since November 2026, `offer` when the clicked link names one. Example: a `primary_cta_click` from the SQL Server page has `offer=sqlserver`. `primary_cta_click` and `contact_submit` (contact form accepted, with `offer` and `from_page`) are sent too. Register them as goals if you want them in the dashboard. Tests for the dispatch logic are in `scripts/audit-funnels.mjs`.
+
+## Funnel stages
+
+Count each stage from its own source. A stage is never inferred from the one before it.
+
+| Stage | Source of truth |
+| --- | --- |
+| Page view | Plausible |
+| Script download | Plausible `script_download`: a click only |
+| Submitted and accepted file | Formspree entry with an attachment that opens |
+| Usable, qualified snapshot request | Owner judgement, recorded in HubSpot |
+| Booking link clicked | Plausible `book_call_click` |
+| Confirmed booking | Cal.com |
+| Sales conversation | HubSpot deal stage |
+| Proposal | HubSpot deal stage, with the proposal date |
+| Paid investigation | Payment receipt |
+
+### Reconciling enquiries into HubSpot (manual, weekly)
+
+1. Export or read new Formspree entries (snapshot and contact forms) and new Cal.com bookings.
+2. Search HubSpot by email before creating anything. If the contact exists, add a note instead of a new record.
+3. Create one deal per buying request. Set the source from the submitted `utm_source`, `referral_source` or `from_page`, in that order. Use "unknown" when none is present.
+4. Move the deal through Qualified, Conversation, Proposal, Won/Lost by hand.
+5. Delete snapshot files at 30 days as promised. HubSpot keeps only the summary note, never the files.
+
+No automation is needed at this volume. Add a Formspree-to-HubSpot integration only if manual entry exceeds about 30 minutes a week.
 
 ## Channel attribution
 
