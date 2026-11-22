@@ -25,11 +25,12 @@ const command = 'psql -X -h <host> -p 5432 -U <user> -d <database> ' + '\\' + '\
     <h3>What it reads</h3><ul>
       <li>PostgreSQL's own statistics and catalog, including settings, expensive queries, table and index activity, and index definitions.</li>
       <li>Foreign keys that may need a supporting index, blocked sessions, connections, cleanup activity and replication health.</li>
-      <li>Column names and types for the 10 largest tables. Set <code>show_schema off</code> to omit the column listing. Index and foreign key definitions can still contain column names.</li></ul>
+      <li>Column names and types for the 10 largest tables. Add <code>-v show_schema=off</code> to the command to omit the column listing. Index and foreign key definitions can still contain column names.</li></ul>
     <h3>What it leaves alone</h3><ul>
       <li>It doesn't read rows from your application tables, write data, change persistent settings or create objects.</li>
       <li>It doesn't run your queries or ask PostgreSQL to explain their execution plans.</li>
-      <li>PostgreSQL usually replaces query values with markers like <code>$1</code> and <code>$2</code>. Sensitive text can still appear. Set <code>show_query_text off</code> to omit query text.</li></ul>
+      <li>It doesn't record host names or IP addresses. It does include database, table, index and role names.</li>
+      <li>PostgreSQL usually replaces query values with markers like <code>$1</code> and <code>$2</code>. Some statements, such as <code>ALTER ROLE … PASSWORD</code>, keep their literal values. The script replaces any query text that mentions a password, secret, token or API key with a placeholder. Sensitive text can still appear, so add <code>-v show_query_text=off</code> to omit query text entirely. Findings are less specific without it.</li></ul>
     <p>Read every file before sending. Delete anything you don't want to share, including sensitive names or details in screenshots.</p>
     <h2 id="send">4. Send your snapshot</h2><SnapshotForm />
     <h2>5. What happens to your data?</h2>
