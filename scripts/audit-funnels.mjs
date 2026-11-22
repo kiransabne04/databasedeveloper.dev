@@ -98,6 +98,7 @@ for (const route of ['/', '/pricing', '/postgresql-performance-investigation']) 
   ok(!/evidence-backed improvement|find nothing you can act on/.test(page(route)), `${route} uses the old subjective refund wording`);
   ok(/no (evidence-backed recommendation|recommendation backed by evidence)/.test(page(route)), `${route} missing the objective refund condition`);
 }
+ok(/up to 5 snapshots a month/.test(page('/snapshot')) && /Up to 5 a month/.test(page('/pricing')), 'Snapshot cap must match site.snapshotMonthlyCap (5)');
 ok(/check that the output is usable and the request fits/.test(page('/snapshot')) && /within 1 business day/.test(page('/snapshot')), 'Snapshot fit check missing');
 ok(/within 1 business day/i.test(page('/snapshot/thank-you')), 'Receipt page must state the fit-check reply time');
 

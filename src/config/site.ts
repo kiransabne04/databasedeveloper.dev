@@ -24,6 +24,8 @@ export const site = {
   contactEndpoint: import.meta.env.PUBLIC_CONTACT_ENDPOINT ?? 'https://formspree.io/f/maeqleqk',
   snapshotEndpoint: import.meta.env.PUBLIC_SNAPSHOT_ENDPOINT || import.meta.env.PUBLIC_CONTACT_ENDPOINT || 'https://formspree.io/f/maeqleqk',
   retentionDays: 30,
+  /** Free snapshot reviews accepted per calendar month. */
+  snapshotMonthlyCap: 5,
   investigationTurnaround: '3 business days',
   investigationOffer: { display: '$450 for my first 3 clients, then $750' },
   upgradeOffer: { display: '$600 founding price, then $900' }

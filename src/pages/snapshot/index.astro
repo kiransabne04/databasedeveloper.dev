@@ -8,7 +8,7 @@ const command = 'psql -X -h <host> -p 5432 -U <user> -d <database> ' + '\\' + '\
 <BaseLayout title="Free PostgreSQL Snapshot Review | WalStack" description="Run one read-only PostgreSQL script. If it fits, I’ll email 3 written findings within 2 business days. Free for RDS, Aurora and self-managed PostgreSQL.">
   <header class="container hero"><h1>Free PostgreSQL snapshot review</h1>
     <p class="lede">Run one read-only script against your database and send me the output. I'll email 3 findings covering what stands out, why it matters and what I'd check next.</p>
-    <p>Free, no call needed. I review up to 10 snapshots a month from companies running PostgreSQL in production. I first check that the output is usable and the request fits. If it doesn't, or the month is full, I'll tell you within 1 business day. Accepted snapshots get 3 written findings within 2 business days of acceptance.</p><div class="actions"><a class="button primary" href="#download">Get the script</a><a class="button" href={site.bookingUrl} data-track="book_call_click">{site.callLabel}</a></div>
+    <p>Free, no call needed. I review up to {site.snapshotMonthlyCap} snapshots a month from companies running PostgreSQL in production. I first check that the output is usable and the request fits. If it doesn't, or the month is full, I'll tell you within 1 business day. Accepted snapshots get 3 written findings within 2 business days of acceptance.</p><div class="actions"><a class="button primary" href="#download">Get the script</a><a class="button" href={site.bookingUrl} data-track="book_call_click">{site.callLabel}</a></div>
   </header>
   <section><div class="container prose snapshot">
     <h2 id="download">1. Download the script</h2>
