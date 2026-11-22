@@ -1,30 +1,19 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import FocusedReviews from '../components/FocusedReviews.astro';
-import PageHero from '../components/PageHero.astro';
+import ConversionActions from '../components/ConversionActions.astro';
+import InvestigationDeliverables from '../components/InvestigationDeliverables.astro';
 import { site } from '../config/site';
 ---
-<BaseLayout title="Scope and Pricing | PostgreSQL Assessments | WalStack" description="WalStack quotes fixed-scope PostgreSQL performance investigations, upgrade-readiness reviews and validation sprints after a short fit review.">
-  <PageHero eyebrow="Scope and pricing" title="A clear scope and fixed quote before paid work." description="Tell me the cluster, the business problem and the decision you need to make. I will review fit, evidence and timing, then send a written scope and fee. There is no open-ended hourly commitment." primaryLabel="Request an Investigation" primaryHref="/contact?offer=investigation&from=/pricing" />
-  <section><div class="container"><h2>Focused entry reviews</h2><p>One query or one change set in PostgreSQL or SQL Server. Fixed quote after fit review.</p><FocusedReviews /></div></section>
-  <section><div class="container"><h2>Broader assessments and remediation</h2></div><div class="container grid three">
-    <div class="card price-card"><span class="kicker">01 · Core assessment</span><h2>PostgreSQL Performance Investigation</h2><p><strong>{site.investigationOffer.display}</strong></p><p>{site.investigationOffer.scope}. Client-run, read-only evidence; ranked findings, risk, validation plan, written report and review call.</p><p>Target: {site.investigationTurnaround} after usable evidence, subject to availability.</p><a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/pricing">Request an Investigation</a><p><a href="/postgresql-performance-investigation">See full scope →</a></p></div>
-    <div class="card price-card"><span class="kicker">02 · Upgrade decision</span><h2>PostgreSQL Upgrade Readiness Review</h2><p><strong>{site.upgradeOffer.display}</strong></p><p>{site.upgradeOffer.scope}. Version and extension compatibility, representative baseline, critical plan checks, blockers, go/no-go and rollback criteria, written report and review call.</p><a class="button" href="/contact?offer=upgrade&amp;from=/pricing">Ask about upgrade readiness</a><p><a href="/postgresql-upgrade-readiness">See full scope →</a></p></div>
-    <div class="card price-card"><span class="kicker">03 · After qualification</span><h2>Remediation or Migration Validation Sprint</h2><p><strong>{site.sprintOffer.display}</strong></p><p>{site.sprintOffer.scope}. Agreed environments, acceptance criteria and before/after measurement. Client owns production operations. Available only after qualification.</p><a class="button" href="/contact?offer=sprint&amp;from=/pricing">Discuss a sprint</a></div>
-  </div></section>
-  <section><div class="container prose">
-    <h2>Which review fits?</h2>
-    <div class="table-wrap"><table><thead><tr><th>Your decision</th><th>Start here</th><th>What you receive</th></tr></thead><tbody>
-      <tr><td>Why is latency, contention or database cost changing?</td><td><a href="/postgresql-performance-investigation">Performance investigation</a></td><td>Ranked causes, uncertainty and safe validation steps</td></tr>
-      <tr><td>Why is one identified query slow?</td><td><a href="/query-rescue">Query Rescue</a></td><td>Annotated plan, ranked changes and validation queries</td></tr>
-      <tr><td>What could this migration block or break?</td><td><a href="/database-code-review">Database Code Review</a></td><td>Severity-ranked findings and a deployment checklist</td></tr>
-      <tr><td>Can we move to a target PostgreSQL version safely?</td><td><a href="/postgresql-upgrade-readiness">Upgrade readiness</a></td><td>Blockers, baseline, go/no-go and rollback criteria</td></tr>
-      <tr><td>Did a specific agreed change meet its target?</td><td>Validation sprint after qualification</td><td>Before/after measures against acceptance criteria</td></tr>
+<BaseLayout title="PostgreSQL Review Pricing | WalStack" description="Start with a free snapshot. A slowdown investigation costs $450 for my first 3 clients, then $750. See upgrade pricing and exactly what each review includes.">
+  <header class="container hero"><h1>PostgreSQL review pricing</h1><p class="lede">Start with three written findings for free. If you need a deeper answer, here’s what it costs in USD.</p></header>
+  <section><div class="container">
+    <div class="table-wrap pricing-table"><table><caption class="visually-hidden">PostgreSQL review prices in USD</caption><thead><tr><th scope="col">Review</th><th scope="col">Price</th><th scope="col">What you get</th></tr></thead><tbody>
+      <tr><th scope="row"><a href="/snapshot">Free snapshot review</a></th><td>$0</td><td>3 written findings within 2 business days from one read-only script. I review 10 per month.</td></tr>
+      <tr><th scope="row"><a href="/postgresql-performance-investigation">Postgres Slowdown Investigation</a></th><td>{site.investigationOffer.display}</td><td>The cause, a safe fix, a review call and a 14-day check. Full refund if I find no evidence-backed improvement.</td></tr>
+      <tr><th scope="row"><a href="/postgresql-upgrade-readiness">PostgreSQL Upgrade Readiness</a></th><td>{site.upgradeOffer.display}</td><td>Pre-upgrade checks, current query timings, a comparison plan and a rollback plan.</td></tr>
     </tbody></table></div>
-    <h2>How the quote is set</h2><p>For a cluster assessment I scope one dominant workload or upgrade path. For a focused review I scope one query path or change set. The quote states evidence required, deliverables, exclusions, review time and the delivery window. Additional clusters, unrelated workloads or implementation need a separate scope. Advisory is available for existing clients or qualified buyers after an assessment.</p>
-    <ol><li>Send the symptom or upgrade decision through <a href="/contact">the inquiry form</a>.</li><li>I review fit, evidence and timing, then send a written scope and fixed fee.</li><li>After acceptance, your team shares reviewed evidence and I deliver the report and the follow-up agreed for your offer.</li></ol>
-    <h2>What your team owns</h2><p>Your team reviews and runs evidence collection, approves access and data handling, and executes production changes. WalStack does not include emergency response, 24×7 support or unlimited DBA staffing. A report may conclude that the evidence does not support a clear change; it will name the uncertainty and next test.</p>
-
-    <p><a href="/sample-report">See a synthetic performance report</a> or <a href="/sample-upgrade-readiness-report">synthetic upgrade-readiness report</a> before asking for a quote.</p>
+    <p>After an investigation, you can ask me about a monthly check-in.</p>
+    <div class="prose"><h2>Inside the slowdown investigation</h2><InvestigationDeliverables />
+    <p>I invoice upfront and deliver the report in 3 business days after I get access or your script output.</p><ConversionActions /></div>
   </div></section>
 </BaseLayout>

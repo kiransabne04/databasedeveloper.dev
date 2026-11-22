@@ -2,20 +2,11 @@
 
 Astro site for WalStack. The site builds locally; review the preview, contact path and old Hashnode URLs before changing the live domain.
 
-## Positioning
+## 30-day conversion test
 
-**Production PostgreSQL performance, investigated from evidence—not guesses.**
+The primary conversion is a free PostgreSQL snapshot submission. The secondary conversion is a booked 15-minute call with Kiran. The pricing page lists the investigation and upgrade review fees.
 
-Primary:
-- PostgreSQL Performance Investigation
-- PostgreSQL Upgrade Readiness
-- AWS RDS / Aurora PostgreSQL
-
-Secondary capability:
-- SQL Server
-- pgvector
-- Snowflake
-- OLAP / analytical workloads
+Review the [complete page copy](docs/conversion-test-copy.html) and [current setup and measurement plan](docs/analytics/MEASUREMENT_PLAN.md) before starting the test. The plan covers the portrait, script download, file uploads, the production calendar, analytics goals and the Search Console sitemap.
 
 ## Run
 

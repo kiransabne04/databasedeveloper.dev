@@ -1,27 +1,5 @@
 ---
-import { site } from '../config/site';
-const {
-  eyebrow = 'Production evidence',
-  title = 'Need an independent PostgreSQL investigation?',
-  description = 'Start with the problem and the evidence you already have. You will get a direct answer on whether a scoped investigation is the right next step.',
-  primaryLabel = 'Request an Investigation',
-  primaryHref = '/contact',
-  primaryTrack = 'primary_cta_click',
-  secondaryLabel = 'See sample report',
-  secondaryHref = '/sample-report'
-} = Astro.props;
+import ConversionActions from './ConversionActions.astro';
+const { eyebrow, title = 'Is production PostgreSQL slowing you down?', description = 'Send a snapshot. I’ll reply with three written findings within two business days.' } = Astro.props;
 ---
-<div class="cta-panel">
-  <div>
-    <span class="eyebrow">{eyebrow}</span>
-    <h2>{title}</h2>
-    <p class="muted">{description}</p>
-    {site.bookingUrl && (
-      <p class="small muted">Prefer to talk first? <a href={site.bookingUrl} target="_blank" rel="noopener" data-track="booking_click">Book a {site.triageCallMinutes}-minute triage call</a>.</p>
-    )}
-  </div>
-  <div class="actions">
-    <a class="button primary" data-track={primaryTrack} href={primaryHref}>{primaryLabel}</a>
-    <a class="button" data-track="sample_report_click" href={secondaryHref}>{secondaryLabel}</a>
-  </div>
-</div>
+<div class="cta-panel"><div>{eyebrow && <span class="eyebrow">{eyebrow}</span>}<h2>{title}</h2><p>{description}</p></div><ConversionActions /></div>

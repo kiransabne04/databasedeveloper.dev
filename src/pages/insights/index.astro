@@ -89,7 +89,7 @@ const schema = {
       <div class="section-head"><div><h2>{group.title}</h2></div><p>{group.intro} Related: <a href={group.related.href}>{group.related.label}</a>.</p></div>
       <div class="grid three">
         {group.items.map((item) => (
-          <a class="card card-link" href={item.href} data-track={item.href.startsWith('/') ? undefined : 'mssqlserver_click'}><span class="kicker">{item.kicker}</span><h3>{item.title}</h3><p>{item.text}</p></a>
+          <a class="card card-link" href={item.href} data-track={item.href.startsWith('/') ? undefined : 'mssqlserver_click'}><span class="kicker">{item.kicker.replace('Lab-tested', 'Lab · Generated data')}</span><h3>{item.title}</h3><p>{item.text}</p></a>
         ))}
       </div>
     </div></section>

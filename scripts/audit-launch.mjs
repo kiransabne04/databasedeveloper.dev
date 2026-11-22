@@ -27,9 +27,9 @@ for (const source of walk(pages, '.astro')) {
   const canonicalAliases = { '/postgresql-query-rescue': '/query-rescue', '/postgresql-pr-review': '/database-code-review' };
   const canonical = `https://walstack.io${canonicalAliases[normalized] || (normalized === '/' ? '/' : normalized)}`;
   assert(html.includes(`<link rel="canonical" href="${canonical}"`), `Bad canonical ${normalized}`);
-  const compatibilityAlias = ['/postgresql-query-rescue', '/postgresql-pr-review'].includes(normalized);
+  const excludedFromSitemap = ['/postgresql-query-rescue', '/postgresql-pr-review', '/snapshot/thank-you'].includes(normalized);
   const routeUrl = `https://walstack.io${normalized === '/' ? '/' : normalized}`;
-  assert(sitemap.includes(`<loc>${routeUrl}</loc>`) === !compatibilityAlias, `Unexpected sitemap status ${normalized}`);
+  assert(sitemap.includes(`<loc>${routeUrl}</loc>`) === !excludedFromSitemap, `Unexpected sitemap status ${normalized}`);
   assert(/<meta name="description" content="[^"]+"/.test(html), `Missing description ${normalized}`);
   allHtml.push([normalized, html]);
 }
@@ -56,7 +56,6 @@ for (const [key, heading, title] of reviewPages) {
   assert(html.includes('<h1>' + heading + '</h1>') && html.includes('<title>' + title + '</title>'), route + ' heading/title');
   assert(html.includes('property="og:url" content="' + url + '"') && html.includes('name="twitter:title" content="' + title + '"'), route + ' social metadata');
   assert(!/<meta name="robots"[^>]*noindex/i.test(html), route + ' blocked from indexing');
-  assert(html.includes('Fixed quote after fit review'), route + ' expected fit-review quote terms');
   const nodes = [...html.matchAll(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/gs)].map(m => JSON.parse(m[1]));
   const service = nodes.find(n => n['@type'] === 'Service');
   assert.equal(service?.url, url);
@@ -64,8 +63,6 @@ for (const [key, heading, title] of reviewPages) {
   assert(!service.offers && !nodes.some(n => n['@type'] === 'AggregateRating'));
   assert.deepEqual(nodes.find(n => n['@type'] === 'BreadcrumbList')?.itemListElement.map(i => [i.position, i.item]), [[1, 'https://walstack.io/'], [2, url]]);
   for (const [, id] of html.matchAll(/href="#([^"]+)"/g)) assert(html.includes('id="' + id + '"'), route + ' missing #' + id);
-  const params = new URLSearchParams({ offer: key, from: route });
-  assert(html.includes('href="/contact?' + params.toString().replaceAll('&', '&amp;') + '"'), route + ' enquiry attribution');
   assert(page('/contact').includes('value="' + key + '"'), route + ' contact option');
 }
 for (const [route, canonical] of [['/postgresql-query-rescue', 'https://walstack.io/query-rescue'], ['/postgresql-pr-review', 'https://walstack.io/database-code-review']]) {
@@ -97,10 +94,32 @@ for (const [route, sections, links] of newGuides) {
   for (const section of sections) assert(html.includes(`href="#${section}"`) && html.includes(`id="${section}"`), `${route} TOC target missing: ${section}`);
   for (const link of links) assert(html.includes(`href="${link}"`), `${route} missing link: ${link}`);
 }
-assert(page('/').includes('href="/contact?offer=investigation&amp;from=/"'), 'Homepage primary CTA lost offer attribution');
-assert(page('/').includes('href="/sample-report"'), 'Homepage sample CTA missing');
-assert(page('/partners').includes('href="/contact?offer=partnership&amp;from=/partners"'), 'Partner CTA missing');
-assert(page('/postgresql-upgrade-readiness').includes('href="/contact?offer=upgrade&amp;from=/postgresql-upgrade-readiness"'), 'Upgrade CTA missing offer attribution');
+const home = page('/');
+const visibleText = html => html.replace(/<script\b[^>]*>.*?<\/script>/gs, '').replace(/<style\b[^>]*>.*?<\/style>/gs, '').replace(/<[^>]+>/g, ' ');
+for (const [route, html] of allHtml) {
+  assert.equal((html.match(/<h1\b/g) || []).length, 1, route + ' should have one H1');
+  let lastHeading = 0;
+  for (const [, level] of html.matchAll(/<h([1-6])\b/g)) {
+    assert(Number(level) <= lastHeading + 1, route + ' skips a heading level');
+    lastHeading = Number(level);
+  }
+  assert(html.includes('href="/snapshot"') && html.includes('data-track="book_call_click"'), route + ' missing conversion link');
+  assert(!/\b(?:we|our|ours)\b/i.test(visibleText(html)), route + ' uses plural first person');
+}
+assert(!/workload evidence|workload baselines|prepared-plan regression|DDL lock queue|Query Store|go\/no-go|\bOLAP\b|evidence-first|ranked change plan/i.test(visibleText(home)), 'Homepage jargon');
+const main = home.match(/<main[^>]*>(.*?)<\/main>/s)[1];
+for (const path of ['/capabilities', '/partners', '/query-rescue', '/database-code-review', '/sql-server-performance']) assert(!main.includes('href="' + path + '"'), path + ' promoted in homepage body');
+assert(main.includes('href="/sample-report"') && main.includes('demo database') && main.includes('generated data'), 'Homepage proof labels');
+assert(!/<blockquote/.test(main), 'Unexpected homepage quote');
+for (const route of ['/sample-report', '/sample-upgrade-readiness-report', '/case-studies', '/case-studies/lab-lock-queue', '/case-studies/lab-generic-plan-regression']) {
+  assert(/synthetic|demo database|generated data/i.test(visibleText(page(route))), route + ' missing lab disclosure');
+}
+const snapshot = page('/snapshot');
+assert(snapshot.includes('href="/snapshot/walstack-snapshot.sql"') && snapshot.includes('data-track="script_download"'), 'Snapshot download link or event missing');
+assert(existsSync(join(dist, 'snapshot', 'walstack-snapshot.sql')), 'Snapshot SQL missing from build');
+assert(snapshot.includes('multipart/form-data') && snapshot.includes('name="snapshot_1"') && snapshot.includes('name="allowed_to_share"'), 'Snapshot form missing');
+assert(page('/snapshot/thank-you').includes('noindex,nofollow'), 'Receipt must be excluded from search');
+assert(snapshot.includes('utm_source') && page('/pricing').includes('$450') && page('/pricing').includes('$750'), 'Missing attribution or price');
 assert(page('/sample-upgrade-readiness-report').includes('Synthetic'), 'Upgrade sample lost synthetic label');
 assert(page('/contact').includes('name="offer"') && page('/contact').includes('name="_gotcha"'), 'Contact offer or spam field missing');
 const directoryUrl = 'https://www.postgresql.org/support/professional_support/asia/';
@@ -122,11 +141,11 @@ for (const route of ['/query-rescue', '/database-code-review']) {
 }
 const contactSource = readFileSync(join(root, 'src/pages/contact.astro'), 'utf8');
 assert(contactSource.includes('successfulSubmissionEvent(response') && campaignSource.includes('if (!response.ok) throw'), 'Form submission must count only a successful response');
-assert(contactSource.includes("name: 'contact_start'") && contactSource.includes("data-track=\"booking_click\""), 'Contact start and booking click must remain distinct');
-assert(contactSource.includes('name="referral_source"') && contactSource.includes('name="referral_landing_page"'), 'Contact form must preserve directory referral attribution');
+assert(contactSource.includes("name: 'contact_start'") && contactSource.includes("data-track=\"book_call_click\""), 'Contact start and booking click must remain distinct');
+assert(page('/contact').includes('name="referral_source"') && page('/contact').includes('name="referral_landing_page"'), 'Contact form must preserve directory referral attribution');
 assert(!contactSource.includes('contact_draft_open'), 'Email draft must not count as submitted lead');
-assert(baseSource.includes('page_location: cleanPage') && baseSource.includes('cleanReferrer(document.referrer)'), 'Analytics page URLs/referrers must be query-free');
-assert(baseSource.includes("window.gtag('event', 'service_page_view'") && (baseSource.match(/track\('service_page_view'/g) || []).length === 1, 'Consent should not duplicate the Plausible service view');
+for (const event of ['snapshot_page_view', 'sample_report_view', 'pricing_view']) assert(baseSource.includes("track('" + event + "')"), event + ' missing');
+assert(!baseSource.includes('googletagmanager.com'), 'Test uses cookie-free analytics');
 assert(campaignSource.includes('first_${key}') && campaignSource.includes('latest_landing_page'), 'First/latest campaign attribution missing');
 const memory = new Map();
 const storage = { getItem: key => memory.get(key) ?? null, setItem: (key, value) => memory.set(key, value) };
@@ -156,9 +175,4 @@ assert.equal(submissions, 0);
 const successEvent = successfulSubmissionEvent({ ok: true }, { service_id: 'query-rescue' });
 if (successEvent.detail.name === 'contact_submit') submissions++;
 assert.equal(submissions, 1);
-assert(!/\$149|\$60\/hour|\$450|\$750–900/.test(page('/pricing')), 'Legacy price on pricing page');
-for (const route of ['/postgresql-performance-investigation','/postgresql-upgrade-readiness']) {
-  assert(!page(route).includes('priceCurrency'), `Unpublished price remains in service schema: ${route}`);
-}
-
 console.log(`Launch audit passed: ${allHtml.length} Astro routes (${requiredRoutes.length} previously public), metadata, sitemap, internal links and commercial CTAs.`);

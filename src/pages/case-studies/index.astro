@@ -5,8 +5,8 @@ import PageHero from '../../components/PageHero.astro';
 <BaseLayout title="PostgreSQL Investigation Lab Cases — WalStack" description="Measured synthetic PostgreSQL lab cases showing the evidence and response to a generic-plan regression and DDL lock queue.">
   <PageHero eyebrow="Investigation examples" title="See the reasoning behind a finding." description="Two reproduced PostgreSQL problems with captured plans, locks, timings and tested responses." secondaryLabel="See sample report" secondaryHref="/sample-report" />
   <section><div class="container grid two">
-    <a class="card card-link" href="/case-studies/lab-generic-plan-regression"><span class="kicker">Measured lab</span><h3>Generic plan regression</h3><p>A plan setting hurt small tenants. Follow the change, plan evidence and tested response.</p></a>
-    <a class="card card-link" href="/case-studies/lab-lock-queue"><span class="kicker">Measured lab</span><h3>DDL lock queue</h3><p>An idle transaction, one ALTER TABLE and 14 seconds of zero reads, reproduced and measured.</p></a>
+    <a class="card card-link" href="/case-studies/lab-generic-plan-regression"><span class="kicker">Lab · Generated data</span><h2>Generic plan regression</h2><p>A plan setting hurt small tenants. Follow the change, plan evidence and tested response.</p></a>
+    <a class="card card-link" href="/case-studies/lab-lock-queue"><span class="kicker">Lab · Generated data</span><h2>DDL lock queue</h2><p>An idle transaction, one ALTER TABLE and 14 seconds of zero reads, reproduced and measured.</p></a>
   </div><div class="container prose">
     <p class="small muted">These are synthetic labs using generated data in an isolated environment, not client incidents.</p>
     <h2>What a lab case shows</h2>

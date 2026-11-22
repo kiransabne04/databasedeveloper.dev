@@ -1,150 +1,31 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import PageHero from '../components/PageHero.astro';
-import InvestigationWorkflow from '../components/InvestigationWorkflow.astro';
-import CTA from '../components/CTA.astro';
+import ConversionActions from '../components/ConversionActions.astro';
+import InvestigationDeliverables from '../components/InvestigationDeliverables.astro';
+import InvestigationFAQ from '../components/InvestigationFAQ.astro';
 import { site } from '../config/site';
-const schema = {
-  '@context': 'https://schema.org',
-  '@type': 'Service',
-  name: 'PostgreSQL Performance Investigation',
-  serviceType: 'PostgreSQL performance investigation',
-  provider: { '@type': 'ProfessionalService', name: site.brand, url: site.url },
-  areaServed: 'Worldwide',
-  url: `${site.url}/postgresql-performance-investigation`,
-  description: 'Fixed-scope assessment quoted after a fit review'
-};
 ---
-<BaseLayout
-  schema={schema}
-  title="PostgreSQL Performance Investigation — WalStack"
-  description="Evidence-first PostgreSQL performance investigation for SaaS teams dealing with latency, CPU, locking, connection pressure, plan regressions or database cost."
->
-  <PageHero
-    eyebrow="Core offer"
-    title="PostgreSQL Performance Investigation"
-    description="For engineering teams seeing latency, CPU or blocking across several requests. I investigate one PostgreSQL cluster, rank causes by evidence and give your team a written plan to validate changes."
-    primaryHref="/contact?offer=investigation&from=/postgresql-performance-investigation"
-    secondaryLabel="See sample report"
-    secondaryHref="/sample-report"
-    supportingText={`Fixed quote after fit review · Target report in ${site.investigationTurnaround} after usable evidence, subject to availability · No production access required`}
-  />
-  <section><div class="container"><p class="small muted">WalStack is <a href="https://www.postgresql.org/support/professional_support/asia/" rel="external">listed in PostgreSQL.org's Professional Services directory</a>.</p></div></section>
-
-  <section>
-    <div class="container">
-      <div class="section-head">
-        <div><span class="eyebrow">Good fit</span><h2>When the team knows something is wrong, but not which change is safe.</h2></div>
-      </div>
-      <div class="grid three">
-        <div class="card"><h3>Latency / CPU</h3><p>p95/p99 grows, database CPU climbs, or a few statements dominate total workload time.</p></div>
-        <div class="card"><h3>Regressions</h3><p>A release, version change, data growth or statistics shift changed plan behavior.</p></div>
-        <div class="card"><h3>Concurrency</h3><p>Blocking, lock queues, long transactions, connection storms or pool saturation appear under load.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="container">
-      <div class="section-head">
-        <div><span class="eyebrow">From plan to decision</span><h2>See the plan, then investigate the workload around it.</h2></div>
-        <p>An execution plan records one query execution. Production symptoms also depend on how often it runs, what sessions wait for, and what changed.</p>
-      </div>
-      <div class="grid two">
-        <div class="card">
-          <h3>Analyze a plan yourself</h3>
-          <p>PlanReader explains PostgreSQL plan nodes and flags issues such as estimate errors, scans and spills. Analysis runs in your browser.</p>
-          <p><a href={site.planReaderPostgresUrl} data-track="planreader_click">Analyze an execution plan with PlanReader ↗</a></p>
-        </div>
-        <div class="card">
-          <h3>Decide what to change in production</h3>
-          <p>I review the dominant workload alongside plans, waits, locks, connection behavior and recent changes. The report ranks findings, trade-offs and a way to validate each proposed change.</p>
-          <p><a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/postgresql-performance-investigation">Request an Investigation</a></p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="container">
-      <div class="section-head"><div><span class="eyebrow">Process</span><h2>Bounded and async-first.</h2></div><p>Target report in {site.investigationTurnaround} after receiving usable evidence, subject to availability. No 24×7 incident response or production write access.</p></div>
-      <InvestigationWorkflow />
-      <p class="topic-nav">Already isolated one slow statement? See <a href="/query-rescue">PostgreSQL query performance diagnosis</a>. If the decision concerns a proposed change, see the <a href="/database-code-review">database pull request review</a>.</p>
-    </div>
-  </section>
-
-  <section>
-    <div class="container grid two">
-      <div class="card">
-        <span class="kicker">Useful evidence</span>
-        <h3>Client-run, read-only inputs</h3>
-        <p class="muted">Most of this comes from one <a href="/evidence-collection">read-only collector script</a>.</p>
-        <ul class="muted">
-          <li>pg_stat_statements or equivalent workload evidence</li>
-          <li>Representative execution plans</li>
-          <li>Schema and relevant indexes</li>
-          <li>pg_stat_activity / waits / locks where relevant</li>
-          <li>Connection and vacuum/statistics context</li>
-          <li>Relevant non-default settings</li>
-          <li>Application symptom and recent-change timeline</li>
-          <li>On RDS/Aurora: Database Insights, CloudWatch and Enhanced Monitoring exports for the same window (<a href="/aws-rds-aurora-postgresql">what each answers</a>)</li>
-        </ul>
-        <p><a href={site.planReaderPostgresUrl} data-track="planreader_click">Analyze an execution plan with PlanReader ↗</a></p>
-      </div>
-      <div class="card">
-        <span class="kicker">You receive</span>
-        <h3>Ranked, actionable findings</h3>
-        <ul class="muted">
-          <li>Target report in {site.investigationTurnaround} after usable evidence</li>
-          <li>Executive summary</li>
-          <li>Top findings ranked by impact/confidence</li>
-          <li>Evidence references</li>
-          <li>Recommendation and trade-offs</li>
-          <li>Risk and rollback consideration</li>
-          <li>Validation plan</li>
-          <li>60-minute review call</li>
-          <li>Follow-up questions during the agreed review window</li>
-        </ul>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="container prose">
-      <h2>Questions before you request an investigation</h2>
-      <h3>What does the initial scope cover?</h3>
-      <p>{site.investigationOffer.scope}. The fit review identifies the symptom, evidence available and decision your team needs to make. Additional clusters or unrelated workloads need a separate scope.</p>
-      <h3>Do we have to grant database access?</h3>
-      <p>No. Your team runs agreed read-only collection and reviews the evidence before sharing it. Credentials and production dumps should stay in your environment.</p>
-      <h3>What if the evidence does not support one clear fix?</h3>
-      <p>The report separates supported findings from hypotheses, states confidence and missing evidence, and recommends the next useful test. A guaranteed performance gain is not part of the offer.</p>
-      <h3>Who implements the changes?</h3>
-      <p>Your engineering team owns production changes. If implementation help is useful, a bounded remediation sprint can be scoped separately after the findings are reviewed.</p>
-      <p><a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/postgresql-performance-investigation">Request an Investigation</a></p>
-    </div>
-  </section>
-
-  <section>
-    <div class="container">
-      <div class="section-head"><div><span class="eyebrow">Scope guardrail</span><h2>What this is not.</h2></div></div>
-      <div class="grid two">
-        <div class="card"><h3>No production write access</h3><p>Your team executes changes. I investigate, prioritize and define validation.</p></div>
-        <div class="card"><h3>No emergency SLA</h3><p>This is scheduled specialist work, not a substitute for an on-call DBA/SRE incident function.</p></div>
-        <div class="card"><h3>No guaranteed percentage</h3><p>Performance improvement depends on workload, implementation and system constraints.</p></div>
-        <div class="card"><h3>No generic “AI report”</h3><p>Candidate analysis may use automation, but client-facing findings remain human-reviewed and evidence-linked.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <section>
-    <div class="container">
-      <div class="card price-card">
-        <span class="kicker">Fixed scope</span><h3>Price agreed before work starts</h3>
-        <p class="muted">{site.investigationOffer.display}. I send a written scope, fee and delivery window after reviewing the evidence available. You decide before paid work starts.</p>
-        <a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/postgresql-performance-investigation">Request an Investigation</a>
-      </div>
-    </div>
-  </section>
-
-  <section><div class="container"><CTA primaryHref="/contact?offer=investigation&amp;from=/postgresql-performance-investigation" /></div></section>
+<BaseLayout title="Postgres Slowdown Investigation | WalStack" description="Find the cause of a slow or expensive PostgreSQL database. Get a fix, rollback steps and a 14-day check. $450 for my first 3 clients, then $750."
+  schema={{ '@context': 'https://schema.org', '@type': 'Service', name: 'Postgres Slowdown Investigation', url: site.url + '/postgresql-performance-investigation', provider: { '@id': site.url + '/#practice' } }}>
+  <header class="container hero"><p class="eyebrow">PostgreSQL performance</p><h1>Postgres Slowdown Investigation</h1>
+    <p class="lede">Find out why pages slowed down or the database bill went up. Get a written fix your engineers can test and undo.</p>
+    <p>{site.investigationOffer.display}. Paid upfront.</p><ConversionActions /></header>
+  <section><div class="container prose"><h2>Who it's for</h2>
+    <p>You run one production database on RDS, Aurora or self-managed PostgreSQL. Something changed, and the engineer who knows the database needs a second pair of eyes.</p>
+    <p>If it's just one slow query or endpoint, say so in the <a href="/snapshot#send">snapshot form</a> because the investigation covers it.</p>
+    <h2>What you get</h2><InvestigationDeliverables />
+    <p><a href="/sample-report" data-track="sample_report_click">Read the sample report</a>. I built it on a demo database.</p>
+    <h2>How the three business days work</h2>
+    <p>The clock starts when I have read-only access or the output of scripts you run. You keep control of production changes.</p>
+    <ol><li><strong>Day 1.</strong> I match the symptom to a time window. I compare query timings with traffic, database activity and recent releases.</li>
+      <li><strong>Day 2.</strong> I check which explanations fit. If two causes look alike, I ask for the smallest extra check that could distinguish them.</li>
+      <li><strong>Day 3.</strong> I send the report with the proposed SQL, risks, rollback steps and before-and-after checks. You get a 45-minute review call.</li></ol>
+    <p>At the 14-day follow-up, I compare results with the original symptom and explain what changed.</p>
+    <h2>What can the data prove?</h2>
+    <p>Two captures can show that one query accounted for most of the extra database time. A single total can't tell me when the increase began.</p>
+    <p>If history is missing or the problem didn't recur, I say so. I explain which next measurement would settle the question.</p>
+    <h2>Price and refund</h2><p><strong>{site.investigationOffer.display}.</strong> Paid upfront in USD. If I can't find at least one evidence-backed improvement, you get a full refund.</p>
+    <p>WalStack is <a href={site.directoryUrl}>listed in PostgreSQL.org's Professional Services directory</a>.</p>
+    <h2>Frequently asked questions</h2><InvestigationFAQ /><ConversionActions />
+  </div></section>
 </BaseLayout>

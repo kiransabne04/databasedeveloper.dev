@@ -5,7 +5,6 @@ import CTA from '../components/CTA.astro';
 import { site } from '../config/site';
 import { pg14Facts } from '../data/facts';
 
-const endpoint = site.contactEndpoint;
 const pdfPath = '/downloads/postgresql-14-upgrade-checklist.pdf';
 const updated = '2026-10-21';
 const schema = {
@@ -35,8 +34,8 @@ const schema = {
   <PageHero
     eyebrow="PG14 end of life · Checklist"
     title="PostgreSQL 14 upgrade checklist"
-    description={`Community support for PostgreSQL 14 ends ${pg14Facts.communityEol}; RDS and Aurora standard support ends ${pg14Facts.rdsStandardSupportEnd}. This is the order of work I use to leave PG14 without a surprise blocker in the window or a slow application the next morning.`}
-    primaryLabel="Ask about upgrade readiness"
+    description={`Community support for PostgreSQL 14 ended on ${pg14Facts.communityEol}; RDS and Aurora standard support ends ${pg14Facts.rdsStandardSupportEnd}. This is the order of work I use to leave PG14 without a surprise blocker in the window or a slow application the next morning.`}
+    primaryLabel="Ask about upgrade readiness" primaryHref={site.bookingUrl} primaryTrack="book_call_click"
     secondaryLabel="Get the PDF"
     secondaryHref="#pdf"
   />
@@ -108,58 +107,11 @@ SELECT subname, subenabled FROM pg_subscription;`}</code></pre></li>
 
       <div id="pdf" class="card checklist-pdf">
         <h2>Get the checklist as a PDF</h2>
-        {endpoint ? (
-          <>
-            <p>Leave your email and the download link appears here. Your address comes to me directly; it is not added to a mailing list.</p>
-            <form id="checklist-form" action={endpoint} method="POST">
-              <input type="hidden" name="_subject" value="PG14 checklist PDF request" />
-              <input type="hidden" name="form" value="pg14-checklist" />
-              <input type="text" name="_gotcha" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true" />
-              <div class="field"><label for="checklist-email">Work email</label><input id="checklist-email" type="email" name="email" required autocomplete="email" /></div>
-              <div class="actions"><button class="button primary" type="submit">Send me the PDF link</button></div>
-              <p id="checklist-status" class="small muted" role="status"></p>
-            </form>
-            <p id="checklist-download" hidden><a class="button primary" data-track="checklist_pdf_download" href={pdfPath} download>Download the PDF</a></p>
-          </>
-        ) : (
-          <p><a class="button primary" data-track="checklist_pdf_download" href={pdfPath} download>Download the PDF</a></p>
-        )}
+        <p><a class="button" data-track="checklist_pdf_download" href={pdfPath} download>Download the PDF</a></p>
       </div>
     </div>
   </section>
 
-  <section><div class="container"><CTA eyebrow="Upgrade readiness" title="Want this done against your own workload?" description="A fixed-scope readiness review runs the inventory, blocker checks and baseline with you, and leaves you with a ranked risk list, a validation plan and rollback criteria." primaryLabel="Ask about upgrade readiness" secondaryLabel="See the readiness review" secondaryHref="/postgresql-upgrade-readiness" /></div></section>
+  <section><div class="container"><CTA eyebrow="Upgrade readiness" title="Want this done against your own workload?" description="A fixed-scope readiness review runs the inventory, blocker checks and baseline with you, and leaves you with a ranked risk list, a validation plan and rollback criteria." /></div></section>
 
-  <script>
-    const form = document.querySelector<HTMLFormElement>('#checklist-form');
-    if (form) {
-      form.addEventListener('submit', (event) => {
-        event.preventDefault();
-        const status = form.querySelector<HTMLElement>('#checklist-status');
-        const button = form.querySelector<HTMLButtonElement>('button[type="submit"]');
-        const download = document.querySelector<HTMLElement>('#checklist-download');
-        const data = new FormData(form);
-        try {
-          const context = JSON.parse(sessionStorage.getItem('dd-campaign-context') || '{}');
-          for (const key of ['utm_source', 'utm_medium', 'utm_campaign', 'landing_page']) {
-            if (typeof context[key] === 'string' && context[key]) data.set(key, context[key]);
-          }
-        } catch { /* The request still works without campaign context. */ }
-        if (button) button.disabled = true;
-        if (status) status.textContent = 'Sending…';
-        fetch(form.action, { method: 'POST', body: data, headers: { Accept: 'application/json' } })
-          .then((response) => {
-            if (!response.ok) throw new Error(String(response.status));
-            window.dispatchEvent(new CustomEvent('dd:track', { detail: 'checklist_email_submit' }));
-            form.hidden = true;
-            if (download) download.hidden = false;
-          })
-          .catch(() => {
-            if (status) status.textContent = 'That did not go through. The download is below anyway.';
-            if (download) download.hidden = false;
-          })
-          .finally(() => { if (button) button.disabled = false; });
-      });
-    }
-  </script>
 </BaseLayout>

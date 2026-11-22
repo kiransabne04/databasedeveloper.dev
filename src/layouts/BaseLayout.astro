@@ -1,9 +1,7 @@
 ---
 import '../styles/global.css';
-import { contactHref } from '../data/offers';
 import type { OfferKey } from '../data/offers';
 import { site, nav } from '../config/site';
-import { reviews } from '../data/reviews';
 
 interface Props {
   serviceId?: OfferKey;
@@ -32,9 +30,6 @@ const {
 } = Astro.props;
 
 const canonicalUrl = canonical ?? new URL(Astro.url.pathname, site.url).toString();
-const navContact = serviceId ? contactHref(serviceId, Astro.url.pathname) : '/contact';
-const navContactLabel = serviceId ? 'Request a Review' : 'Request an Investigation';
-const gaEnabled = Boolean(site.gaId);
 const isNotFound = Astro.url.pathname.replace(/\/$/, '') === '/404';
 const schemas = [
   {
@@ -45,22 +40,18 @@ const schemas = [
     url: site.url,
     description: site.description,
     email: site.email,
-    founder: {
-      '@type': 'Person',
-      name: site.personName,
-      url: `${site.url}/about`,
-      sameAs: [site.linkedinUrl, site.githubUrl, site.personalSiteUrl]
-    },
-    areaServed: 'Worldwide',
-    serviceType: [
-      'PostgreSQL performance investigation',
-      'PostgreSQL upgrade readiness',
-      'Query Rescue for PostgreSQL and SQL Server',
-      'Database Code Review for PostgreSQL and SQL Server',
-      'SQL Server performance review',
-      'pgvector performance review',
-      'Snowflake query performance review'
-    ]
+    founder: { '@id': site.url + '/#kiran' },
+    address: { '@type': 'PostalAddress', addressLocality: 'Pune', addressCountry: 'IN' },
+    areaServed: 'Worldwide'
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    '@id': site.url + '/#kiran',
+    name: site.personName,
+    jobTitle: 'Independent PostgreSQL performance engineer',
+    url: site.url + '/about',
+    sameAs: [site.linkedinUrl, site.githubUrl, site.personalSiteUrl]
   },
   ...(schema ? (Array.isArray(schema) ? schema : [schema]) : [])
 ];
@@ -94,25 +85,23 @@ const schemas = [
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     {schemas.map((item) => <script type="application/ld+json" set:html={JSON.stringify(item)} />)}
   </head>
-  <body data-not-found={isNotFound ? 'true' : undefined} data-service-id={serviceId} data-ga-id={site.gaId} data-analytics-hosts={JSON.stringify(site.analyticsHosts)} data-plausible-domain={import.meta.env.PUBLIC_PLAUSIBLE_DOMAIN}>
+  <body data-not-found={isNotFound ? 'true' : undefined} data-service-id={serviceId} data-plausible-script={site.plausibleScript} data-analytics-hosts={JSON.stringify(site.analyticsHosts)} data-plausible-domain={site.plausibleDomain}>
     <a class="skip-link" href="#main">Skip to content</a>
     <header class="site-header">
       <div class="container nav-shell">
         <a class="brand" href="/" aria-label="WalStack home">
-          <span class="brand-mark" aria-hidden="true">W</span>
+          <img src="/favicon.svg" alt="" width="34" height="34" />
           <span>{site.brand}</span>
         </a>
         <nav class="desktop-nav" aria-label="Primary navigation">
           {nav.map((item) => <a href={item.href}>{item.label}</a>)}
-          <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-          <a class="nav-cta" data-track={serviceId ? 'service_cta_click' : 'primary_cta_click'} href={navContact}>{navContactLabel}</a>
+          <a class="nav-cta" data-track="book_call_click" href={site.bookingUrl}>Book a call</a>
         </nav>
         <details class="mobile-menu">
           <summary>Menu</summary>
           <div class="mobile-menu-panel">
             {nav.map((item) => <a href={item.href}>{item.label}</a>)}
-            <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-            <a href={navContact} data-track={serviceId ? 'service_cta_click' : 'primary_cta_click'}>{navContactLabel}</a>
+            <a class="nav-cta" href={site.bookingUrl} data-track="book_call_click">Book a call</a>
           </div>
         </details>
       </div>
@@ -126,141 +115,71 @@ const schemas = [
       <div class="container footer-grid">
         <div>
           <a class="brand" href="/">
-            <span class="brand-mark" aria-hidden="true">W</span>
+            <img src="/favicon.svg" alt="" width="34" height="34" />
             <span>{site.brand}</span>
           </a>
-          <p>Evidence-first database performance investigations by <a href="/about">{site.personName}</a>.</p>
-          <p class="small">PostgreSQL first. Specialist capability across SQL Server, pgvector, Snowflake and analytical/OLAP workloads.</p>
+          <p>Kiran Sabne · Independent PostgreSQL engineer<br />Pune, India</p>
+          <p><a href="/snapshot" data-track="primary_cta_click">Get a free snapshot review</a> · <a href={site.bookingUrl} data-track="book_call_click">{site.callLabel}</a></p>
           <p class="small">© 2026 {site.legalName}</p>
         </div>
         <div class="footer-links">
-          <div>
-            <strong>Work</strong>
+          <div><strong>Work</strong>
             <a href="/postgresql-performance-investigation">Investigation</a>
             <a href="/postgresql-upgrade-readiness">Upgrade readiness</a>
-            {Object.values(reviews).map(review => <a href={review.href}>{review.name}</a>)}
-            <a href="/pricing">Pricing</a>
+            <a href="/query-rescue">Query Rescue</a>
+            <a href="/database-code-review">Database Code Review</a>
+            <a href="/sql-server-performance">SQL Server Performance Review</a>
+            <a href="/capabilities">Capabilities</a>
+            <a href="/partners">Partners</a>
           </div>
-          <div>
-            <strong>Learn</strong>
-            <a href="/problems">Problems</a>
-            <a href="/case-studies">Case studies</a>
-            <a href="/insights">Guides</a>
-            <a href="/rss.xml">RSS</a>
+          <div><strong>Resources</strong>
+            <a href="/problems">Problems</a><a href="/insights">Guides</a><a href="/case-studies">Case studies (lab)</a>
+            <a href="/sample-report" data-track="sample_report_click">Sample report (demo)</a>
+            <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a>
+            <a href={site.sqlServerBlogUrl}>MSSQLServer.dev</a>
+            <a href={site.extensionUrl}>pg_stat_index_queries</a><a href="/rss.xml">RSS</a>
           </div>
-          <div>
-            <strong>Connect</strong>
-            <a href={site.planReaderUrl} data-track="planreader_click">PlanReader ↗</a>
-            <a href={site.sqlServerBlogUrl} data-track="mssqlserver_click">MSSQLServer.dev ↗</a>
-            <a href="/about">About Kiran</a>
-            <a href="/contact">Contact</a>
-            <a href="/privacy">Privacy</a>
-            <a href="/terms">Terms</a>
-            {gaEnabled && <button type="button" class="link-button" data-consent-reset>Cookie settings</button>}
+          <div><strong>Details</strong>
+            <a href="/pricing">Pricing</a><a href="/about">About</a><a href="/contact">Contact</a>
+            <a href="/privacy">Privacy</a><a href="/terms">Terms</a><a href="/privacy#cookies">Cookie settings</a>
           </div>
         </div>
       </div>
     </footer>
 
-    {gaEnabled && (
-      <div id="consent-banner" class="consent-banner" role="region" aria-label="Analytics cookies" hidden>
-        <p>This site uses Google Analytics cookies to understand which pages are useful, only if you accept. No advertising. <a href="/privacy">Privacy</a></p>
-        <div class="actions">
-          <button type="button" class="button" data-consent="denied">Decline</button>
-          <button type="button" class="button primary" data-consent="granted">Accept analytics</button>
-        </div>
-      </div>
-    )}
-
     <script>
       // @ts-nocheck
       import { resolveCampaignContext } from '../lib/campaign-context.mjs';
       const serviceId = document.body.dataset.serviceId || null;
-      const gaId = document.body.dataset.gaId || '';
       const analyticsHosts = JSON.parse(document.body.dataset.analyticsHosts || '[]');
-      const plausibleDomain = document.body.dataset.plausibleDomain || '';
-      if (plausibleDomain) {
-        window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments); };
-        const s = document.createElement('script');
-        s.defer = true;
-        s.dataset.domain = plausibleDomain;
-        s.src = 'https://plausible.io/js/script.js';
-        document.head.appendChild(s);
+      const domain = document.body.dataset.plausibleDomain;
+      if (domain && analyticsHosts.includes(location.hostname)) {
+        window.plausible = function() { (window.plausible.q = window.plausible.q || []).push(arguments); };
+        const script = document.createElement('script');
+        script.defer = true;
+        if (document.body.dataset.plausibleScript) {
+          script.src = document.body.dataset.plausibleScript;
+          window.plausible.init = (options) => { window.plausible.o = options || {}; };
+          window.plausible.init();
+        } else {
+          script.dataset.domain = domain;
+          script.src = 'https://plausible.io/js/script.js';
+        }
+        document.head.appendChild(script);
       }
 
       // Keep first touch and the latest tagged visit separate within this tab.
       let storage;
       try { storage = window.sessionStorage; } catch { storage = null; }
-      const { campaignContext, cleanPage, cleanReferrer } = resolveCampaignContext(location, document.referrer, storage);
+      const { campaignContext } = resolveCampaignContext(location, document.referrer, storage);
 
-      // Google Analytics loads only after the visitor accepts analytics cookies.
-      const consentKey = 'dd-analytics-consent';
-      function loadGoogleAnalytics() {
-        if (window.gtag) return;
-        window.dataLayer = window.dataLayer || [];
-        window.gtag = function(){ dataLayer.push(arguments); };
-        gtag('consent', 'default', {
-          analytics_storage: 'granted',
-          ad_storage: 'denied',
-          ad_user_data: 'denied',
-          ad_personalization: 'denied'
-        });
-        gtag('js', new Date());
-        gtag('config', gaId, {
-          allow_google_signals: false,
-          allow_ad_personalization_signals: false,
-          page_location: cleanPage,
-          page_referrer: cleanReferrer(document.referrer),
-          campaign_source: campaignContext.utm_source || undefined,
-          campaign_medium: campaignContext.utm_medium || undefined,
-          campaign_name: campaignContext.utm_campaign || undefined,
-          campaign_content: campaignContext.utm_content || undefined
-        });
-        const s = document.createElement('script');
-        s.async = true;
-        s.src = `https://www.googletagmanager.com/gtag/js?id=${gaId}`;
-        document.head.appendChild(s);
-      }
-      function clearAnalyticsCookies() {
-        document.cookie.split(';').map((c) => c.split('=')[0].trim()).filter((name) => name.startsWith('_ga')).forEach((name) => {
-          const host = location.hostname.replace(/^www\./, '');
-          document.cookie = `${name}=; Max-Age=0; path=/`;
-          document.cookie = `${name}=; Max-Age=0; path=/; domain=.${host}`;
-        });
-      }
-      if (gaId && analyticsHosts.includes(location.hostname)) {
-        const banner = document.getElementById('consent-banner');
-        const choice = localStorage.getItem(consentKey);
-        if (choice === 'granted') loadGoogleAnalytics();
-        else if (choice !== 'denied' && banner) banner.hidden = false;
-        banner?.addEventListener('click', (event) => {
-          const button = event.target instanceof Element ? event.target.closest('[data-consent]') : null;
-          if (!button) return;
-          const granted = button.getAttribute('data-consent') === 'granted';
-          localStorage.setItem(consentKey, granted ? 'granted' : 'denied');
-          banner.hidden = true;
-          if (granted) {
-            loadGoogleAnalytics();
-            if (serviceId) window.gtag('event', 'service_page_view', { source_page: location.pathname, service_id: serviceId, ...campaignContext });
-          }
-          else clearAnalyticsCookies();
-        });
-        document.querySelector('[data-consent-reset]')?.addEventListener('click', () => {
-          if (localStorage.getItem(consentKey) === 'granted') {
-            localStorage.removeItem(consentKey);
-            clearAnalyticsCookies();
-            location.reload();
-            return;
-          }
-          localStorage.removeItem(consentKey);
-          if (banner) banner.hidden = false;
-        });
+      for (const field of document.querySelectorAll('form [data-campaign]')) {
+        field.value = campaignContext[field.name] || '';
       }
 
       function track(name, extra = {}) {
         const props = { source_page: location.pathname, ...campaignContext, ...extra };
         if (window.plausible) window.plausible(name, { props });
-        if (window.gtag) window.gtag('event', name, props);
       }
 
       document.addEventListener('click', (event) => {
@@ -275,6 +194,9 @@ const schemas = [
       });
       if (serviceId) track('service_page_view', { service_id: serviceId });
       const path = location.pathname.replace(/\/$/, '') || '/';
+      if (path === '/snapshot') track('snapshot_page_view');
+      if (path === '/pricing') track('pricing_view');
+      if (path === '/sample-report') track('sample_report_view');
       if (path === '/postgresql-performance-investigation') track('investigation_page_view');
       if (path === '/postgresql-upgrade-readiness') track('upgrade_page_view');
       if (['/sql-server-performance', '/pgvector-performance', '/snowflake-performance', '/olap-analytical-performance'].includes(path)) track('capability_page_view');

@@ -1,0 +1,7 @@
+---
+interface Props { testimonial?: { quote: string; attribution: string } }
+const { testimonial } = Astro.props;
+---
+{testimonial?.quote.trim() && testimonial.attribution.trim() && <figure class="container">
+  <blockquote>{testimonial.quote}</blockquote><figcaption>{testimonial.attribution}</figcaption>
+</figure>}

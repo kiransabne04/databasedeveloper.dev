@@ -7,9 +7,9 @@ import { site } from '../../config/site';
 <BaseLayout title="PostgreSQL Plan Regression — WalStack" description="PostgreSQL plan regression triage: compare plans and row estimates, check statistics and generic plans, and know when to investigate deeper.">
   <PageHero eyebrow="Problem guide" title="PostgreSQL Plan Regression" description="Same SQL. Different plan. Very different production behavior." />
   <section><div class="container grid three">
-    <div class="card"><h3>Cardinality</h3><p>Compare estimated vs actual rows and data distribution changes.</p></div>
-<div class="card"><h3>Prepared statements</h3><p>Generic/custom plan behavior can create parameter-sensitive regressions.</p></div>
-<div class="card"><h3>Change timeline</h3><p>Tie plan changes back to deployment, statistics, data growth, version or configuration changes.</p></div>
+    <div class="card"><h2 class="card-heading">Cardinality</h2><p>Compare estimated vs actual rows and data distribution changes.</p></div>
+<div class="card"><h2 class="card-heading">Prepared statements</h2><p>Generic/custom plan behavior can create parameter-sensitive regressions.</p></div>
+<div class="card"><h2 class="card-heading">Change timeline</h2><p>Tie plan changes back to deployment, statistics, data growth, version or configuration changes.</p></div>
   </div></section>
   <section><div class="container prose">
     <h2>Investigation principle</h2>
@@ -17,7 +17,7 @@ import { site } from '../../config/site';
     <h2>Common wrong assumptions</h2>
     <ul>
       <li><strong>“The SQL didn’t change, so the plan didn’t.”</strong> Plans depend on statistics, parameter values, data volume, settings and version. Any of them can change while the SQL text stays the same.</li>
-      <li><strong>“Running ANALYZE fixed it, so we’re done.”</strong> Then find out why autoanalyze didn’t keep up. Large tables can wait a long time between automatic analyzes, and correlated columns may need extended statistics (<code>CREATE STATISTICS</code>).</li>
+      <li><strong>“Running ANALYZE fixed it, so the problem is solved.”</strong> Then find out why autoanalyze didn’t keep up. Large tables can wait a long time between automatic analyzes, and correlated columns may need extended statistics (<code>CREATE STATISTICS</code>).</li>
       <li><strong>“EXPLAIN in psql shows what the app gets.”</strong> The application may use prepared statements, generic plans or different session settings. The <a href="/sample-report">sample report</a> shows a case where psql looks fine and the application doesn’t.</li>
       <li><strong>“Just force the old plan.”</strong> Disabling planner node types or pinning plans hides the cause. It also breaks again when the data shifts.</li>
     </ul>

@@ -1,7 +1,8 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
-import { offers, contactHref, type FocusedOffer } from '../data/offers';
+import ConversionActions from '../components/ConversionActions.astro';
+import { offers, type FocusedOffer } from '../data/offers';
 import { site } from '../config/site';
 
 interface Props {
@@ -14,7 +15,7 @@ interface Props {
 }
 const { service, title, description, headline, fit, excludes } = Astro.props;
 const offer = offers[service];
-const ask = contactHref(service, offer.href);
+
 const url = site.url + offer.href;
 const schema = [{
   '@context': 'https://schema.org', '@type': 'Service', name: offer.name,
@@ -28,7 +29,7 @@ const schema = [{
 ---
 <BaseLayout {title} {description} canonical={url} {schema} serviceId={service}>
   <PageHero eyebrow="PostgreSQL and SQL Server" title={offer.name} description={headline}
-    primaryLabel={offer.askLabel} primaryHref={ask} primaryTrack="service_cta_click"
+    primaryLabel="Get a free PostgreSQL snapshot review" primaryHref="/snapshot"
     secondaryLabel="See the written deliverables" secondaryHref="#deliverables" supportingText={offer.price}>
     <p class="muted">{fit}</p>
   </PageHero>
@@ -40,7 +41,7 @@ const schema = [{
   <section><div class="container cta-panel">
     <div><h2>Agree the scope before sharing evidence</h2><p>{offer.terms}. One written review and one clarification round. I confirm the fixed fee and delivery window before paid work begins.</p>
     <p class="muted">{excludes}</p></div>
-    <div class="actions"><a class="button primary" data-track="service_cta_click" href={ask}>{offer.askLabel}</a></div>
+    <ConversionActions />
   </div></section>
 </BaseLayout>
 <style> #deliverables { scroll-margin-top: 6rem; } </style>

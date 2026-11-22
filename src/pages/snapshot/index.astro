@@ -1,0 +1,51 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import SnapshotForm from '../../components/SnapshotForm.astro';
+import { site } from '../../config/site';
+const scriptPath = '/snapshot/walstack-snapshot.sql';
+const command = 'psql -X -h <host> -p 5432 -U <user> -d <database> ' + '\\' + '\n     -f walstack-snapshot.sql -o walstack-snapshot-1.txt';
+---
+<BaseLayout title="Free PostgreSQL Snapshot Review | WalStack" description="Run one read-only PostgreSQL script. I’ll email 3 written findings within 2 business days. Free for RDS, Aurora and self-managed PostgreSQL.">
+  <header class="container hero"><h1>Free PostgreSQL snapshot review</h1>
+    <p class="lede">Run one read-only script against your database and send me the output. Within 2 business days, I'll email 3 findings covering what stands out, why it matters and what I'd check next.</p>
+    <p>Free, no call needed. I do 10 of these a month.</p><div class="actions"><a class="button primary" href="#download">Get the script</a><a class="button" href={site.bookingUrl} data-track="book_call_click">{site.callLabel}</a></div>
+  </header>
+  <section><div class="container prose snapshot">
+    <h2 id="download">1. Download the script</h2>
+    <a class="button primary" href={scriptPath} download="walstack-snapshot.sql" data-track="script_download">Download walstack-snapshot.sql</a>
+    <h2>2. Run it during a busy period</h2>
+    <p>Use PostgreSQL 13 or newer on RDS, Aurora or a self-managed server. Use an account with <code>pg_monitor</code>, PostgreSQL's built-in monitoring role. On RDS or Aurora, an administrator can grant it with <code>GRANT pg_monitor TO &lt;user&gt;;</code>.</p>
+    <p>Open a terminal in the script's folder. Replace the host, user and database names with your own.</p>
+    <pre tabindex="0" aria-label="psql command"><code id="run-command">{command}</code></pre>
+    <button type="button" class="button" id="copy-command" hidden>Copy command</button><span id="copy-status" role="status"></span>
+    <p>One run is fine. If you can, run it again about an hour later. Change the output filename to <code>walstack-snapshot-2.txt</code>.</p>
+    <p>Comparing two runs shows what's growing now. A single run gives totals since statistics were last reset.</p>
+    <p>The script usually takes a few seconds. Each statement has a 10-second timeout. If it waits on a lock for one second, the script continues to the next statement.</p>
+    <h2>3. Check what you're sharing</h2>
+    <h3>What it reads</h3><ul>
+      <li>PostgreSQL's own statistics and catalog, including settings, expensive queries, table and index activity, and index definitions.</li>
+      <li>Foreign keys that may need a supporting index, blocked sessions, connections, cleanup activity and replication health.</li>
+      <li>Column names and types for the 10 largest tables. Set <code>show_schema off</code> to omit the column listing. Index and foreign key definitions can still contain column names.</li></ul>
+    <h3>What it leaves alone</h3><ul>
+      <li>It doesn't read rows from your application tables, write data, change persistent settings or create objects.</li>
+      <li>It doesn't run your queries or ask PostgreSQL to explain their execution plans.</li>
+      <li>PostgreSQL usually replaces query values with markers like <code>$1</code> and <code>$2</code>. Sensitive text can still appear. Set <code>show_query_text off</code> to omit query text.</li></ul>
+    <p>Read every file before sending. Delete anything you don't want to share, including sensitive names or details in screenshots.</p>
+    <h2 id="send">4. Send your snapshot</h2><SnapshotForm />
+    <h2>5. What happens to your data?</h2>
+    <p>I use your output only to write your findings. Formspree handles the upload. I keep the files private and delete them after {site.retentionDays} days unless you hire me. <a href="/privacy">Read my privacy policy</a>.</p>
+  </div></section>
+  <script>
+    const copy = document.querySelector<HTMLButtonElement>('#copy-command');
+    if (copy && navigator.clipboard) {
+      copy.hidden = false;
+      copy.addEventListener('click', async () => {
+        const status = document.querySelector('#copy-status')!;
+        try {
+          await navigator.clipboard.writeText(document.querySelector('#run-command')!.textContent || '');
+          status.textContent = ' Command copied.';
+        } catch { status.textContent = ' Select and copy the command above.'; }
+      });
+    }
+  </script>
+</BaseLayout>

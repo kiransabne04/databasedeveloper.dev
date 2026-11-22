@@ -35,5 +35,5 @@ LIMIT 10;</code></pre>
 
   <h3>Measure the API, not only the SQL</h3>
   <p>Record p50 and p95 time for embedding generation, database execution, network transfer and result hydration under realistic concurrency. Then track recall, result count, index size, build time, insert latency and memory as the collection grows. Keep exact search as a baseline for small filtered cohorts; an approximate index is not mandatory for every query.</p>
-  <p>For each important query cohort, maintain an exact-search result set as a recall baseline. Track latency, recall, returned-result count, memory and write/index-maintenance cost as data grows. The <a href="https://github.com/pgvector/pgvector#readme">pgvector documentation</a> describes the index types and filtering behavior; our <a href="/insights/pgvector-hnsw-vs-ivfflat">HNSW versus IVFFlat guide</a> turns those details into a benchmark plan.</p>
+  <p>For each important query cohort, maintain an exact-search result set as a recall baseline. Track latency, recall, returned-result count, memory and write/index-maintenance cost as data grows. The <a href="https://github.com/pgvector/pgvector#readme">pgvector documentation</a> describes the index types and filtering behavior. My <a href="/insights/pgvector-hnsw-vs-ivfflat">HNSW versus IVFFlat guide</a> turns those details into a benchmark plan.</p>
 </ArticleLayout>

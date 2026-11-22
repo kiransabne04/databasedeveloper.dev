@@ -1,0 +1,66 @@
+---
+import { site } from '../config/site';
+import { campaignFields } from '../lib/campaign-context.mjs';
+---
+<form id="snapshot-form" action={site.snapshotEndpoint} method="post" enctype="multipart/form-data">
+  <input type="hidden" name="_subject" value="Free PostgreSQL snapshot review" />
+  <input type="text" name="_gotcha" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true" aria-label="Leave blank" />
+  {[...campaignFields, ...campaignFields.map(key => 'first_' + key), 'landing_page', 'latest_landing_page', 'referring_page'].map(key => <input type="hidden" name={key} data-campaign />)}
+  <div class="form-grid">
+    <label class="field">Name<input name="name" autocomplete="name" required /></label>
+    <label class="field">Work email<input name="email" type="email" autocomplete="email" required /></label>
+    <label class="field">Company<input name="company" autocomplete="organization" required /></label>
+    <label class="field">Where does Postgres run?<select name="hosting" required><option value="">Select one</option><option>RDS</option><option>Aurora</option><option>Self-managed</option><option>Other</option></select></label>
+    <label class="field">Instance type or capacity (optional)<input name="capacity" placeholder="db.r6g.xlarge or Serverless v2, 2–16 ACU" /></label>
+    <label class="field">PostgreSQL version (optional)<input name="version" /></label>
+    <label class="field full">What's bothering you, in a sentence or two?<textarea name="symptom" required rows="3"></textarea></label>
+    <label class="field full">When did it start? Any release, migration or data load around then? (optional)<textarea name="timeline" rows="2"></textarea></label>
+    <label class="field full">First snapshot (.txt, up to 5 MB)<input name="snapshot_1" type="file" accept=".txt,text/plain" required /></label>
+    <label class="field full">Second snapshot (optional, .txt, up to 5 MB)<input name="snapshot_2" type="file" accept=".txt,text/plain" /></label>
+    <label class="field full">CloudWatch CPU and disk operations (IOPS) or Aurora capacity (ACU) for the last 7 days (optional, PNG or JPEG, up to 5 MB)<input name="screenshot" type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" /></label>
+    <label class="check-field field full"><input type="checkbox" name="allowed_to_share" value="yes" required /> I'm allowed to share this output.</label>
+  </div>
+  <noscript><p>Enable JavaScript to validate and upload your files, or email <a href={`mailto:${site.email}`}>{site.email}</a> for help.</p></noscript>
+  <button class="button primary" type="submit" disabled>Send my snapshot</button>
+  <p id="upload-status" role="status" aria-live="polite" tabindex="-1"></p>
+</form>
+<script>
+  const form = document.querySelector<HTMLFormElement>('#snapshot-form');
+  if (form) {
+    const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    const status = form.querySelector<HTMLElement>('#upload-status')!;
+    const inputs = form.querySelectorAll<HTMLInputElement>('input[type="file"]');
+    function validate(input: HTMLInputElement) {
+      const file = input.files?.[0];
+      const extension = input.name === 'screenshot' ? /\.(png|jpe?g)$/i : /\.txt$/i;
+      let message = '';
+      if (file && !extension.test(file.name)) message = 'Choose a file in the requested format.';
+      else if (file && (!file.size || file.size > 5_000_000)) message = 'Choose a nonempty file up to 5 MB.';
+      input.setCustomValidity(message);
+    }
+    for (const input of inputs) input.addEventListener('change', () => validate(input));
+    submit.disabled = false;
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (submit.disabled) return;
+      inputs.forEach(validate);
+      if (!form.reportValidity()) return;
+      submit.disabled = true;
+      status.textContent = 'Uploading your snapshot…';
+      try {
+        const data = new FormData(form);
+        for (const input of inputs) if (!input.files?.length) data.delete(input.name);
+        const response = await fetch(form.action, { method: 'POST', body: data, headers: { Accept: 'application/json' } });
+        if (!response.ok) throw new Error(String(response.status));
+      } catch {
+        status.textContent = 'I could not confirm receipt. Your files are still selected. Try again or contact hello@walstack.io.';
+        submit.disabled = false;
+        status.focus();
+        return;
+      }
+      window.dispatchEvent(new CustomEvent('dd:track', { detail: 'snapshot_submitted' }));
+      form.reset();
+      location.replace('/snapshot/thank-you');
+    });
+  }
+</script>

@@ -6,9 +6,9 @@ import CTA from '../../components/CTA.astro';
 <BaseLayout title="PostgreSQL Connection Exhaustion — WalStack" description="More connections can make the database less available. Practical evidence to collect, common wrong assumptions and when a deeper investigation is justified.">
   <PageHero eyebrow="Problem guide" title="PostgreSQL Connection Exhaustion" description="More connections can make the database less available." />
   <section><div class="container grid three">
-    <div class="card"><h3>Pool behavior</h3><p>Check application pools, PgBouncer mode, idle connections and concurrency limits.</p></div>
-<div class="card"><h3>Long transactions</h3><p>Idle-in-transaction sessions and slow transactions can retain locks/resources while pools keep opening work.</p></div>
-<div class="card"><h3>Storms after deploy</h3><p>Retries and synchronized reconnects can turn an application event into database saturation.</p></div>
+    <div class="card"><h2 class="card-heading">Pool behavior</h2><p>Check application pools, PgBouncer mode, idle connections and concurrency limits.</p></div>
+<div class="card"><h2 class="card-heading">Long transactions</h2><p>Idle-in-transaction sessions and slow transactions can retain locks/resources while pools keep opening work.</p></div>
+<div class="card"><h2 class="card-heading">Storms after deploy</h2><p>Retries and synchronized reconnects can turn an application event into database saturation.</p></div>
   </div></section>
   <section><div class="container prose">
     <h2>Investigation principle</h2>

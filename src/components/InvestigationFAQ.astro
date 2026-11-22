@@ -1,0 +1,12 @@
+---
+import { site } from '../config/site';
+---
+<div class="questions">
+  <details><summary>Do you need access to my production database?</summary><p>You run the free snapshot yourself. For an investigation, a read-only role is fastest. You can also run my scripts and send me the output.</p></details>
+  <details><summary>Is it safe?</summary><p>I use read-only access by default. I only run your queries with your written approval. That includes EXPLAIN ANALYZE, which runs a query to measure it. You remove my access at the end.</p></details>
+  <details><summary>What if you find nothing?</summary><p>If I can't find at least one evidence-backed improvement in the paid investigation, you get a full refund.</p></details>
+  <details><summary>I already use Datadog, pganalyze or AWS Performance Insights. How can you help?</summary><p>Keep your monitoring tools. I can use their data to explain why something slowed down and what to change.</p></details>
+  <details><summary>Can you help during an outage?</summary><p>I work best after service is back. I trace the cause and help you prevent a repeat. I don’t provide on-call coverage.</p></details>
+  <details><summary>Where are you based, and how do I pay?</summary><p>I'm in Pune, India. I invoice upfront in USD and confirm payment details before you commit.</p></details>
+  <details><summary>Can you sign an NDA?</summary><p>Send me your NDA for review before you share any database output. You can reach me at <a href={`mailto:${site.email}`}>{site.email}</a>.</p></details>
+</div>

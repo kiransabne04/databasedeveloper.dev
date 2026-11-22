@@ -1,4 +1,4 @@
-const campaignFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content'];
+export const campaignFields = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
 
 function cleanInternalReferrer(value) {
   try {
@@ -39,9 +39,11 @@ export function resolveCampaignContext(location, referrer = '', storage = null) 
     context.referral_landing_page = location.pathname;
   }
   if (hasIncoming) {
+    const firstTaggedVisit = !context.latest_landing_page;
     for (const key of campaignFields) {
-      if (incoming[key] && !context[`first_${key}`]) context[`first_${key}`] = incoming[key];
+      if (firstTaggedVisit && incoming[key]) context[`first_${key}`] = incoming[key];
       if (incoming[key]) context[key] = incoming[key];
+      else delete context[key];
     }
     context.latest_landing_page = location.pathname;
   }

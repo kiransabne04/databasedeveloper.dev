@@ -1,55 +1,64 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import FocusedReviews from '../components/FocusedReviews.astro';
+import ConversionActions from '../components/ConversionActions.astro';
+import InvestigationDeliverables from '../components/InvestigationDeliverables.astro';
+import InvestigationFAQ from '../components/InvestigationFAQ.astro';
+import Testimonial from '../components/Testimonial.astro';
+import Portrait from '../components/Portrait.astro';
 import { site } from '../config/site';
 import { pg14Facts } from '../data/facts';
 ---
-<BaseLayout title="PostgreSQL Performance Investigations & Upgrade Reviews | WalStack"
-  description="Independent PostgreSQL performance investigations for SaaS teams on RDS, Aurora and self-managed databases. Scope a workload investigation, query review or migration review.">
-  <div class="container hero hero-grid">
-    <div>
-      <span class="eyebrow">Independent PostgreSQL consulting</span>
-      <h1>Find what’s slowing down production PostgreSQL.</h1>
-      <p class="lede">For SaaS teams facing latency after a release, blocking or rising database load on RDS, Aurora or self-managed PostgreSQL. I trace the symptom to workload evidence and give your team a ranked change plan.</p>
-      <div class="actions">
-        <a class="button primary" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/">Request an Investigation</a>
-        <a class="button ghost" data-track="sample_report_click" href="/sample-report">See Sample Report</a>
-      </div>
-      <p class="small muted">Work directly with <a href="/about">Kiran Sabne</a>. Fixed quote after fit review.</p>
-    </div>
-    <aside class="hero-proof"><h2>What changed in production?</h2>
-      <ul class="signal-list">
-        <li><a href="/problems/postgresql-plan-regression">A query plan changed after a release</a></li>
-        <li><a href="/query-rescue">One expensive statement dominates latency</a></li>
-        <li><a href="/postgresql-concurrency-and-locking-a-comprehensive-guide">Sessions block or deadlock under load</a></li>
-        <li><a href="/database-code-review">A schema migration could interrupt writes</a></li>
-        <li><a href="/postgresql-upgrade-readiness">A major upgrade needs a regression baseline</a></li>
-      </ul>
-    </aside>
-  </div>
-  <section><div class="container">
-    <div class="section-head"><div><span class="eyebrow">PostgreSQL and SQL Server</span><h2>Start with a focused review</h2></div>
-    <p>Choose the smallest paid review that answers the decision in front of your team.</p></div>
-    <FocusedReviews />
+<BaseLayout title="PostgreSQL Performance Consultant for RDS & Aurora | WalStack"
+  description="Independent PostgreSQL engineer. I find why your RDS or Aurora database is slow or expensive and give you safe fixes. Start with a free snapshot review.">
+  <header class="container hero intro">
+    <div><p class="eyebrow">Kiran Sabne · Pune, India</p>
+      <h1>Find what's slowing down production PostgreSQL.</h1>
+      <p class="lede">I'm Kiran Sabne, an independent PostgreSQL performance engineer. When RDS, Aurora or self-managed Postgres gets slow or expensive, I find out why. I show you the evidence and give you a fix you can test safely.</p>
+      <ConversionActions />
+      <p class="small">Run one read-only script. Get 3 written findings within 2 business days. No database access needed.</p>
+      <p class="trust">Read-only by default · Fixed prices · Refund if I find nothing you can act on</p>
+    </div><Portrait />
+  </header>
+  <section><div class="container split"><h2>Sound familiar?</h2><div>
+    <ul class="signal-list"><li>Pages or APIs slowed down after a release. Nobody can point to the query responsible.</li>
+      <li>CPU or Aurora capacity spikes, even when traffic is steady and nothing has shipped.</li>
+      <li>Your database bill grows faster than your user base.</li>
+      <li>You're still on PostgreSQL 14. RDS standard support ends in February 2027.</li>
+      <li>You have no dedicated DBA. The engineer who knows the database is busy shipping features.</li></ul>
+    <p>If one of these is happening now, <a href="/snapshot">start with the free snapshot</a>.</p>
+  </div></div></section>
+  <section><div class="container"><h2>How it works</h2>
+    <ol class="steps"><li><h3>Free snapshot</h3><p>You run one read-only script and send me the output. I reply with 3 written findings within 2 business days.</p></li>
+      <li><h3>Investigation at a fixed price</h3><p>If you want to go further, I trace the slowdown using a read-only role. You can also run my scripts yourself.</p></li>
+      <li><h3>Fix and verify</h3><p>You get the exact changes, what each one locks and how to undo it. I check the result 14 days later.</p></li></ol>
   </div></section>
-  <section><div class="container prose">
-    <h2>When the decision spans a workload</h2>
-    <p><a href="/postgresql-performance-investigation">PostgreSQL Performance Investigation</a> covers a cluster and its dominant workload. Bring latency, CPU, connection pressure or locks that affect several requests.</p>
-    <p><a href="/postgresql-upgrade-readiness">PostgreSQL Upgrade Readiness</a> covers compatibility, workload baselines, potential regressions and go/no-go checks for a version change. Community support for PostgreSQL 14 ended on {pg14Facts.communityEol}. <a href="/postgresql-14-eol">Check the managed-service dates</a>.</p>
-    <p><a href="/sql-server-performance">SQL Server Performance Review</a> uses Query Store, waits and blocking evidence when the issue crosses statements or application paths.</p>
-  </div></section>
-  <section><div class="container grid two">
-    <div class="prose"><h2>Inspect the work</h2>
-      <p>Trace a <a href="/case-studies/lab-generic-plan-regression">prepared-plan regression</a> or a <a href="/case-studies/lab-lock-queue">DDL lock queue</a> through reproducible labs. The <a data-track="sample_report_click" href="/sample-report">synthetic report</a> shows how I present evidence, uncertainty and a validation decision.</p>
-      <p class="small muted">The lab cases use generated data; their measurements are not customer results.</p>
-      <p>I built <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a> for inspecting execution plans and the experimental <a href="https://github.com/kiransabne04/pg_stat_index_queries">pg_stat_index_queries</a> project for connecting PostgreSQL indexes to the queries that use them.</p>
-      <p class="small muted">Listed in <a href="https://www.postgresql.org/support/professional_support/asia/" rel="external">PostgreSQL.org's Professional Services directory</a>.</p>
-    </div>
-    <div class="card"><h2>How an engagement works</h2><ol>
-      <li>Describe the symptom or planned change.</li><li>I confirm fit and send the scope, fee and delivery window.</li>
-      <li>Your team shares approved, redacted evidence.</li><li>You receive written findings and checks to run before and after a change.</li>
-    </ol><a class="button" data-track="primary_cta_click" href="/contact?offer=investigation&amp;from=/">Request an Investigation</a></div>
-  </div></section>
-  <section><div class="container cta-panel"><div><h2>Delivering a database change for a client?</h2><p>Agencies and fractional CTOs can bring me in for one database PR, a workload investigation or an upgrade review. We agree who owns client communication and production changes.</p></div>
-    <a class="button" data-track="partner_cta_click" href="/partners">Explore a Technical Partnership</a></div></section>
+  <section><div class="container offer split"><div><p class="eyebrow">The paid investigation</p>
+    <h2><a href="/postgresql-performance-investigation">Postgres Slowdown Investigation</a></h2>
+    <p class="price">$450</p><p>Founding price for my first 3 clients, then $750. Paid upfront.</p></div>
+    <div><h3>What you get</h3><InvestigationDeliverables />
+      <p>I deliver in 3 business days after I get access or your script output.</p>
+      <p><strong>If I can't find at least one evidence-backed improvement, you get a full refund.</strong></p>
+      <ConversionActions primary="Start with a free snapshot" call="Book a call" />
+    </div></div></section>
+  <section><div class="container split"><h2>Upgrading off PostgreSQL 14?</h2><div>
+    <p>RDS standard support ends on 28 February 2027. From 1 March, AWS charges extra for eligible instances that stay on 14 with Extended Support enabled. <a href={pg14Facts.awsSource}>AWS release calendar</a>.</p>
+    <p>I check what could break and record how your busiest queries run today. You get a plan to compare performance after the upgrade and roll back if needed.</p>
+    <p><a href="/postgresql-upgrade-readiness">PostgreSQL Upgrade Readiness</a> · <strong>{site.upgradeOffer.display}</strong></p>
+    <a class="button" data-track="book_call_click" href={site.bookingUrl}>Ask about your upgrade</a>
+  </div></div></section>
+  <section><div class="container split"><h2>What you'll receive</h2><div>
+    <p><a href="/sample-report" data-track="sample_report_click">See a sample report</a>. I built it on a demo database. It contains no client results.</p>
+    <p><a href="/case-studies">Lab case studies</a>. I reproduced these problems on generated data. All measurements come from the lab.</p>
+    <p>I built <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a> to read database execution plans. I also built <a href={site.extensionUrl}>pg_stat_index_queries</a>, an experimental open-source PostgreSQL extension.</p>
+    <p>WalStack is <a href={site.directoryUrl}>listed in PostgreSQL.org's Professional Services directory</a>.</p>
+  </div></div></section>
+  <Testimonial />
+  <section><div class="container split"><h2>About me</h2><div>
+    <p>I'm Kiran Sabne. I've spent about 8 years in database and backend engineering, including about 6 with PostgreSQL in production.</p>
+    <p>I've worked on RDS and Aurora, moved and partitioned large tables, built pipelines that copy database changes, and handled major upgrades.</p>
+    <p>I work alone and take a few engagements each month. From Pune, India, I work asynchronously and overlap with US mornings and UK/EU afternoons.</p>
+    <p><a href={site.linkedinUrl}>LinkedIn</a> · <a href={site.githubUrl}>GitHub</a> · <a href="/about">More about me</a></p>
+  </div></div></section>
+  <section><div class="container split"><h2>Frequently asked questions</h2><InvestigationFAQ /></div></section>
+  <section><div class="container offer"><h2>Something slow right now? Send me a snapshot.</h2><ConversionActions /></div></section>
 </BaseLayout>

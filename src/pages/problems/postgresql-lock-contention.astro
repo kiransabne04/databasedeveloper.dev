@@ -6,9 +6,9 @@ import CTA from '../../components/CTA.astro';
 <BaseLayout title="PostgreSQL Lock Contention — WalStack" description="PostgreSQL lock contention triage: find the blocking session, recognise DDL lock queues and idle transactions, and know when to investigate deeper.">
   <PageHero eyebrow="Problem guide" title="PostgreSQL Lock Contention" description="The slow query may be waiting on work that is already finished." />
   <section><div class="container grid three">
-    <div class="card"><h3>Blocking chain</h3><p>Identify blockers and waiters rather than optimizing the waiting statement in isolation.</p></div>
-<div class="card"><h3>Transaction scope</h3><p>Long transactions can turn ordinary DDL/DML into queues that amplify latency.</p></div>
-<div class="card"><h3>DDL interaction</h3><p>A fast DDL statement can still be dangerous if it waits for or queues behind long-running transactions.</p></div>
+    <div class="card"><h2 class="card-heading">Blocking chain</h2><p>Identify blockers and waiters rather than optimizing the waiting statement in isolation.</p></div>
+<div class="card"><h2 class="card-heading">Transaction scope</h2><p>Long transactions can turn ordinary DDL/DML into queues that amplify latency.</p></div>
+<div class="card"><h2 class="card-heading">DDL interaction</h2><p>A fast DDL statement can still be dangerous if it waits for or queues behind long-running transactions.</p></div>
   </div></section>
   <section><div class="container prose">
     <h2>Investigation principle</h2>
