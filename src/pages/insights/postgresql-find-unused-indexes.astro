@@ -34,7 +34,7 @@ const faq = [
   description={description}
   eyebrow="PostgreSQL indexing · Lab-tested"
   published="2026-11-11"
-  updated="2026-11-11"
+  updated="2026-11-22"
   schemaType="Article"
   faq={faq}
   ctaTitle="Too many indexes, write latency creeping up, and no one sure what is safe to drop?"
@@ -183,6 +183,8 @@ WHERE n_tup_upd > 10000
 ORDER BY n_tup_upd - n_tup_hot_upd DESC
 LIMIT 20;`}</code></pre>
   <p>A heavily updated table with a low <code>hot_pct</code> is where an unneeded index on an updated column costs the most. A BRIN index is the exception: as a summarizing index, it does not prevent HOT.</p>
+
+  <p><code>idx_scan</code> says how often an index was used, not which queries used it. I am building an open-source extension for that question, <a href={site.extensionUrl}>pg_stat_index_queries</a>. It lists the queries that executed through each index. Its SQL edition reads captured plans on RDS and Aurora and can estimate the plan change if an index were dropped, using HypoPG in your session only. It is experimental and has not been run in production, so treat its output as one input to the decision and benchmark it on a non-production system first.</p>
 
   <h2 id="drop">Drop it safely, with a rollback</h2>
   <ol>

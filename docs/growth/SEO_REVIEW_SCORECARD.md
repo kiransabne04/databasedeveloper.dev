@@ -19,7 +19,7 @@ Recorded on 22 Nov 2026 from owner-supplied Search Console figures. This window 
 | 23 Oct to 19 Nov 2026 | walstack.io | 160 | 2 | Mostly informational queries. Little service exposure. |
 | 23 Oct to 19 Nov 2026 | databasedeveloper.dev | 5,430 | 34 | Locking, sharding, pg_upgrade failures, slow after upgrade, RDS/Aurora deadlines |
 
-Indexing at baseline (stored URL Inspection): `/` indexed. Investigation, upgrade, SQL Server and pricing crawled, not indexed. Snapshot, Query Rescue and code review unknown. Website and pipeline baseline: **unmeasured** (Plausible goals not confirmed, no logged enquiries).
+Indexing at baseline (stored URL Inspection): `/` indexed. Investigation, upgrade, SQL Server and pricing crawled, not indexed. Snapshot, Query Rescue and code review unknown. Search Console actions: Change of Address to walstack.io started 12 Nov 2026. Indexing was requested on 22 Nov 2026 for the nine service pages after a live URL test. Website and pipeline baseline: **unmeasured** (Plausible goals not confirmed, no logged enquiries).
 
 ### Worksheet
 

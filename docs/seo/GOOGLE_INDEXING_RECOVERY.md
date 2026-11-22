@@ -63,7 +63,7 @@ No slug was changed. No historical article redirects to an unrelated page.
 3. If not, select `walstack.io`. The tool checks that the homepage and a sample of URLs 301 to the new site. Submit only after it passes.
 4. Keep the old domain registered and the redirects in place indefinitely. Google's site-move guide says to keep redirects as long as possible, generally at least a year.
 
-An agent cannot see or file this. The current state is **unknown**.
+**Status (owner, 22 Nov 2026):** the Change of Address from databasedeveloper.dev to walstack.io was started on **12 November 2026**. No further action is needed. Google says the move signal lasts 180 days, so keep the redirects well beyond **11 May 2027**.
 
 ### 3.3 Check redirects yourself
 
@@ -91,6 +91,8 @@ Then click **Test live URL**. It should report "URL is available to Google" and 
 ### 3.6 Request indexing selectively
 
 Request indexing for a page only after its content has changed and the change is deployed. In this branch that applies to `/postgresql-upgrade-readiness`, `/partners`, `/query-rescue`, `/sql-server-performance` and `/postgresql-performance-investigation`. Request each one once. Repeating a request does not speed it up, and the tool has a daily quota.
+
+**Status (owner, 22 Nov 2026):** after a live URL test, indexing was requested for all nine pages in §3.5. Do not request them again unless a page changes materially. Re-inspect them around 6 December 2026 and 20 December 2026.
 
 ### 3.7 Reading the coverage states
 
