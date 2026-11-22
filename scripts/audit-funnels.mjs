@@ -69,6 +69,16 @@ for (const route of ['/', '/pricing', '/partners']) {
   ok(nodes.some((n) => n['@type'] === 'WebSite' && n.url === 'https://walstack.io'), `${route} WebSite schema`);
 }
 
+for (const route of ['/sql-server-performance', '/pgvector-performance', '/snowflake-performance', '/olap-analytical-performance', '/aws-rds-aurora-postgresql', '/postgresql-performance-investigation', '/postgresql-upgrade-readiness']) {
+  const nodes = [...page(route).matchAll(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/gs)].map((m) => JSON.parse(m[1]));
+  const service = nodes.find((n) => n['@type'] === 'Service');
+  ok(service && service.provider?.['@id'] === 'https://walstack.io/#practice', `${route} needs Service schema linked to the practice`);
+}
+ok(page('/').includes('<meta name="viewport" content="width=device-width, initial-scale=1"'), 'Viewport must set initial-scale=1');
+const llms = readFileSync(join(dist, 'llms.txt'), 'utf8');
+ok(llms.startsWith('# WalStack\n') && llms.includes('one person, not a firm') && llms.includes('up to 5 accepted reviews a month'), 'llms.txt identity, honesty note and snapshot cap');
+for (const [, path] of llms.matchAll(/\]\(https:\/\/walstack\.io(\/[^)]*)\)/g)) ok(page(path), `llms.txt links to missing page ${path}`);
+
 // 4. Redirects: old domain reaches its final URL in one hop; slash variants collapse.
 ok(vercel.trailingSlash === false, 'trailingSlash must be false so /path/ redirects to /path');
 const oldHosts = ['databasedeveloper.dev', 'www.databasedeveloper.dev'];

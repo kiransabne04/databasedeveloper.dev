@@ -1,9 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { serviceSchema } from '../lib/schema';
 import PageHero from '../components/PageHero.astro';
 import CTA from '../components/CTA.astro';
 ---
-<BaseLayout title="OLAP & Analytical Workload Performance — WalStack" description="Analytical workload performance reviews across partitioning, clustering, data skew, scan amplification, distributed joins and cost/performance trade-offs.">
+<BaseLayout title="OLAP & Analytical Workload Performance — WalStack" description="Analytical workload performance reviews across partitioning, clustering, data skew, scan amplification, distributed joins and cost/performance trade-offs." schema={serviceSchema('Analytical Workload Performance Review', '/olap-analytical-performance', 'Analytical workload performance reviews across partitioning, clustering, data skew, scan amplification, distributed joins and cost/performance trade-offs.')}>
   <PageHero primaryLabel="Describe your analytical workload" primaryHref="/contact?from=%2Folap-analytical-performance" eyebrow="OLAP / Big Data" title="Analytical Workload Performance" description="Large analytical workloads fail differently from OLTP systems. Review scan amplification, partitioning, clustering, skew, distributed joins and workload isolation as a system—not as isolated SQL syntax." />
   <section><div class="container grid three">
     <div class="card"><h2 class="card-heading">Scan amplification</h2><p>Find why an apparently selective query still reads far more data than the business question suggests.</p></div>

@@ -1,9 +1,10 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import { serviceSchema } from '../lib/schema';
 import PageHero from '../components/PageHero.astro';
 import CTA from '../components/CTA.astro';
 ---
-<BaseLayout title="pgvector Performance Review — WalStack" description="Production pgvector performance reviews: HNSW vs IVFFlat, recall/latency, memory, filtering, hybrid search and vector workload scaling.">
+<BaseLayout title="pgvector Performance Review — WalStack" description="Production pgvector performance reviews: HNSW vs IVFFlat, recall/latency, memory, filtering, hybrid search and vector workload scaling." schema={serviceSchema('pgvector Performance Review', '/pgvector-performance', 'Production pgvector performance reviews: HNSW vs IVFFlat, recall/latency, memory, filtering, hybrid search and vector workload scaling.')}>
   <PageHero primaryLabel="Ask about a pgvector review" primaryHref="/contact?offer=pgvector&from=%2Fpgvector-performance" eyebrow="AI + database" title="Production pgvector Performance Review" description="Vector-search performance is a database trade-off problem too: recall, latency, memory, index build cost, metadata filters and the relational workload around the vector search." />
   <section>
     <div class="container grid three">
