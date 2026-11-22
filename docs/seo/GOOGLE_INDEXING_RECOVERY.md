@@ -13,13 +13,15 @@ Submitting a sitemap, requesting indexing or filing a Change of Address helps Go
 | `https://www.walstack.io/` | 308 to `https://walstack.io/` | OK |
 | `http://walstack.io/` | 308 to HTTPS | OK |
 | All 54 routes in `scripts/required-routes.json` on the old domain | Each 301 to the same path on walstack.io in one hop, final 200 | OK |
-| `/sitemap.xml`, `/archive`, `/members`, `/recommendations`, interview pointer on the old domain | Two hops (old domain, then walstack.io, then destination) | **Fixed in this branch** with host-specific one-hop 301s |
-| `https://walstack.io/postgresql-performance-investigation/` (trailing slash) | 200, duplicate of the slash-less URL. Its canonical points to the slash-less URL. | **Fixed in this branch** with `trailingSlash: false` (308 to the slash-less URL) |
+| `/sitemap.xml`, `/archive`, `/members`, `/recommendations`, interview pointer on the old domain | Two hops (old domain, then walstack.io, then destination) | Accepted. See the note below. |
+| `https://walstack.io/postgresql-performance-investigation/` (trailing slash) | 200, duplicate of the slash-less URL. Its canonical points to the slash-less URL. | **Fixed** (live since 22 Nov) with `trailingSlash: false` (308 to the slash-less URL) |
 | Canonicals | Self-referencing, slash-less, on `https://walstack.io` | OK |
 | `robots.txt` | `Allow: /` and `Sitemap: https://walstack.io/sitemap-index.xml` | OK |
 | Sitemap | `sitemap-index.xml` lists `sitemap-0.xml` with 64 URLs. It excludes `/snapshot/thank-you` and the two noindex alias pages. | OK |
 | `/snapshot/thank-you` | `noindex,nofollow`, not in the sitemap | OK |
 | Production build | Live homepage H1 and snapshot form match `main` at `f94b72a` | Deployed |
+
+**Note on the old domain (verified after the 22 Nov deploy).** `databasedeveloper.dev` is configured in the Vercel dashboard as a domain-level redirect to walstack.io. Vercel applies that redirect before `vercel.json`, so the host-specific rules in `vercel.json` never run for the old domain. Its 301s also lack the headers `vercel.json` adds on walstack.io. Every article and service path still reaches walstack.io in one hop. Only the five legacy paths above take two hops, and Google follows short chains. Keep the dashboard redirect: it is the simpler and safer setup for a domain move. The host rules in `vercel.json` are inactive and would only apply if the domain were attached to the project without that redirect.
 
 No noindex or robots block was found on a commercial page. The "crawled, not indexed" states in Search Console are not explained by a technical block.
 
@@ -41,9 +43,9 @@ The old domain served Hashnode articles first, then this Astro site, before the 
 | `/postgresql-14-eol` | 301, one hop | Same path | Self | Keep |
 | `/insights/rds-aurora-postgresql-14-extended-support-cost` | 301, one hop | Same path | Self | Keep |
 | `/insights/postgresql-slow-queries-pg-stat-statements` | 301, one hop | Same path | Self | Keep |
-| `/crack-sql-interviews-with-these-postgresql-internals-and-real-questions` | 301 then 308 (two hops) | kiransabne.dev full article | On kiransabne.dev | One hop after this branch deploys |
-| `/archive`, `/members`, `/recommendations` | Two hops | `/insights` | Self | One hop after this branch deploys |
-| `/sitemap.xml` | Two hops | `/sitemap-index.xml` | n/a | One hop after this branch deploys |
+| `/crack-sql-interviews-with-these-postgresql-internals-and-real-questions` | 301 then 308 (two hops) | kiransabne.dev full article | On kiransabne.dev | Keep (two hops is acceptable) |
+| `/archive`, `/members`, `/recommendations` | Two hops | `/insights` | Self | Keep (two hops is acceptable) |
+| `/sitemap.xml` | Two hops | `/sitemap-index.xml` | n/a | Keep (two hops is acceptable) |
 
 No slug was changed. No historical article redirects to an unrelated page.
 
@@ -71,7 +73,7 @@ for u in https://databasedeveloper.dev/ https://www.databasedeveloper.dev/postgr
 done
 ```
 
-Each line should end on `200` at `https://walstack.io/...` with `hops=1`. After this branch deploys, `sitemap.xml` and `/pricing/` should also show one hop.
+Each line should end on `200` at `https://walstack.io/...` with `hops=1`. `/pricing/` should 308 to `/pricing`. The old-domain `sitemap.xml` takes two hops, as explained in section 1.
 
 ### 3.4 Sitemap
 
