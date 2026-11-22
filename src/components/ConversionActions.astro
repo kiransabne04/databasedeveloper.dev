@@ -1,8 +1,21 @@
 ---
 import { site } from '../config/site';
-const { primary = 'Get a free snapshot review', call = site.callLabel, href = '/snapshot' } = Astro.props;
+import { nextStep, type OfferKey } from '../data/offers';
+
+interface Props {
+  /** Paid offer this block leads to. Omit for the PostgreSQL free-snapshot default. */
+  offer?: OfferKey;
+  primary?: string;
+  call?: string;
+  href?: string;
+}
+const { offer, call = site.callLabel } = Astro.props;
+const step = nextStep(offer, Astro.url.pathname);
+const primary = Astro.props.primary ?? step.label;
+const href = Astro.props.href ?? step.href;
 ---
 <div class="actions">
-  <a class="button primary" data-track="primary_cta_click" href={href}>{primary}</a>
-  <a class="button" data-track="book_call_click" href={site.bookingUrl}>{call}</a>
+  <a class="button primary" data-track={step.track} data-offer={offer} href={href}>{primary}</a>
+  <a class="button" data-track="book_call_click" data-offer={offer} href={site.bookingUrl}>{call}</a>
 </div>
+{step.alternate && <p class="small muted">Already know you need the full investigation? <a href={step.alternate.href} data-track="primary_cta_click" data-offer={offer}>{step.alternate.label}</a>.</p>}

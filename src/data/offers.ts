@@ -113,6 +113,23 @@ export const offers: Record<OfferKey, Offer> = {
   }
 };
 
+/**
+ * The first step for each journey. Only the PostgreSQL investigation starts
+ * with the free snapshot: Query Rescue, code review, upgrade and other-engine
+ * buyers go straight to a scoped enquiry that records the offer and page.
+ */
+export function nextStep(offer: OfferKey | undefined, fromPath: string): {
+  label: string; href: string; track: string; alternate?: { label: string; href: string };
+} {
+  if (!offer || offer === 'investigation') {
+    return {
+      label: 'Get a free snapshot review', href: '/snapshot', track: 'primary_cta_click',
+      alternate: offer ? { label: 'Request the paid investigation', href: contactHref('investigation', fromPath) } : undefined
+    };
+  }
+  return { label: offers[offer].askLabel, href: contactHref(offer, fromPath), track: 'primary_cta_click' };
+}
+
 /** Contact link that tells the form which guide and offer the reader came from. */
 export function contactHref(offer: OfferKey, fromPath: string): string {
   const params = new URLSearchParams({ offer, from: fromPath });

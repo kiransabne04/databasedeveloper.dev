@@ -4,7 +4,7 @@ import PageHero from '../components/PageHero.astro';
 import CTA from '../components/CTA.astro';
 ---
 <BaseLayout title="OLAP & Analytical Workload Performance — WalStack" description="Analytical workload performance reviews across partitioning, clustering, data skew, scan amplification, distributed joins and cost/performance trade-offs.">
-  <PageHero eyebrow="OLAP / Big Data" title="Analytical Workload Performance" description="Large analytical workloads fail differently from OLTP systems. Review scan amplification, partitioning, clustering, skew, distributed joins and workload isolation as a system—not as isolated SQL syntax." />
+  <PageHero primaryLabel="Describe your analytical workload" primaryHref="/contact?from=%2Folap-analytical-performance" eyebrow="OLAP / Big Data" title="Analytical Workload Performance" description="Large analytical workloads fail differently from OLTP systems. Review scan amplification, partitioning, clustering, skew, distributed joins and workload isolation as a system—not as isolated SQL syntax." />
   <section><div class="container grid three">
     <div class="card"><h2 class="card-heading">Scan amplification</h2><p>Find why an apparently selective query still reads far more data than the business question suggests.</p></div>
     <div class="card"><h2 class="card-heading">Skew + joins</h2><p>Review distribution and join behavior when one stage dominates elapsed time or resource usage.</p></div>
@@ -34,5 +34,5 @@ import CTA from '../components/CTA.astro';
     </ul>
     <p>The useful outcome is an explicit trade-off: the freshness the business needs, the layout that serves the main query patterns, and the maintenance that keeps both true as data grows. In PostgreSQL, the same trade-off appears in <a href="/how-to-scale-postgresql-databases-with-partitioning">partitioning</a> and <a href="/postgresql-indexing-when-brin-beats-b-tree">BRIN versus B-tree</a> decisions.</p>
   </div></section>
-  <section><div class="container"><CTA title="Need an analytical-workload review?" description="Start with the platform, workload pattern and cost/latency symptom. Scope is agreed once the problem and evidence are clear." /></div></section>
+  <section><div class="container"><CTA primary="Describe your analytical workload" href="/contact?from=%2Folap-analytical-performance" title="Need an analytical-workload review?" description="Start with the platform, workload pattern and cost/latency symptom. Scope is agreed once the problem and evidence are clear." /></div></section>
 </BaseLayout>

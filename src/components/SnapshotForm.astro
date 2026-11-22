@@ -5,7 +5,7 @@ import { campaignFields } from '../lib/campaign-context.mjs';
 <form id="snapshot-form" action={site.snapshotEndpoint} method="post" enctype="multipart/form-data">
   <input type="hidden" name="_subject" value="Free PostgreSQL snapshot review" />
   <input type="text" name="_gotcha" class="visually-hidden" tabindex="-1" autocomplete="off" aria-hidden="true" aria-label="Leave blank" />
-  {[...campaignFields, ...campaignFields.map(key => 'first_' + key), 'landing_page', 'latest_landing_page', 'referring_page'].map(key => <input type="hidden" name={key} data-campaign />)}
+  {[...campaignFields, ...campaignFields.map(key => 'first_' + key), 'landing_page', 'latest_landing_page', 'referring_page', 'referral_source', 'referral_landing_page'].map(key => <input type="hidden" name={key} data-campaign />)}
   <div class="form-grid">
     <label class="field">Name<input name="name" autocomplete="name" required /></label>
     <label class="field">Work email<input name="email" type="email" autocomplete="email" required /></label>
@@ -25,6 +25,7 @@ import { campaignFields } from '../lib/campaign-context.mjs';
   <p id="upload-status" role="status" aria-live="polite" tabindex="-1"></p>
 </form>
 <script>
+  import { submitSnapshot } from '../lib/snapshot-submit.mjs';
   const form = document.querySelector<HTMLFormElement>('#snapshot-form');
   if (form) {
     const submit = form.querySelector<HTMLButtonElement>('button[type="submit"]')!;
@@ -47,20 +48,23 @@ import { campaignFields } from '../lib/campaign-context.mjs';
       if (!form.reportValidity()) return;
       submit.disabled = true;
       status.textContent = 'Uploading your snapshot…';
-      try {
-        const data = new FormData(form);
-        for (const input of inputs) if (!input.files?.length) data.delete(input.name);
-        const response = await fetch(form.action, { method: 'POST', body: data, headers: { Accept: 'application/json' } });
-        if (!response.ok) throw new Error(String(response.status));
-      } catch {
-        status.textContent = 'I could not confirm receipt. Your files are still selected. Try again or contact hello@walstack.io.';
+      const data = new FormData(form);
+      for (const input of inputs) if (!input.files?.length) data.delete(input.name);
+      const result = await submitSnapshot({
+        action: form.action, data, fetchImpl: (url: string, init: RequestInit) => fetch(url, init),
+        // Let analytics send the event before the page changes; submitSnapshot caps the wait.
+        track: (name: string, callback: () => void) => window.dispatchEvent(new CustomEvent('dd:track', { detail: { name, props: {}, callback } })),
+        navigate: () => { form.reset(); location.replace('/snapshot/thank-you'); }
+      });
+      if (!result.ok) {
+        // Formspree explains rejected uploads (plan limits, file type) in its JSON errors.
+        const detail = result.message ? ` (${result.message})` : '';
+        status.textContent = `I could not confirm receipt${detail}. Your files are still selected. Try again or email hello@walstack.io.`;
         submit.disabled = false;
         status.focus();
         return;
       }
-      window.dispatchEvent(new CustomEvent('dd:track', { detail: 'snapshot_submitted' }));
-      form.reset();
-      location.replace('/snapshot/thank-you');
+      status.textContent = 'Received. Opening the confirmation page…';
     });
   }
 </script>

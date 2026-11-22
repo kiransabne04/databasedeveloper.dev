@@ -1,0 +1,276 @@
+ count 
+-------
+    10
+(1 row)
+
+ count 
+-------
+    10
+(1 row)
+
+################ PostgreSQL 13
+PostgreSQL 13.23 (Debian 13.23-1.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+== A. pg_monitor login, defaults
+exit=0
+stderr lines: 0
+143
+22
+-- credential literal stored by pg_stat_statements? (raw view as superuser)
+1
+-- credential text present in output? (expect 0)
+0
+-- placeholder lines
+1
+-- privilege line
+| t
+== B. login without pg_monitor
+exit=0
+stderr lines: 0
+41
+== C. -v show_query_text=off -v show_schema=off
+exit=0
+stderr lines: 0
+show_query_text = off  show_schema = off
+0
+(skipped: show_schema is off)
+== D. extension absent (fresh database)
+exit=0
+stderr lines: 0
+=== 6–7. Query timings unavailable (pg_stat_statements is not installed in this database) ===
+== E. another session holds ACCESS EXCLUSIVE on orders
+exit=0
+elapsed_seconds=4
+   4 ERROR:  canceling statement due to lock timeout
+1
+== F. no writes: pg_stat_database xact_commit unaffected? (session counters only)
+0
+ count 
+-------
+    10
+(1 row)
+
+ count 
+-------
+    10
+(1 row)
+
+################ PostgreSQL 14
+PostgreSQL 14.24 (Debian 14.24-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+== A. pg_monitor login, defaults
+exit=0
+stderr lines: 0
+146
+22
+-- credential literal stored by pg_stat_statements? (raw view as superuser)
+1
+-- credential text present in output? (expect 0)
+0
+-- placeholder lines
+1
+-- privilege line
+| t
+== B. login without pg_monitor
+exit=0
+stderr lines: 0
+41
+== C. -v show_query_text=off -v show_schema=off
+exit=0
+stderr lines: 0
+show_query_text = off  show_schema = off
+0
+(skipped: show_schema is off)
+== D. extension absent (fresh database)
+exit=0
+stderr lines: 0
+=== 6–7. Query timings unavailable (pg_stat_statements is not installed in this database) ===
+== E. another session holds ACCESS EXCLUSIVE on orders
+exit=0
+elapsed_seconds=4
+   4 ERROR:  canceling statement due to lock timeout
+1
+== F. no writes: pg_stat_database xact_commit unaffected? (session counters only)
+0
+ count 
+-------
+    10
+(1 row)
+
+ count 
+-------
+    10
+(1 row)
+
+################ PostgreSQL 15
+PostgreSQL 15.20 (Debian 15.20-1.pgdg13+1) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+== A. pg_monitor login, defaults
+exit=0
+stderr lines: 0
+146
+22
+-- credential literal stored by pg_stat_statements? (raw view as superuser)
+1
+-- credential text present in output? (expect 0)
+0
+-- placeholder lines
+1
+-- privilege line
+| t
+== B. login without pg_monitor
+exit=0
+stderr lines: 0
+41
+== C. -v show_query_text=off -v show_schema=off
+exit=0
+stderr lines: 0
+show_query_text = off  show_schema = off
+0
+(skipped: show_schema is off)
+== D. extension absent (fresh database)
+exit=0
+stderr lines: 0
+=== 6–7. Query timings unavailable (pg_stat_statements is not installed in this database) ===
+== E. another session holds ACCESS EXCLUSIVE on orders
+exit=0
+elapsed_seconds=5
+   4 ERROR:  canceling statement due to lock timeout
+1
+== F. no writes: pg_stat_database xact_commit unaffected? (session counters only)
+0
+ count 
+-------
+    10
+(1 row)
+
+ count 
+-------
+    10
+(1 row)
+
+################ PostgreSQL 16
+PostgreSQL 16.15 (Debian 16.15-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+== A. pg_monitor login, defaults
+exit=0
+stderr lines: 0
+146
+22
+-- credential literal stored by pg_stat_statements? (raw view as superuser)
+1
+-- credential text present in output? (expect 0)
+0
+-- placeholder lines
+1
+-- privilege line
+| t
+== B. login without pg_monitor
+exit=0
+stderr lines: 0
+41
+== C. -v show_query_text=off -v show_schema=off
+exit=0
+stderr lines: 0
+show_query_text = off  show_schema = off
+0
+(skipped: show_schema is off)
+== D. extension absent (fresh database)
+exit=0
+stderr lines: 0
+=== 6–7. Query timings unavailable (pg_stat_statements is not installed in this database) ===
+== E. another session holds ACCESS EXCLUSIVE on orders
+exit=0
+elapsed_seconds=4
+   4 ERROR:  canceling statement due to lock timeout
+1
+== F. no writes: pg_stat_database xact_commit unaffected? (session counters only)
+0
+ count 
+-------
+    10
+(1 row)
+
+ count 
+-------
+    10
+(1 row)
+
+################ PostgreSQL 17
+PostgreSQL 17.11 (Debian 17.11-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+== A. pg_monitor login, defaults
+exit=0
+stderr lines: 0
+149
+22
+-- credential literal stored by pg_stat_statements? (raw view as superuser)
+1
+-- credential text present in output? (expect 0)
+0
+-- placeholder lines
+1
+-- privilege line
+| t
+== B. login without pg_monitor
+exit=0
+stderr lines: 0
+42
+== C. -v show_query_text=off -v show_schema=off
+exit=0
+stderr lines: 0
+show_query_text = off  show_schema = off
+0
+(skipped: show_schema is off)
+== D. extension absent (fresh database)
+exit=0
+stderr lines: 0
+=== 6–7. Query timings unavailable (pg_stat_statements is not installed in this database) ===
+== E. another session holds ACCESS EXCLUSIVE on orders
+exit=0
+elapsed_seconds=4
+   4 ERROR:  canceling statement due to lock timeout
+1
+== F. no writes: pg_stat_database xact_commit unaffected? (session counters only)
+0
+ count 
+-------
+    10
+(1 row)
+
+ count 
+-------
+    10
+(1 row)
+
+################ PostgreSQL 18
+PostgreSQL 18.6 (Debian 18.6-1.pgdg13+2) on aarch64-unknown-linux-gnu, compiled by gcc (Debian 14.2.0-19) 14.2.0, 64-bit
+== A. pg_monitor login, defaults
+exit=0
+stderr lines: 0
+150
+22
+-- credential literal stored by pg_stat_statements? (raw view as superuser)
+1
+-- credential text present in output? (expect 0)
+0
+-- placeholder lines
+1
+-- privilege line
+| t
+== B. login without pg_monitor
+exit=0
+stderr lines: 0
+41
+== C. -v show_query_text=off -v show_schema=off
+exit=0
+stderr lines: 0
+show_query_text = off  show_schema = off
+0
+(skipped: show_schema is off)
+== D. extension absent (fresh database)
+exit=0
+stderr lines: 0
+=== 6–7. Query timings unavailable (pg_stat_statements is not installed in this database) ===
+== E. another session holds ACCESS EXCLUSIVE on orders
+exit=0
+elapsed_seconds=4
+   4 ERROR:  canceling statement due to lock timeout
+1
+== F. no writes: pg_stat_database xact_commit unaffected? (session counters only)
+0

@@ -1,5 +1,5 @@
 -- =====================================================================
--- WalStack PostgreSQL Snapshot (v1.1)
+-- WalStack PostgreSQL Snapshot (v1.2)
 -- https://walstack.io/snapshot
 --
 -- Reads PostgreSQL statistics and catalog views into a plain-text report.
@@ -19,18 +19,32 @@
 -- application database and has the built-in pg_monitor role.
 --   On RDS/Aurora, an administrator can run: GRANT pg_monitor TO <user>;
 --
+-- Privacy switches. Both default to on because the findings depend on
+-- them. Turn either off on the command line without editing this file:
+--   psql ... -v show_query_text=off -v show_schema=off -f walstack-snapshot.sql
 -- show_query_text off omits query text. PostgreSQL usually normalizes
--- literals to $1, $2, etc., but some captured text can contain literals.
--- show_schema off omits the column listing. Index and foreign key
--- definitions and other names may still expose schema details.
+-- literals to $1, $2, etc., but utility statements and some captured text
+-- can contain literals. Query text that mentions a password, secret, token
+-- or API key is replaced with a placeholder; the timings are kept.
+-- show_schema off omits the column listing. Table, index, constraint and
+-- role names and index/foreign key definitions are still included.
+-- The report never includes host names, IP addresses or application rows.
+--
+-- Requires psql 10 or newer (for \if). Tested with PostgreSQL 13-18.
 --
 -- Optional sections depend on your version, extensions, and permissions.
 -- If a statement times out on a lock, the script continues to the next
 -- statement. Review terminal errors as well as the snapshot output.
 -- =====================================================================
 
+\if :{?show_query_text}
+\else
 \set show_query_text on
+\endif
+\if :{?show_schema}
+\else
 \set show_schema on
+\endif
 
 \set QUIET on
 \set ON_ERROR_STOP on
@@ -53,13 +67,21 @@ SELECT EXISTS (
          JOIN pg_namespace n ON n.oid = e.extnamespace
          WHERE e.extname = 'pg_stat_statements'
        ), 'pg_catalog') AS pgss_schema,
-       current_setting('server_version_num')::int >= 170000 AS pg17
+       current_setting('server_version_num')::int >= 170000 AS pg17,
+       pg_has_role(current_user, 'pg_monitor', 'USAGE') AS monitor_ok
 \gset
 SELECT to_regclass(format('%I.pg_stat_statements_info', :'pgss_schema')) IS NOT NULL AS has_pgss_info
 \gset
 \set ON_ERROR_STOP off
 
-\qecho 'WalStack PostgreSQL Snapshot v1.1'
+\qecho 'WalStack PostgreSQL Snapshot v1.2'
+\qecho 'show_query_text =' :show_query_text ' show_schema =' :show_schema
+\if :monitor_ok
+\else
+\qecho 'WARNING: this login is not a member of pg_monitor. Query text and other'
+\qecho 'sessions will show as <insufficient privilege>. Ask an administrator to run'
+\qecho 'GRANT pg_monitor TO <user>; and rerun, or send this output as it is.'
+\endif
 
 \qecho
 \qecho '=== 1. Server and version ==='
@@ -68,7 +90,8 @@ SELECT version() AS version,
        pg_postmaster_start_time() AS server_started,
        now() AS snapshot_taken,
        pg_is_in_recovery() AS is_replica,
-       current_database() AS database;
+       current_database() AS database,
+       pg_has_role(current_user, 'pg_monitor', 'USAGE') AS has_pg_monitor;
 
 \qecho
 \qecho '=== 2. Key settings ==='
@@ -123,7 +146,10 @@ SELECT queryid,
        rows,
        shared_blks_hit, shared_blks_read, temp_blks_written
 \if :show_query_text
-       , left(regexp_replace(query, '\s+', ' ', 'g'), 300) AS query
+       , CASE WHEN query ~* '(password|passwd|secret|token|api[_-]?key)'
+              THEN '[omitted by script: text mentions a credential]'
+              ELSE left(regexp_replace(query, '\s+', ' ', 'g'), 300)
+         END AS query
 \endif
 FROM :"pgss_schema".pg_stat_statements
 WHERE dbid = (SELECT oid FROM pg_database WHERE datname = current_database())
@@ -137,7 +163,10 @@ SELECT queryid, calls,
        round(max_exec_time::numeric, 2) AS max_ms,
        round(stddev_exec_time::numeric, 2) AS stddev_ms
 \if :show_query_text
-       , left(regexp_replace(query, '\s+', ' ', 'g'), 300) AS query
+       , CASE WHEN query ~* '(password|passwd|secret|token|api[_-]?key)'
+              THEN '[omitted by script: text mentions a credential]'
+              ELSE left(regexp_replace(query, '\s+', ' ', 'g'), 300)
+         END AS query
 \endif
 FROM :"pgss_schema".pg_stat_statements
 WHERE calls >= 50

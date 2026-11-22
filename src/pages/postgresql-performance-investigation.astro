@@ -5,14 +5,14 @@ import InvestigationDeliverables from '../components/InvestigationDeliverables.a
 import InvestigationFAQ from '../components/InvestigationFAQ.astro';
 import { site } from '../config/site';
 ---
-<BaseLayout title="Postgres Slowdown Investigation | WalStack" description="Find the cause of a slow or expensive PostgreSQL database. Get a fix, rollback steps and a 14-day check. $450 for my first 3 clients, then $750."
+<BaseLayout title="PostgreSQL Performance Investigation for RDS & Aurora | WalStack" description="Find the cause of a slow or expensive PostgreSQL database. Get a fix, rollback steps and a 14-day check. $450 for my first 3 clients, then $750."
   schema={{ '@context': 'https://schema.org', '@type': 'Service', name: 'Postgres Slowdown Investigation', url: site.url + '/postgresql-performance-investigation', provider: { '@id': site.url + '/#practice' } }}>
   <header class="container hero"><p class="eyebrow">PostgreSQL performance</p><h1>Postgres Slowdown Investigation</h1>
     <p class="lede">Find out why pages slowed down or the database bill went up. Get a written fix your engineers can test and undo.</p>
-    <p>{site.investigationOffer.display}. Paid upfront.</p><ConversionActions /></header>
+    <p>{site.investigationOffer.display}. Paid upfront.</p><ConversionActions offer="investigation" /></header>
   <section><div class="container prose"><h2>Who it's for</h2>
     <p>You run one production database on RDS, Aurora or self-managed PostgreSQL. Something changed, and the engineer who knows the database needs a second pair of eyes.</p>
-    <p>If it's just one slow query or endpoint, say so in the <a href="/snapshot#send">snapshot form</a> because the investigation covers it.</p>
+    <p>If it's just one slow query or endpoint, say so in the <a href="/snapshot#send">snapshot form</a> because the investigation covers it. If you can already name the statement and only want that query reviewed, <a href="/query-rescue">Query Rescue</a> is narrower. For a change that hasn't shipped yet, see <a href="/database-code-review">Database Code Review</a>.</p>
     <h2>What you get</h2><InvestigationDeliverables />
     <p><a href="/sample-report" data-track="sample_report_click">Read the sample report</a>. I built it on a demo database.</p>
     <h2>How the three business days work</h2>
@@ -24,8 +24,8 @@ import { site } from '../config/site';
     <h2>What can the data prove?</h2>
     <p>Two captures can show that one query accounted for most of the extra database time. A single total can't tell me when the increase began.</p>
     <p>If history is missing or the problem didn't recur, I say so. I explain which next measurement would settle the question.</p>
-    <h2>Price and refund</h2><p><strong>{site.investigationOffer.display}.</strong> Paid upfront in USD. If I can't find at least one evidence-backed improvement, you get a full refund.</p>
+    <h2>Price and refund</h2><p><strong>{site.investigationOffer.display}.</strong> Paid upfront in USD. If the report contains no recommendation backed by evidence from your system, you get a full refund. A recommendation counts when it cites the statistic, plan or log line it rests on. Results after you apply a change are not part of the refund condition.</p>
     <p>WalStack is <a href={site.directoryUrl}>listed in PostgreSQL.org's Professional Services directory</a>.</p>
-    <h2>Frequently asked questions</h2><InvestigationFAQ /><ConversionActions />
+    <h2>Frequently asked questions</h2><InvestigationFAQ /><ConversionActions offer="investigation" />
   </div></section>
 </BaseLayout>

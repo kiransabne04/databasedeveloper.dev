@@ -4,7 +4,7 @@ import PageHero from '../components/PageHero.astro';
 import CTA from '../components/CTA.astro';
 ---
 <BaseLayout title="pgvector Performance Review — WalStack" description="Production pgvector performance reviews: HNSW vs IVFFlat, recall/latency, memory, filtering, hybrid search and vector workload scaling.">
-  <PageHero eyebrow="AI + database" title="Production pgvector Performance Review" description="Vector-search performance is a database trade-off problem too: recall, latency, memory, index build cost, metadata filters and the relational workload around the vector search." />
+  <PageHero primaryLabel="Ask about a pgvector review" primaryHref="/contact?offer=pgvector&from=%2Fpgvector-performance" eyebrow="AI + database" title="Production pgvector Performance Review" description="Vector-search performance is a database trade-off problem too: recall, latency, memory, index build cost, metadata filters and the relational workload around the vector search." />
   <section>
     <div class="container grid three">
       <div class="card"><h2 class="card-heading">HNSW vs IVFFlat</h2><p>Choose and tune based on workload, recall/latency target, update pattern and operational constraints—not popularity.</p></div>
@@ -46,5 +46,5 @@ import CTA from '../components/CTA.astro';
       <p class="small muted">Version-specific details from the <a href="https://github.com/pgvector/pgvector#readme">pgvector documentation</a> (0.8.x), checked 13 October 2026. Managed services may ship an older pgvector; check <code>SELECT extversion FROM pg_extension WHERE extname = 'vector';</code> first.</p>
     </div>
   </section>
-  <section><div class="container"><CTA title="Need a second set of eyes on a pgvector workload?" description="Bring the workload shape, vector/index configuration and query behavior. The first step is deciding whether a focused review is justified." /></div></section>
+  <section><div class="container"><CTA offer="pgvector" title="Need a second set of eyes on a pgvector workload?" description="Bring the workload shape, vector/index configuration and query behavior. The first step is deciding whether a focused review is justified." /></div></section>
 </BaseLayout>

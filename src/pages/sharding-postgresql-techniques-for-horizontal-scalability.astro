@@ -1,5 +1,6 @@
 ---
 import ArticleLayout from '../layouts/ArticleLayout.astro';
+import ArticleOffer from '../components/ArticleOffer.astro';
 import { Content as Original } from '../originals/sharding-postgresql-techniques-for-horizontal-scalability.md';
 ---
 <ArticleLayout title="Sharding PostgreSQL: Partitioning vs Sharding, Alternatives and Techniques" description="PostgreSQL partitioning vs sharding, the alternatives to try first, and a decision guide: prove the single-node limit, choose a shard key, quantify cross-shard work and design routing, rebalancing and recovery." eyebrow="PostgreSQL architecture" published="2025-07-05" updated="2026-10-14" original>
@@ -24,6 +25,8 @@ import { Content as Original } from '../originals/sharding-postgresql-techniques
   </ul>
   <p>A tenant key is attractive for a SaaS workload when most requests remain within one tenant. It can fail if one tenant dominates writes or if core reports join across tenants. Simulate data and traffic distribution, including the largest tenant and projected growth; evenly distributed row counts do not guarantee evenly distributed load.</p>
   <p><code>postgres_fdw</code> can access remote PostgreSQL tables, but remote access alone is not a complete sharding system. A distributed extension or application routing layer still needs explicit operational design. The <a href="https://www.postgresql.org/docs/current/postgres-fdw.html">PostgreSQL FDW documentation</a> describes remote-table behavior and limitations.</p>
+
+  <ArticleOffer offer="investigation" title="Considering sharding because one PostgreSQL instance is struggling?" text="The constraint is often a handful of statements, bloat or connection handling rather than raw capacity. An investigation ranks what is actually using the instance, so the sharding decision rests on measured load." />
 
   <h3>Define the cutover before moving a row</h3>
   <p>Write down how a request finds its shard, how the mapping changes during a move, and how both old and new locations handle concurrent writes. A rehearsal should cover backfill, change capture or dual-write reconciliation, verification, cutover and rollback. Include per-shard backups, restore tests, schema rollout order and failure isolation. Without those steps, splitting tables can reduce one bottleneck while increasing the recovery risk.</p>
