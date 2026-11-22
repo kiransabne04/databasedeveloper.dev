@@ -27,6 +27,7 @@ export const GET: APIRoute = () => {
     link('Sample investigation report', '/sample-report', 'Report format, built on a demo database.'),
     link('Lab case studies', '/case-studies', 'Reproduced problems on generated data.'),
     `- [Lab scripts and outputs](https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs): Reproducible scripts behind the guides.`,
+    `- [pg_stat_index_queries](${site.extensionUrl}): Experimental open-source PostgreSQL extension by ${site.personName} that shows which queries use each index; SQL edition for RDS/Aurora.`,
     `- [PostgreSQL.org professional services listing](${site.directoryUrl}): Directory entry.`,
     '',
     '## Guides',
