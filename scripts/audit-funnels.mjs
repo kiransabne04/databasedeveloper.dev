@@ -93,6 +93,14 @@ ok(/SET default_transaction_read_only = on;/.test(sql) && /SET statement_timeout
 ok((sql.match(/omitted by script: text mentions a credential/g) || []).length === 2, 'Both query-text sections redact credentials');
 ok(sql.includes('\\if :{?show_query_text}') && sql.includes('\\if :{?show_schema}'), 'Privacy switches must be overridable with psql -v');
 
+// Owner-approved terms (Nov 2026): objective refund condition and a snapshot fit check.
+for (const route of ['/', '/pricing', '/postgresql-performance-investigation']) {
+  ok(!/evidence-backed improvement|find nothing you can act on/.test(page(route)), `${route} uses the old subjective refund wording`);
+  ok(/no (evidence-backed recommendation|recommendation backed by evidence)/.test(page(route)), `${route} missing the objective refund condition`);
+}
+ok(/check that the output is usable and the request fits/.test(page('/snapshot')) && /within 1 business day/.test(page('/snapshot')), 'Snapshot fit check missing');
+ok(/within 1 business day/i.test(page('/snapshot/thank-you')), 'Receipt page must state the fit-check reply time');
+
 // 6. Snapshot submission with mocked endpoint, analytics and timers.
 const run = async (response, { analyticsCalls = true, throws = false } = {}) => {
   const events = []; let navigations = 0; const timers = [];

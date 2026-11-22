@@ -2,6 +2,6 @@
 import ConversionActions from './ConversionActions.astro';
 import type { OfferKey } from '../data/offers';
 interface Props { eyebrow?: string; title?: string; description?: string; offer?: OfferKey; primary?: string; href?: string }
-const { eyebrow, offer, primary, href, title = 'Is production PostgreSQL slowing you down?', description = 'Send a snapshot. I’ll reply with three written findings within two business days.' } = Astro.props;
+const { eyebrow, offer, primary, href, title = 'Is production PostgreSQL slowing you down?', description = 'Send a snapshot. If it fits, I’ll reply with three written findings within two business days.' } = Astro.props;
 ---
 <div class="cta-panel"><div>{eyebrow && <span class="eyebrow">{eyebrow}</span>}<h2>{title}</h2><p>{description}</p></div><ConversionActions offer={offer} primary={primary} href={href} /></div>
