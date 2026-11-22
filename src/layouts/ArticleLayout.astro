@@ -2,7 +2,7 @@
 import BaseLayout from './BaseLayout.astro';
 import { site } from '../config/site';
 import ConversionActions from '../components/ConversionActions.astro';
-import { offers, type OfferKey } from '../data/offers';
+import { offers, nextStep, type OfferKey } from '../data/offers';
 
 interface Props {
   title: string;
@@ -24,6 +24,7 @@ interface Props {
 
 const { title, description, eyebrow, published, updated, original = false, ctaTitle, ctaDescription, offer = 'investigation', offerLine = true, schemaType = 'BlogPosting', faq } = Astro.props;
 const details = offers[offer];
+const step = nextStep(offer, Astro.url.pathname);
 
 const pageUrl = new URL(Astro.url.pathname, site.url).toString();
 const articleSchema = {
@@ -60,7 +61,7 @@ const faqSchema = faq?.length ? {
       <p class="lede">{description}</p>
       <p class="small muted">By <a href="/about">{site.personName}</a> · Published <time datetime={published}>{published}</time> · Updated <time datetime={updated}>{updated}</time></p>
       {/lab/i.test(eyebrow) && <p class="small muted">I measured this example on generated data in a lab. It contains no client results.</p>}
-      {offerLine && <p class="article-service small">Have a similar issue? <a href="/snapshot">Get a free PostgreSQL snapshot review</a> or <a href={site.bookingUrl} data-track="book_call_click">book a 15-minute call</a>.</p>}
+      {offerLine && <p class="article-service small">Have a similar issue in production? <a href={step.href} data-track={step.track} data-offer={offer}>{step.label}</a> or <a href={site.bookingUrl} data-track="book_call_click" data-offer={offer}>book a 15-minute call</a>.</p>}
       {original && <p class="small muted">Technically reviewed and corrected on <time datetime={updated}>{updated}</time>, with added <a href="#production-notes">production notes</a>.</p>}
     </header>
     <section><div class="container prose article-body"><slot /></div></section>
@@ -73,7 +74,7 @@ const faqSchema = faq?.length ? {
           <h2>{ctaTitle ?? 'Need help with a production PostgreSQL problem?'}</h2>
           <p class="muted">{ctaDescription ?? 'Bring the symptom and available evidence. A scoped investigation turns competing hypotheses into a ranked validation plan.'}</p>
         </div>
-        <ConversionActions />
+        <ConversionActions offer={offer} />
       </div>
       <div class="author-box">
         <p><strong>About the author.</strong> I'm <a href="/about">{site.personName}</a>, a database and backend engineer with about 8 years of experience. My focus includes PostgreSQL, Aurora/RDS, SQL Server and Snowflake. These guides draw on my work and public <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs">labs</a> you can rerun. See <a href="/how-it-works">how a scoped engagement works</a>.</p>

@@ -2,7 +2,7 @@
 import BaseLayout from './BaseLayout.astro';
 import PageHero from '../components/PageHero.astro';
 import ConversionActions from '../components/ConversionActions.astro';
-import { offers, type FocusedOffer } from '../data/offers';
+import { offers, contactHref, type FocusedOffer } from '../data/offers';
 import { site } from '../config/site';
 
 interface Props {
@@ -29,7 +29,7 @@ const schema = [{
 ---
 <BaseLayout {title} {description} canonical={url} {schema} serviceId={service}>
   <PageHero eyebrow="PostgreSQL and SQL Server" title={offer.name} description={headline}
-    primaryLabel="Get a free PostgreSQL snapshot review" primaryHref="/snapshot"
+    primaryLabel={offer.askLabel} primaryHref={contactHref(service, offer.href)}
     secondaryLabel="See the written deliverables" secondaryHref="#deliverables" supportingText={offer.price}>
     <p class="muted">{fit}</p>
   </PageHero>
@@ -41,7 +41,7 @@ const schema = [{
   <section><div class="container cta-panel">
     <div><h2>Agree the scope before sharing evidence</h2><p>{offer.terms}. One written review and one clarification round. I confirm the fixed fee and delivery window before paid work begins.</p>
     <p class="muted">{excludes}</p></div>
-    <ConversionActions />
+    <ConversionActions offer={service} />
   </div></section>
 </BaseLayout>
 <style> #deliverables { scroll-margin-top: 6rem; } </style>
