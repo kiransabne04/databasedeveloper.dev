@@ -5,8 +5,8 @@ import PageHero from '../components/PageHero.astro';
 import PG14Notice from '../components/PG14Notice.astro';
 import CTA from '../components/CTA.astro';
 ---
-<BaseLayout title="AWS RDS & Aurora PostgreSQL Performance — WalStack" description="PostgreSQL performance investigation for RDS and Aurora: Database Insights, CloudWatch, Enhanced Monitoring, RDS Proxy and upgrade risk." schema={serviceSchema('RDS and Aurora PostgreSQL Performance Investigation', '/aws-rds-aurora-postgresql', 'PostgreSQL performance investigation for RDS and Aurora: Database Insights, CloudWatch, Enhanced Monitoring, RDS Proxy and upgrade risk.')}>
-  <PageHero eyebrow="AWS PostgreSQL" title="RDS/Aurora performance without defaulting to “scale the instance.”" description="Use workload evidence to separate expensive statements, plan problems, connection amplification, waits and configuration from genuine capacity constraints." />
+<BaseLayout title="RDS & Aurora PostgreSQL Performance: High CPU & Slow Queries | WalStack" description="PostgreSQL performance investigation for RDS and Aurora: Database Insights, CloudWatch, Enhanced Monitoring, RDS Proxy and upgrade risk." schema={serviceSchema('RDS and Aurora PostgreSQL Performance Investigation', '/aws-rds-aurora-postgresql', 'PostgreSQL performance investigation for RDS and Aurora: Database Insights, CloudWatch, Enhanced Monitoring, RDS Proxy and upgrade risk.')}>
+  <PageHero eyebrow="RDS and Aurora PostgreSQL performance" title="RDS/Aurora performance without defaulting to “scale the instance.”" description="Use workload evidence to separate expensive statements, plan problems, connection amplification, waits and configuration from genuine capacity constraints." />
   <section>
     <div class="container grid three">
       <div class="card"><h2 class="card-heading">Workload concentration</h2><p>Which statements, calls and I/O patterns actually account for database time?</p></div>
@@ -46,8 +46,8 @@ import CTA from '../components/CTA.astro';
         <div><span class="eyebrow">Common patterns</span><h2>Where RDS and Aurora performance problems usually hide.</h2></div>
       </div>
       <div class="grid two">
-        <div class="card"><h3>“Scale up” that only buys time</h3><p>CPU climbs and the instance class goes up a size. Database Insights still shows the same three statements dominating load, so the bigger instance fills again as data grows.</p></div>
-        <div class="card"><h3>Connection pressure, not query cost</h3><p>Connection counts spike after a deploy or a retry storm. Each query is fast; there are just too many backends competing. Pool sizing, RDS Proxy pinning and idle-in-transaction sessions matter more than indexes.</p></div>
+        <div class="card"><h3>High CPU, and a “scale up” that only buys time</h3><p>CPU climbs and the instance class goes up a size. Database Insights still shows the same three statements dominating load, so the bigger instance fills again as data grows.</p></div>
+        <div class="card"><h3>Connection pressure and RDS Proxy pinning</h3><p>Connection counts spike after a deploy or a retry storm. Each query is fast; there are just too many backends competing. Pool sizing, RDS Proxy pinning and idle-in-transaction sessions matter more than indexes.</p></div>
         <div class="card"><h3>Storage and I/O limits</h3><p>Latency rises with disk queue depth while CPU looks fine. Check provisioned IOPS and throughput, burst balance, and whether the working set still fits in memory.</p></div>
         <div class="card"><h3>Aurora I/O and cost surprises</h3><p>On Aurora, read and write I/O is part of the bill on the Standard storage configuration. Scan-heavy workloads can show up in cost before they show up in latency.</p></div>
       </div>

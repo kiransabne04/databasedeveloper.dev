@@ -142,3 +142,81 @@ Confidence ratings: **High** means demand and intent are both evidenced. **Mediu
 - Separate landing pages per keyword variant. Rejected: they would be near-duplicates and could dilute crawl attention on a new domain.
 - A paid keyword tool subscription. Not before revenue. Search Console query exports cover the need.
 - A comparison page against large consultancies. Wait until there is client evidence to cite.
+
+## Independent review, 23 November 2026
+
+Second-pass review of the map above and of an external keyword list. Evidence: the live site (production HTML matched `main` at `f7855d2`), the built site's internal links, and one US web search per new term.
+
+### Findings
+
+- **No technical indexing defect.** Every commercial page returns 200, has a self-referencing canonical, has no `noindex` meta or `X-Robots-Tag` header, and is in the sitemap. `robots.txt` allows everything. Old-domain article URLs reach walstack.io in one hop. The "crawled, not indexed" states for the investigation, upgrade, SQL Server, Query Rescue, Code Review, snapshot and pricing pages are Google's selection on a young domain. Most of these pages changed on 22 November, so the next useful signal is the re-inspection around 6 December.
+- **Historical articles already route to the matching offer.** Locking, sharding, partitioning and the slow-query guide go to the investigation. The upgrade guides go to the upgrade enquiry. The parameter-sniffing guide goes to SQL Server and Query Rescue. No change needed.
+- **Homepage service discovery is already handled.** The footer on every page links all seven services and partners. The nav carries investigation, snapshot, upgrade and pricing. The launch audit's rule that keeps Query Rescue, Code Review, SQL Server and partners out of the homepage body keeps the homepage on one offer. Nothing in Search Console shows that rule is costing discovery, so it stays.
+- **One real internal-link gap.** `/aws-rds-aurora-postgresql` is the most detailed page on the RDS/Aurora wedge, but only three pages linked to it in their body, and the investigation page was not one of them. **Implemented:** one sentence on the investigation page links to it ("what each AWS source can and can't answer"). This also gives the investigation page content the homepage does not repeat.
+
+### External keyword list: decisions
+
+| Proposed cluster | What ranks (23 Nov) | Decision | Reason |
+| --- | --- | --- | --- |
+| Fractional / on-demand PostgreSQL DBA | Remote DBA subscriptions (Datavail, EDB, MinervaDB, MariaDB) offering 24×7 coverage | Reject | The SERP sells ongoing operational coverage. WalStack sells fixed-scope reviews and does not promise 24×7 response. |
+| Freelance PostgreSQL DBA / independent Postgres engineer | Upwork, Toptal, Freelancer, Malt and job boards | Reject | Marketplace and job-search intent |
+| PostgreSQL performance consultant / consulting services | See cluster A | Already solved | Homepage title carries it. Do not repeat it on the investigation page. |
+| AWS RDS PostgreSQL performance tuning (consultant) | AWS documentation and Prescriptive Guidance, plus AWS Marketplace fixed-scope listings | Monitor | Buyer intent exists, but AWS documentation dominates. The RDS page already covers the topic. Retitling it would compete with the investigation page, whose title also says "RDS & Aurora". Revisit if Search Console shows impressions for the RDS page. |
+| Reduce RDS/Aurora cost | Not checked separately | Reject as a target | No cost-reduction offer or evidence on the site. Claiming one would be new positioning. |
+| RDS Proxy troubleshooting | Not checked | Monitor | Mentioned on the RDS page. A guide is justified only if Search Console shows demand. |
+| PostgreSQL 14 to 17/18 upgrade service; RDS 14 end of support | AWS release calendar and upgrade documentation | Already solved | The upgrade page and five upgrade guides cover it, and every guide routes to the upgrade enquiry. |
+| Zero-downtime major-version upgrade | Not checked | Reject | A promise the readiness review does not make. Blue/green is covered as a guide. |
+| Partitioning consulting, pgvector tuning | Not checked | Reject for now | Secondary capabilities. Their guides already link to the investigation. No new pages before the first paid client. |
+| Postgres slow query rescue; lock contention troubleshooting | Not checked | Already solved | Query Rescue page plus the locking guide, which routes to the investigation |
+
+### Owner decision: target primary, secondary and long-tail terms
+
+The owner decided on 23 November to target the primary map below now, rather than wait for the 6 December re-inspection. Every commercial title now leads with its primary term, and a funnel-audit check keeps it that way. Terms were added only where the page already does what the term describes. No keyword stuffing, and no promises the services don't make.
+
+### Primary map (one main term per page)
+
+| Page | Primary term (title) | Secondary terms (eyebrow, H2s, body) |
+| --- | --- | --- |
+| `/` | PostgreSQL performance consultant | PostgreSQL consultant, PostgreSQL consulting |
+| `/postgresql-performance-investigation` | PostgreSQL performance investigation | slow PostgreSQL database, Postgres slowdown, RDS/Aurora slow queries, PostgreSQL performance audit |
+| `/postgresql-upgrade-readiness` | PostgreSQL upgrade readiness assessment | PostgreSQL upgrade consulting, RDS PostgreSQL 14 end of support, PostgreSQL 14 to 17/18 upgrade, query regression testing |
+| `/aws-rds-aurora-postgresql` | RDS & Aurora PostgreSQL performance | Aurora/RDS high CPU, slow queries, RDS Proxy pinning, Database Insights |
+| `/sql-server-performance` | SQL Server performance consulting | SQL Server consulting services, Query Store, blocking investigation, parameter sniffing |
+| `/query-rescue` | Slow SQL query review | Postgres slow query fix, query plan review, ORM-generated SQL |
+| `/database-code-review` | Database migration review | PostgreSQL migration review, schema change review, ALTER TABLE lock risk |
+| `/partners` | PostgreSQL consultant for agencies | white-label database specialist, fractional CTO |
+| `/pricing` | PostgreSQL consulting pricing | fixed-price PostgreSQL review |
+
+Guides stay informational. Each one hands off to the matching offer.
+
+### Secondary list: long-tail phrases
+
+No measured volume for any of these. Most are probably 0 to 10 searches a month. They are worth having because the person typing one is close to hiring. Use them in H2s, FAQ questions and guide handoff sentences, not as new pages. Promote a phrase to a title or FAQ change only when Search Console shows impressions for it.
+
+**Investigation:** postgresql database slow after deploy consultant · hire postgresql expert to find slow queries · postgresql performance audit for saas · postgres high cpu root cause analysis service · pg_stat_statements analysis consultant · postgresql query regression investigation · why is my postgres database slow suddenly · one-time postgresql performance review fixed price · postgresql consultant for startups without a dba · postgres database bill went up
+
+**RDS / Aurora:** aurora postgresql high cpu troubleshooting expert · rds postgresql slow queries performance insights analysis · aurora postgresql performance review consultant · rds postgresql cpu spike root cause · aws database insights postgresql help · rds proxy connection issues postgresql · aurora postgresql io cost too high · scale up rds instance or fix queries
+
+**Upgrade:** rds postgresql 14 upgrade before february 2027 · aurora postgresql 14 upgrade assessment · postgresql 14 to 17 upgrade risk assessment · postgresql 14 to 18 upgrade consultant · rds postgresql extended support avoid cost · pg_upgrade compatibility check · postgresql major version upgrade query regression testing · postgresql upgrade rollback plan · rds blue green deployment postgresql major upgrade · postgresql slow after upgrade to 16 or 17
+
+**Query Rescue:** review my slow postgresql query · postgresql explain analyze expert review · fix one slow sql query fixed price · postgres query plan review service · slow orm generated query postgresql · sql server slow query review
+
+**Database Code Review:** postgresql migration review before deploy · review database migration for locking risk · safe postgres schema change review · alter table lock risk review postgresql · create index concurrently migration review · sql server stored procedure code review
+
+**SQL Server:** sql server query store regression consultant · sql server parameter sniffing fix · sql server blocking investigation service · sql server performance review fixed price · sql server slow after upgrade · entity framework slow sql server queries
+
+**Partners (outreach copy rather than search):** postgresql specialist for agencies · white label postgresql consultant · database expert for fractional cto · subcontract postgresql performance work
+
+**Never target:** cheap, freelance, fractional DBA, 24/7, guaranteed, zero downtime, PostgreSQL engineer (job intent), "walstack" alone.
+
+### Not changed, on purpose
+
+- H1s on the investigation, upgrade, SQL Server, Query Rescue and Code Review pages. They carry the offer name or the buyer's problem, which converts better. The term goes in the title and the eyebrow.
+- No `/postgresql-consulting` page. It would duplicate the homepage.
+- No new long-tail landing pages. Near-duplicates would dilute a young domain.
+
+### Accounts the owner controls
+
+- **Search Console:** re-inspect the nine service pages around 6 and 20 December. Request indexing once, after this change deploys, for each page whose title changed (investigation, upgrade, RDS/Aurora, Query Rescue, Code Review, pricing, homepage), and for `/partners`, which Google did not know about, only if it is still unknown on 6 December.
+- **Bing Webmaster Tools:** import the walstack.io property from Search Console and confirm `sitemap-index.xml` is read. Bing powers several AI assistants' web results, and the import takes a few minutes.
+- **IndexNow:** optional. It needs a key file committed to `public/` and a submission on each deploy. Decide after Bing shows whether crawling is a problem at all.

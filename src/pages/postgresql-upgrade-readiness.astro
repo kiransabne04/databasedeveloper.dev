@@ -4,12 +4,12 @@ import ConversionActions from '../components/ConversionActions.astro';
 import { site } from '../config/site';
 import { pg14Facts } from '../data/facts';
 ---
-<BaseLayout title="PostgreSQL Upgrade Readiness Review for RDS & Aurora | WalStack" description="A major-version upgrade assessment for PostgreSQL on RDS, Aurora or self-managed servers: blockers, a query baseline, regression checks and a rollback plan."
+<BaseLayout title="PostgreSQL Upgrade Readiness Assessment for RDS & Aurora | WalStack" description="A major-version upgrade assessment for PostgreSQL on RDS, Aurora or self-managed servers: blockers, a query baseline, regression checks and a rollback plan."
   schema={{ '@context': 'https://schema.org', '@type': 'Service', name: 'PostgreSQL Upgrade Readiness', provider: { '@id': site.url + '/#practice' }, url: site.url + '/postgresql-upgrade-readiness' }}>
-  <header class="container hero"><p class="eyebrow">PostgreSQL Upgrade Readiness</p><h1>Know what breaks and what slows down before the upgrade window.</h1>
+  <header class="container hero"><p class="eyebrow">PostgreSQL upgrade readiness assessment</p><h1>Know what breaks and what slows down before the upgrade window.</h1>
     <p class="lede">A readiness review for a PostgreSQL major-version upgrade on RDS, Aurora or a self-managed server. You get the blockers, a baseline of your busiest queries and clear go, no-go and rollback criteria.</p>
     <ConversionActions offer="upgrade" call="Book a 15-minute call" />
-    <h2 style="margin-top: 2.5rem">If you're still on PostgreSQL 14</h2>
+    <h2 style="margin-top: 2.5rem">Upgrading RDS or Aurora PostgreSQL 14 before end of standard support</h2>
     <p>RDS standard support ends on 28 February 2027. From 1 March, keeping an enrolled database on 14 adds an hourly charge.</p>
     <p>For provisioned instances, AWS charges per virtual CPU-hour. The rate depends on the region and support year. Count each billable standby and replica. If you disabled Extended Support, AWS can upgrade the database instead.</p>
     <p>For example, at a regional rate of $0.10 per virtual CPU-hour, four virtual CPUs running for 720 hours add $288. Check your region for the actual rate.</p>
@@ -19,16 +19,17 @@ import { pg14Facts } from '../data/facts';
     <ul><li>Database and extension versions, application drivers and how the application opens connections.</li>
       <li>Large tables, replicas and any systems that copy changes from the database.</li>
       <li>Queries your customers depend on, their response times and how PostgreSQL runs them today.</li></ul>
+    <p>Most teams leaving PostgreSQL 14 choose 17 or 18 as the target. I check which one your extensions, drivers and platform support before you commit to it.</p>
     <h2>What you get</h2>
     <p>A written list of blockers, the upgrade path I recommend and checks to rehearse on a test copy. I name the timings and errors to watch after the switch.</p>
     <p>You get clear conditions for proceeding, stopping or rolling back. The rollback plan covers what happens to writes accepted after the switch. Your team owns the production change.</p>
     <p><a href="/sample-upgrade-readiness-report">See a sample upgrade report</a>. I built it on a demo database.</p>
-    <h2>Technical details for your engineer</h2>
+    <h2>Query regression testing and the rollback plan</h2>
     <p>On self-managed PostgreSQL, <code>pg_upgrade --check</code> tests whether the old and new installations are compatible. It can't predict how quickly an important query will run.</p>
     <p>On RDS or Aurora, I check whether a blue/green deployment fits. That means testing the new version on a separate environment before switching traffic.</p>
     <p>I check replication slots, the bookmarks other systems use to resume copying changes. I document how to restart those systems and check for missing changes.</p>
     <p>Lab-tested guides behind this review: <a href="/insights/pg-upgrade-check-failures">pg_upgrade --check failures</a> · <a href="/insights/postgresql-upgrade-logical-replication-slots">logical replication slots after pg_upgrade</a> · <a href="/insights/rds-aurora-postgresql-14-to-18-blue-green">RDS and Aurora Blue/Green</a> · <a href="/insights/postgresql-slow-after-major-upgrade">why queries slow down after an upgrade</a> · <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a></p>
-    <h2>Price</h2><p><strong>{site.upgradeOffer.display}</strong> for one cluster and its proposed target version. Bring your current version, hosting platform and intended upgrade date to the call.</p>
+    <h2>Price</h2><p><strong>{site.upgradeOffer.display}</strong> for one cluster and its proposed target version. It is fixed-scope upgrade consulting, not an open-ended retainer. Bring your current version, hosting platform and intended upgrade date to the call.</p>
     <p>The review covers compatibility and upgrade risk. It is not the same as the free performance snapshot, which looks at today's workload only.</p>
     <ConversionActions offer="upgrade" call="Book a 15-minute call" />
   </div></section>

@@ -12,8 +12,9 @@ interface Props {
   headline: string;
   fit: string;
   excludes: string;
+  eyebrow?: string;
 }
-const { service, title, description, headline, fit, excludes } = Astro.props;
+const { service, title, description, headline, fit, excludes, eyebrow = 'PostgreSQL and SQL Server' } = Astro.props;
 const offer = offers[service];
 
 const url = site.url + offer.href;
@@ -28,7 +29,7 @@ const schema = [{
 }];
 ---
 <BaseLayout {title} {description} canonical={url} {schema} serviceId={service}>
-  <PageHero eyebrow="PostgreSQL and SQL Server" title={offer.name} description={headline}
+  <PageHero {eyebrow} title={offer.name} description={headline}
     primaryLabel={offer.askLabel} primaryHref={contactHref(service, offer.href)}
     secondaryLabel="See the written deliverables" secondaryHref="#deliverables" supportingText={offer.price}>
     <p class="muted">{fit}</p>
