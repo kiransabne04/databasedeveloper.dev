@@ -40,6 +40,11 @@ for (const [route, offer] of [
   ['/insights/sql-server-implicit-conversion-nvarchar-varchar', 'sqlserver']
 ]) ok(main(route).includes(enquiry(offer, route)), `${route} should route to ${offer}`);
 ok(main('/postgresql-concurrency-and-locking-a-comprehensive-guide').includes('href="/snapshot"'), 'Locking guide keeps the snapshot route');
+// Any panel labelled 'Upgrade readiness' must lead to the upgrade enquiry, not the performance snapshot.
+for (const route of ['/postgresql-14-upgrade-checklist', '/insights/postgresql-14-minor-version-deadlines']) {
+  const panel = main(route).split('Upgrade readiness</span>')[1] || '';
+  ok(panel.includes(enquiry('upgrade', route)) && !/class="button primary"[^>]*href="\/snapshot"/.test(panel.slice(0, 1500)), `${route} upgrade panel must route to the upgrade enquiry`);
+}
 for (const route of ['/insights/pg-upgrade-check-failures', '/insights/sql-server-implicit-conversion-nvarchar-varchar']) {
   ok(!main(route).includes('Get a free snapshot review'), `${route} offers a PostgreSQL performance snapshot to the wrong buyer`);
 }
