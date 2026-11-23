@@ -26,6 +26,7 @@ for (const [route, offer] of [
 }
 const investigation = main('/postgresql-performance-investigation');
 ok(investigation.includes('href="/snapshot"') && investigation.includes(enquiry('investigation', '/postgresql-performance-investigation')), 'Investigation needs snapshot and direct paid route');
+ok(investigation.includes('href="/aws-rds-aurora-postgresql"'), 'Investigation should link to the RDS/Aurora evidence page');
 ok(main('/partners').includes('href="/contact?offer=partnership&amp;from=%2Fpartners"'), 'Partners enquiry route');
 ok(page('/contact').includes('value="partnership"'), 'Contact form must accept the partnership offer');
 ok(main('/partners').replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length > 400, 'Partners page is thin');

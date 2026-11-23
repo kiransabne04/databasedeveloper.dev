@@ -142,3 +142,41 @@ Confidence ratings: **High** means demand and intent are both evidenced. **Mediu
 - Separate landing pages per keyword variant. Rejected: they would be near-duplicates and could dilute crawl attention on a new domain.
 - A paid keyword tool subscription. Not before revenue. Search Console query exports cover the need.
 - A comparison page against large consultancies. Wait until there is client evidence to cite.
+
+## Independent review, 23 November 2026
+
+Second-pass review of the map above and of an external keyword list. Evidence: the live site (production HTML matched `main` at `f7855d2`), the built site's internal links, and one US web search per new term.
+
+### Findings
+
+- **No technical indexing defect.** Every commercial page returns 200, has a self-referencing canonical, has no `noindex` meta or `X-Robots-Tag` header, and is in the sitemap. `robots.txt` allows everything. Old-domain article URLs reach walstack.io in one hop. The "crawled, not indexed" states for the investigation, upgrade, SQL Server, Query Rescue, Code Review, snapshot and pricing pages are Google's selection on a young domain. Most of these pages changed on 22 November, so the next useful signal is the re-inspection around 6 December.
+- **Historical articles already route to the matching offer.** Locking, sharding, partitioning and the slow-query guide go to the investigation. The upgrade guides go to the upgrade enquiry. The parameter-sniffing guide goes to SQL Server and Query Rescue. No change needed.
+- **Homepage service discovery is already handled.** The footer on every page links all seven services and partners. The nav carries investigation, snapshot, upgrade and pricing. The launch audit's rule that keeps Query Rescue, Code Review, SQL Server and partners out of the homepage body keeps the homepage on one offer. Nothing in Search Console shows that rule is costing discovery, so it stays.
+- **One real internal-link gap.** `/aws-rds-aurora-postgresql` is the most detailed page on the RDS/Aurora wedge, but only three pages linked to it in their body, and the investigation page was not one of them. **Implemented:** one sentence on the investigation page links to it ("what each AWS source can and can't answer"). This also gives the investigation page content the homepage does not repeat.
+
+### External keyword list: decisions
+
+| Proposed cluster | What ranks (23 Nov) | Decision | Reason |
+| --- | --- | --- | --- |
+| Fractional / on-demand PostgreSQL DBA | Remote DBA subscriptions (Datavail, EDB, MinervaDB, MariaDB) offering 24×7 coverage | Reject | The SERP sells ongoing operational coverage. WalStack sells fixed-scope reviews and does not promise 24×7 response. |
+| Freelance PostgreSQL DBA / independent Postgres engineer | Upwork, Toptal, Freelancer, Malt and job boards | Reject | Marketplace and job-search intent |
+| PostgreSQL performance consultant / consulting services | See cluster A | Already solved | Homepage title carries it. Do not repeat it on the investigation page. |
+| AWS RDS PostgreSQL performance tuning (consultant) | AWS documentation and Prescriptive Guidance, plus AWS Marketplace fixed-scope listings | Monitor | Buyer intent exists, but AWS documentation dominates. The RDS page already covers the topic. Retitling it would compete with the investigation page, whose title also says "RDS & Aurora". Revisit if Search Console shows impressions for the RDS page. |
+| Reduce RDS/Aurora cost | Not checked separately | Reject as a target | No cost-reduction offer or evidence on the site. Claiming one would be new positioning. |
+| RDS Proxy troubleshooting | Not checked | Monitor | Mentioned on the RDS page. A guide is justified only if Search Console shows demand. |
+| PostgreSQL 14 to 17/18 upgrade service; RDS 14 end of support | AWS release calendar and upgrade documentation | Already solved | The upgrade page and five upgrade guides cover it, and every guide routes to the upgrade enquiry. |
+| Zero-downtime major-version upgrade | Not checked | Reject | A promise the readiness review does not make. Blue/green is covered as a guide. |
+| Partitioning consulting, pgvector tuning | Not checked | Reject for now | Secondary capabilities. Their guides already link to the investigation. No new pages before the first paid client. |
+| Postgres slow query rescue; lock contention troubleshooting | Not checked | Already solved | Query Rescue page plus the locking guide, which routes to the investigation |
+
+### Not changed, on purpose
+
+- No title or H1 rewrites. Seven of the nine commercial pages changed on 22 November. Changing them again before Google re-evaluates would hide whether the last change worked.
+- No `/postgresql-consulting` page. It would duplicate the homepage.
+- The RDS page title still uses "—" where other pages use "|". This is cosmetic and not worth a recrawl.
+
+### Accounts the owner controls
+
+- **Search Console:** re-inspect the nine service pages around 6 and 20 December. Request indexing for `/postgresql-performance-investigation` once after this change deploys, and for `/partners`, which Google did not know about, only if it is still unknown on 6 December.
+- **Bing Webmaster Tools:** import the walstack.io property from Search Console and confirm `sitemap-index.xml` is read. Bing powers several AI assistants' web results, and the import takes a few minutes.
+- **IndexNow:** optional. It needs a key file committed to `public/` and a submission on each deploy. Decide after Bing shows whether crawling is a problem at all.
