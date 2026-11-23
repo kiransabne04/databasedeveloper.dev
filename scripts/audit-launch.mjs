@@ -45,8 +45,8 @@ for (const [route, html] of allHtml) {
 }
 const page = (route) => allHtml.find(([path]) => path === route)?.[1] || '';
 const reviewPages = [
-  ['query-rescue', 'Query Rescue', 'Query Rescue for PostgreSQL &amp; SQL Server | WalStack'],
-  ['database-code-review', 'Database Code Review', 'Database Code Review for PostgreSQL &amp; SQL Server | WalStack'],
+  ['query-rescue', 'Query Rescue', 'Slow SQL Query Review for PostgreSQL &amp; SQL Server | WalStack'],
+  ['database-code-review', 'Database Code Review', 'Database Migration Review for PostgreSQL &amp; SQL Server | WalStack'],
 ];
 for (const [key, heading, title] of reviewPages) {
   const route = '/' + key;

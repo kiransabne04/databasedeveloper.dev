@@ -7,13 +7,19 @@ import { site } from '../config/site';
 ---
 <BaseLayout title="PostgreSQL Performance Investigation for RDS & Aurora | WalStack" description="Find the cause of a slow or expensive PostgreSQL database. Get a fix, rollback steps and a 14-day check. $450 for my first 3 clients, then $750."
   schema={{ '@context': 'https://schema.org', '@type': 'Service', name: 'Postgres Slowdown Investigation', url: site.url + '/postgresql-performance-investigation', provider: { '@id': site.url + '/#practice' } }}>
-  <header class="container hero"><p class="eyebrow">PostgreSQL performance</p><h1>Postgres Slowdown Investigation</h1>
+  <header class="container hero"><p class="eyebrow">PostgreSQL performance investigation</p><h1>Postgres Slowdown Investigation</h1>
     <p class="lede">Find out why pages slowed down or the database bill went up. Get a written fix your engineers can test and undo.</p>
     <p>{site.investigationOffer.display}. Paid upfront.</p><ConversionActions offer="investigation" /></header>
   <section><div class="container prose"><h2>Who it's for</h2>
-    <p>You run one production database on RDS, Aurora or self-managed PostgreSQL. Something changed, and the engineer who knows the database needs a second pair of eyes.</p>
+    <p>You run one production database on RDS, Aurora or self-managed PostgreSQL. Something changed, and the engineer who knows the database needs a second pair of eyes. It is a fixed-price performance audit of one production database, not a retainer.</p>
     <p>On RDS or Aurora, I also read Database Insights and CloudWatch for the same window. See <a href="/aws-rds-aurora-postgresql">what each AWS source can and can't answer</a>.</p>
     <p>If it's just one slow query or endpoint, say so in the <a href="/snapshot#send">snapshot form</a> because the investigation covers it. If you can already name the statement and only want that query reviewed, <a href="/query-rescue">Query Rescue</a> is narrower. For a change that hasn't shipped yet, see <a href="/database-code-review">Database Code Review</a>.</p>
+    <h2>Common reasons teams ask for one</h2>
+    <ul><li>The database got slow after a deploy, and nobody can say which change caused it.</li>
+      <li>CPU is high on RDS or Aurora, and the next step on the table is a bigger instance.</li>
+      <li>The database bill went up without a matching rise in traffic.</li>
+      <li>A query that used to be fast regressed as the data grew.</li>
+      <li>Your SaaS team has no DBA, and the engineer who knows the database is busy shipping features.</li></ul>
     <h2>What you get</h2><InvestigationDeliverables />
     <p><a href="/sample-report" data-track="sample_report_click">Read the sample report</a>. I built it on a demo database.</p>
     <h2>How the three business days work</h2>
