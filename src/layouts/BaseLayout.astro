@@ -42,7 +42,7 @@ const schemas = [
     email: site.email,
     founder: { '@id': site.url + '/#kiran' },
     image: `${site.url}/og-default.png`,
-    address: { '@type': 'PostalAddress', addressLocality: 'Pune', addressCountry: 'IN' },
+    address: { '@type': 'PostalAddress', addressCountry: 'IN' },
     areaServed: 'Worldwide',
     knowsAbout: ['PostgreSQL', 'Amazon RDS for PostgreSQL', 'Amazon Aurora PostgreSQL', 'SQL Server', 'pgvector', 'Snowflake']
   },
@@ -131,7 +131,7 @@ const schemas = [
             <img src="/favicon.svg" alt="" width="34" height="34" />
             <span>{site.brand}</span>
           </a>
-          <p>Kiran Sabne · Independent PostgreSQL engineer<br />Pune, India</p>
+          <p>Kiran Sabne · Independent PostgreSQL engineer<br />India · remote, worldwide</p>
           <p><a href="/snapshot" data-track="primary_cta_click">Get a free snapshot review</a> · <a href={site.bookingUrl} data-track="book_call_click">{site.callLabel}</a></p>
           <p class="small">© 2026 {site.legalName}</p>
         </div>

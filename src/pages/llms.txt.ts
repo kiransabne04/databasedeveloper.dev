@@ -9,7 +9,7 @@ export const GET: APIRoute = () => {
   const body = [
     `# ${site.brand}`,
     '',
-    `> ${site.description} Run by ${site.personName}, an independent PostgreSQL performance engineer based in Pune, India, working remotely and asynchronously.`,
+    `> ${site.description} Run by ${site.personName}, an independent PostgreSQL performance engineer based in India, working remotely and asynchronously.`,
     '',
     'WalStack is one person, not a firm. It does not offer 24/7 incident response. Sample reports and case studies use generated lab data and contain no client results.',
     '',
