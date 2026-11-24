@@ -45,6 +45,7 @@ WHERE backend_type = 'client backend';</code></pre>
       <li>You are deciding between a bigger instance, a pooler and application changes, and each one has a different cost.</li>
     </ul>
     <p>If old transactions are part of the spike, use the <a href="/postgresql-concurrency-and-locking-a-comprehensive-guide">locking and concurrency guide</a> to identify who is blocking whom.</p>
+    <p>On RDS or Aurora, check RDS Proxy pinning and connection metrics with the <a href="/aws-rds-aurora-postgresql">RDS and Aurora performance tuning</a> evidence table. To trace the pool budget across releases, scope a <a href="/postgresql-performance-investigation">PostgreSQL performance tuning and slowdown audit</a>.</p>
   </div></section>
   <section><div class="container"><CTA /></div></section>
 </BaseLayout>

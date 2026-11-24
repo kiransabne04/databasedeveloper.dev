@@ -48,6 +48,7 @@ ORDER BY xact_start;</code></pre>
       <li>Long or idle transactions come from a code path or job that nobody has identified.</li>
     </ul>
     <p>For the wider diagnostic sequence, read the <a href="/postgresql-concurrency-and-locking-a-comprehensive-guide">PostgreSQL locking and concurrency guide</a>.</p>
+    <p>If the blocking started with a migration, a <a href="/database-code-review">PostgreSQL schema and migration code review</a> checks the lock each statement takes before the next deploy. For contention across many sessions, scope a <a href="/postgresql-performance-investigation">slowdown audit</a>.</p>
   </div></section>
   <section><div class="container"><CTA /></div></section>
 </BaseLayout>

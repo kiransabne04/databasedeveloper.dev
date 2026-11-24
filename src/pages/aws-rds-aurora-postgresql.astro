@@ -1,12 +1,23 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
-import { serviceSchema } from '../lib/schema';
+import { servicePageSchema, investigationOffers, type Faq } from '../lib/schema';
+import ServiceFAQ from '../components/ServiceFAQ.astro';
+import ExampleFinding from '../components/ExampleFinding.astro';
+
+const description = 'Performance tuning and cost review for AWS RDS and Aurora PostgreSQL: high CPU, slow queries, connection pressure, RDS Proxy pinning and Aurora I/O cost, from Database Insights and CloudWatch evidence.';
+const faq: Faq[] = [
+  { q: 'Should I scale up the RDS instance or fix the queries?', a: 'Look at Database Insights load by SQL statement first. If a few statements account for most of the load, a bigger instance only buys time until data grows again. Scale up when the load is spread across the workload and the instance is at a real CPU, memory or I/O ceiling.' },
+  { q: 'Can you work without access to my AWS account?', a: 'Yes. Your team exports Database Insights views, CloudWatch metrics and the parameter group, and runs a read-only SQL script. No AWS credentials or database write access are needed.' },
+  { q: 'Does the review cover Aurora cost?', a: 'Yes, as far as the database workload drives it. On the Aurora Standard storage configuration, read and write I/O are billed per request, so scan-heavy statements show up on the bill. I identify which statements drive the I/O and whether the I/O-Optimized configuration is worth evaluating. I do not promise a savings figure.' },
+  { q: 'Do I need Database Insights advanced mode?', a: 'No. Standard mode and pg_stat_statements are enough to start. Advanced mode adds longer history and execution plans, which helps when the slowdown started weeks ago.' },
+  { q: 'Will RDS Proxy fix my connection problems?', a: 'Only if sessions are not pinned. Pinned sessions keep a backend connection each, which cancels the pooling. Check the DatabaseConnectionsCurrentlySessionPinned metric and the statements that cause pinning before relying on it.' }
+];
 import PageHero from '../components/PageHero.astro';
 import PG14Notice from '../components/PG14Notice.astro';
 import CTA from '../components/CTA.astro';
 ---
-<BaseLayout title="RDS & Aurora PostgreSQL Performance: High CPU & Slow Queries | WalStack" description="PostgreSQL performance investigation for RDS and Aurora: Database Insights, CloudWatch, Enhanced Monitoring, RDS Proxy and upgrade risk." schema={serviceSchema('RDS and Aurora PostgreSQL Performance Investigation', '/aws-rds-aurora-postgresql', 'PostgreSQL performance investigation for RDS and Aurora: Database Insights, CloudWatch, Enhanced Monitoring, RDS Proxy and upgrade risk.')}>
-  <PageHero eyebrow="RDS and Aurora PostgreSQL performance" title="RDS/Aurora performance without defaulting to “scale the instance.”" description="Use workload evidence to separate expensive statements, plan problems, connection amplification, waits and configuration from genuine capacity constraints." />
+<BaseLayout title="AWS RDS & Aurora PostgreSQL Performance Tuning & Cost Optimization | WalStack" description={description} schema={servicePageSchema({ name: 'AWS RDS and Aurora PostgreSQL performance tuning', path: '/aws-rds-aurora-postgresql', description, breadcrumb: 'AWS RDS and Aurora PostgreSQL performance tuning', faq, offers: investigationOffers })}>
+  <PageHero eyebrow="RDS and Aurora performance without defaulting to “scale the instance”" title="AWS RDS and Aurora PostgreSQL performance tuning and cost optimization" description="Use workload evidence to separate expensive statements, plan problems, connection amplification, waits and configuration from genuine capacity constraints." />
   <section>
     <div class="container grid three">
       <div class="card"><h2 class="card-heading">Workload concentration</h2><p>Which statements, calls and I/O patterns actually account for database time?</p></div>
@@ -53,6 +64,22 @@ import CTA from '../components/CTA.astro';
       </div>
     </div>
   </section>
+
+  <section><div class="container prose">
+    <h2>Worked example</h2>
+    <ExampleFinding label="An illustrative pattern on RDS. No client data and no measured figures."
+      symptom="CPU on the writer climbs to its ceiling after a release, and the proposal is to move up one instance size."
+      cause="Database Insights shows most load from one statement that the release started calling once per item in a list. pg_stat_statements shows its calls multiplied while its mean time stayed flat."
+      fix={`-- Confirm the call growth, then fix the access pattern in the application
+SELECT queryid, calls, mean_exec_time, total_exec_time
+FROM pg_stat_statements
+ORDER BY total_exec_time DESC
+LIMIT 10;`}
+      lockRisk="The diagnosis is read-only. The fix is an application change that batches the lookups, so no database lock is involved. If an index is also added, CREATE INDEX CONCURRENTLY avoids blocking writes."
+      validation="Database Insights load for that statement and the writer's CPU return to the pre-release level at the same traffic, without changing the instance class." />
+    <p>The <a href="/postgresql-performance-investigation">PostgreSQL performance tuning and slowdown audit</a> applies this method to your own RDS or Aurora evidence.</p>
+    <ServiceFAQ items={faq} />
+  </div></section>
 
   <section>
     <div class="container"><PG14Notice /></div>

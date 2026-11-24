@@ -27,7 +27,10 @@ for (const source of walk(pages, '.astro')) {
   const canonicalAliases = { '/postgresql-query-rescue': '/query-rescue', '/postgresql-pr-review': '/database-code-review' };
   const canonical = `https://walstack.io${canonicalAliases[normalized] || (normalized === '/' ? '/' : normalized)}`;
   assert(html.includes(`<link rel="canonical" href="${canonical}"`), `Bad canonical ${normalized}`);
-  const excludedFromSitemap = ['/postgresql-query-rescue', '/postgresql-pr-review', '/snapshot/thank-you'].includes(normalized);
+  const noindexFollow = ['/sql-server-performance', '/snowflake-performance', '/olap-analytical-performance', '/partner-kit', '/privacy', '/terms'].includes(normalized);
+  if (noindexFollow) assert(html.includes('<meta name="robots" content="noindex,follow"'), `${normalized} should be noindex,follow`);
+  const excludedFromSitemap = noindexFollow || ['/postgresql-query-rescue', '/postgresql-pr-review', '/snapshot/thank-you'].includes(normalized);
+  if (!excludedFromSitemap) assert(!/<meta name="robots"[^>]*noindex/.test(html), `${normalized} is in the sitemap but noindex`);
   const routeUrl = `https://walstack.io${normalized === '/' ? '/' : normalized}`;
   assert(sitemap.includes(`<loc>${routeUrl}</loc>`) === !excludedFromSitemap, `Unexpected sitemap status ${normalized}`);
   assert(/<meta name="description" content="[^"]+"/.test(html), `Missing description ${normalized}`);
@@ -45,8 +48,8 @@ for (const [route, html] of allHtml) {
 }
 const page = (route) => allHtml.find(([path]) => path === route)?.[1] || '';
 const reviewPages = [
-  ['query-rescue', 'Query Rescue', 'Slow SQL Query Review for PostgreSQL &amp; SQL Server | WalStack'],
-  ['database-code-review', 'Database Code Review', 'Database Migration Review for PostgreSQL &amp; SQL Server | WalStack'],
+  ['query-rescue', 'PostgreSQL slow query optimization and execution plan review', 'PostgreSQL Slow Query Optimization &amp; Execution Plan Review | WalStack'],
+  ['database-code-review', 'PostgreSQL schema and migration code review', 'PostgreSQL Schema &amp; Migration Code Review Service | WalStack'],
 ];
 for (const [key, heading, title] of reviewPages) {
   const route = '/' + key;

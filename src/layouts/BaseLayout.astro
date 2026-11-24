@@ -13,6 +13,8 @@ interface Props {
   published?: string;
   updated?: string;
   noindex?: boolean;
+  /** Keep out of the index but let crawlers follow its links (secondary-capability and legal pages). */
+  noindexFollow?: boolean;
   schema?: Record<string, unknown> | Array<Record<string, unknown>>;
 }
 
@@ -25,6 +27,7 @@ const {
   published,
   updated,
   noindex = false,
+  noindexFollow = false,
   schema,
   serviceId
 } = Astro.props;
@@ -80,6 +83,7 @@ const schemas = [
     <link rel="alternate" type="application/rss+xml" title="WalStack insights" href={`${site.url}/rss.xml`} />
     <link rel="alternate" type="application/rss+xml" title="PostgreSQL guides" href={`${site.url}/rss/postgresql.xml`} />
     {noindex && <meta name="robots" content="noindex,nofollow" />}
+    {!noindex && noindexFollow && <meta name="robots" content="noindex,follow" />}
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:type" content={ogType} />
@@ -141,15 +145,14 @@ const schemas = [
             <a href="/postgresql-upgrade-readiness">Upgrade readiness</a>
             <a href="/query-rescue">Query Rescue</a>
             <a href="/database-code-review">Database Code Review</a>
-            <a href="/sql-server-performance">SQL Server Performance Review</a>
+            <a href="/aws-rds-aurora-postgresql">RDS &amp; Aurora</a>
             <a href="/capabilities">Capabilities</a>
             <a href="/partners">Partners</a>
           </div>
           <div><strong>Resources</strong>
-            <a href="/problems">Problems</a><a href="/insights">Guides</a><a href="/case-studies">Case studies (lab)</a>
+            <a href="/problems">Problems</a><a href="/how-it-works">How it works</a><a href="/insights">Guides</a><a href="/case-studies">Case studies (lab)</a>
             <a href="/sample-report" data-track="sample_report_click">Sample report (demo)</a>
             <a href={site.planReaderUrl} data-track="planreader_click">PlanReader</a>
-            <a href={site.sqlServerBlogUrl}>MSSQLServer.dev</a>
             <a href={site.extensionUrl}>pg_stat_index_queries</a><a href="/rss.xml">RSS</a>
           </div>
           <div><strong>Details</strong>

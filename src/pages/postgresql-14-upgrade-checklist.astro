@@ -61,6 +61,7 @@ SELECT subname, subenabled FROM pg_subscription;`}</code></pre></li>
       <ul class="checklist">
         <li>Pick the target from your platform's supported list, not the newest number. On RDS: <code>aws rds describe-db-engine-versions --engine postgres --engine-version &lt;current&gt; --query "DBEngineVersions[*].ValidUpgradeTarget[*].EngineVersion"</code>.</li>
         <li>Choose the path: in-place major upgrade (downtime for the whole <code>pg_upgrade</code>), RDS/Aurora Blue/Green (short switchover, logical replication limits), or self-managed logical replication. The trade-offs are in <a href="/insights/rds-aurora-postgresql-14-to-18-blue-green">RDS and Aurora 14 → 18: downtime and Blue/Green</a>.</li>
+        <li>If the target choice depends on extensions, CDC or drivers you have not inventoried, the <a href="/postgresql-upgrade-readiness">PostgreSQL 14 upgrade readiness assessment</a> works through them for one cluster. <a href="/sample-upgrade-readiness-report">See a sample upgrade report</a> built on a demo database.</li>
         <li>Confirm each extension exists at a compatible version on the target. RDS removes <code>plrust</code> from version 18; check the provider's extension list for the rest.</li>
       </ul>
 
@@ -80,6 +81,7 @@ SELECT subname, subenabled FROM pg_subscription;`}</code></pre></li>
         <li>Save the top statements by total execution time from <code>pg_stat_statements</code> over a normal busy period. The new cluster starts with empty cumulative statistics, so this is the only comparison point. <a href="/insights/postgresql-slow-queries-pg-stat-statements">How to rank them</a>.</li>
         <li>Save <code>EXPLAIN (ANALYZE, BUFFERS)</code> for the 10–20 queries that matter most to users, with real parameter values. <code>FORMAT JSON</code> keeps them machine-readable; <a href={site.planReaderPostgresUrl} data-track="planreader_click">PlanReader</a> opens either format and flags estimate errors and spills.</li>
         <li>Record p95 latency, CPU, connections and error rate for the same window.</li>
+        <li>If today's workload is already slow, fix that before the upgrade so you are not comparing against a bad baseline. The <a href="/snapshot">free PostgreSQL health check</a> shows what stands out now.</li>
       </ul>
 
       <h2 id="rehearse">5. Rehearse on a copy</h2>

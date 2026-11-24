@@ -1,13 +1,23 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ConversionActions from '../components/ConversionActions.astro';
-import InvestigationDeliverables from '../components/InvestigationDeliverables.astro';
-import InvestigationFAQ from '../components/InvestigationFAQ.astro';
+import ServiceFAQ from '../components/ServiceFAQ.astro';
+import ExampleFinding from '../components/ExampleFinding.astro';
 import { site } from '../config/site';
+import { servicePageSchema, investigationOffers, type Faq } from '../lib/schema';
+
+const description = 'A fixed-price PostgreSQL performance tuning and slowdown audit for RDS, Aurora or self-managed servers: the cause, the SQL fix, its lock risk, rollback and a 14-day check.';
+const faq: Faq[] = [
+  { q: 'What do you need from me to start?', a: 'A read-only role with pg_monitor, or the output of scripts you run yourself. The time the slowdown started and the releases around it. On RDS or Aurora, Database Insights and CloudWatch exports for the same window. No write access and no AWS credentials.' },
+  { q: 'Which PostgreSQL views and tools do you inspect?', a: 'pg_stat_statements for workload cost, pg_stat_activity and pg_locks with pg_blocking_pids() for waits and blocking, pg_stat_user_tables for dead tuples and vacuum history, pg_stat_io on PostgreSQL 16 and later, auto_explain or slow-query logs, and EXPLAIN (ANALYZE, BUFFERS) only with your written approval because it executes the query.' },
+  { q: 'How is this different from asking an AI tool or reading my monitoring dashboard?', a: 'Both can explain a plan or suggest an index. The audit ties the slowdown to a time window, checks which explanation the evidence supports, ranks the changes by impact and risk, and states the lock each change takes and how to undo it.' },
+  { q: 'Do you apply the changes in production?', a: 'No. Your team applies them. You get the SQL, the lock it takes, the rollback and the query that shows whether it worked. At the 14-day follow-up I compare the result with the original symptom.' },
+  { q: 'What if two causes look alike?', a: 'I say so in the report and ask for the smallest extra measurement that would tell them apart, for example a second pg_stat_statements capture an hour later or one EXPLAIN for a slow parameter value.' }
+];
 ---
-<BaseLayout title="PostgreSQL Performance Investigation for RDS & Aurora | WalStack" description="Find the cause of a slow or expensive PostgreSQL database. Get a fix, rollback steps and a 14-day check. $450 for my first 3 clients, then $750."
-  schema={{ '@context': 'https://schema.org', '@type': 'Service', name: 'Postgres Slowdown Investigation', url: site.url + '/postgresql-performance-investigation', provider: { '@id': site.url + '/#practice' } }}>
-  <header class="container hero"><p class="eyebrow">PostgreSQL performance investigation</p><h1>Postgres Slowdown Investigation</h1>
+<BaseLayout title="PostgreSQL Performance Tuning & Slowdown Audit for RDS & Aurora | WalStack" description={description}
+  schema={servicePageSchema({ name: 'PostgreSQL performance tuning and slowdown audit', path: '/postgresql-performance-investigation', description, breadcrumb: 'PostgreSQL performance tuning and slowdown audit', faq, offers: investigationOffers })}>
+  <header class="container hero"><p class="eyebrow">Postgres Slowdown Investigation · fixed price</p><h1>PostgreSQL performance tuning and slowdown audit</h1>
     <p class="lede">Find out why pages slowed down or the database bill went up. Get a written fix your engineers can test and undo.</p>
     <p>{site.investigationOffer.display}. Paid upfront.</p><ConversionActions offer="investigation" /></header>
   <section><div class="container prose"><h2>Who it's for</h2>
@@ -20,19 +30,42 @@ import { site } from '../config/site';
       <li>The database bill went up without a matching rise in traffic.</li>
       <li>A query that used to be fast regressed as the data grew.</li>
       <li>Your SaaS team has no DBA, and the engineer who knows the database is busy shipping features.</li></ul>
-    <h2>What you get</h2><InvestigationDeliverables />
-    <p><a href="/sample-report" data-track="sample_report_click">Read the sample report</a>. I built it on a demo database.</p>
+    <h2>What the audit inspects</h2>
+    <ul>
+      <li><strong>Workload cost:</strong> <code>pg_stat_statements</code> ranked by total execution time, calls and shared blocks read, compared across two captures so growth shows up.</li>
+      <li><strong>Waits and blocking:</strong> <code>pg_stat_activity</code> wait events, <code>pg_locks</code> and <code>pg_blocking_pids()</code>. On RDS and Aurora, Database Insights load by wait event.</li>
+      <li><strong>I/O:</strong> <code>pg_stat_io</code> on PostgreSQL 16 and later, buffer hit ratios and temporary file use from <code>work_mem</code> spills.</li>
+      <li><strong>Table health:</strong> dead tuples, last autovacuum and analyze times in <code>pg_stat_user_tables</code>, and transaction age.</li>
+      <li><strong>Plans:</strong> existing <code>auto_explain</code> or slow-query log entries first. <code>EXPLAIN (ANALYZE, BUFFERS)</code> only with your approval, because it runs the query.</li>
+    </ul>
+    <h2>What the report contains</h2>
+    <ul>
+      <li>A timeline that lines up the slowdown with releases, data growth and configuration changes.</li>
+      <li>Each finding with its severity, confidence and the statistic, plan or log line it rests on.</li>
+      <li>For each recommended change: the SQL, the lock it takes and for how long, how to undo it, and the query that shows whether it worked.</li>
+      <li>What the data could not prove, and the next measurement that would settle it.</li>
+      <li>A 45-minute review call with your engineers and a check 14 days later.</li>
+    </ul>
+    <h2>Example finding</h2>
+    <ExampleFinding label="From the sample report, measured on a demo database with generated data. Not a client result."
+      symptom="Small tenants waited 0.5–0.7 s on the 'recent open orders' endpoint. Mean time for the statement rose from 0.91 ms to 12.98 ms, and throughput fell from about 4,100 to about 300 statements a second."
+      cause="plan_cache_mode = force_generic_plan was set on the application role. The generic plan read orders_created_idx backwards for every tenant. For a tenant with 18 open orders it discarded 2,001,182 rows before returning."
+      fix={`ALTER ROLE app RESET plan_cache_mode;
+CREATE INDEX CONCURRENTLY orders_tenant_created_idx
+  ON orders (tenant_id, created_at);`}
+      lockRisk="The role reset takes no table lock and applies to new sessions, so recycle the pool. CREATE INDEX CONCURRENTLY takes SHARE UPDATE EXCLUSIVE, which does not block reads or writes, but it waits for older transactions and leaves an INVALID index if it fails."
+      validation="Same pg_stat_statements queryid over the same window: mean 0.03 ms after the index. No auto_explain entries above 100 ms for the small tenants."
+      source={{ href: '/sample-report', label: 'Read the full sample report' }} />
     <h2>How the three business days work</h2>
     <p>The clock starts when I have read-only access or the output of scripts you run. You keep control of production changes.</p>
     <ol><li><strong>Day 1.</strong> I match the symptom to a time window. I compare query timings with traffic, database activity and recent releases.</li>
       <li><strong>Day 2.</strong> I check which explanations fit. If two causes look alike, I ask for the smallest extra check that could distinguish them.</li>
       <li><strong>Day 3.</strong> I send the report with the proposed SQL, risks, rollback steps and before-and-after checks. You get a 45-minute review call.</li></ol>
-    <p>At the 14-day follow-up, I compare results with the original symptom and explain what changed.</p>
     <h2>What can the data prove?</h2>
     <p>Two captures can show that one query accounted for most of the extra database time. A single total can't tell me when the increase began.</p>
     <p>If history is missing or the problem didn't recur, I say so. I explain which next measurement would settle the question.</p>
     <h2>Price and refund</h2><p><strong>{site.investigationOffer.display}.</strong> Paid upfront in USD. If the report contains no recommendation backed by evidence from your system, you get a full refund. A recommendation counts when it cites the statistic, plan or log line it rests on. Results after you apply a change are not part of the refund condition.</p>
     <p>WalStack is <a href={site.directoryUrl}>listed in PostgreSQL.org's Professional Services directory</a>.</p>
-    <h2>Frequently asked questions</h2><InvestigationFAQ /><ConversionActions offer="investigation" />
+    <ServiceFAQ items={faq} /><ConversionActions offer="investigation" />
   </div></section>
 </BaseLayout>

@@ -1,0 +1,9 @@
+---
+import type { Faq } from '../lib/schema';
+interface Props { items: Faq[]; heading?: string; }
+const { items, heading = 'Frequently asked questions' } = Astro.props;
+---
+<h2 id="faq">{heading}</h2>
+<div class="questions">
+  {items.map((item) => <details><summary>{item.q}</summary><p>{item.a}</p></details>)}
+</div>
