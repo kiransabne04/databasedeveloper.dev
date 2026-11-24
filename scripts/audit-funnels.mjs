@@ -27,6 +27,11 @@ for (const [route, offer] of [
 const investigation = main('/postgresql-performance-investigation');
 ok(investigation.includes('href="/snapshot"') && investigation.includes(enquiry('investigation', '/postgresql-performance-investigation')), 'Investigation needs snapshot and direct paid route');
 ok(investigation.includes('href="/aws-rds-aurora-postgresql"'), 'Investigation should link to the RDS/Aurora evidence page');
+for (const route of ['/postgresql-concurrency-and-locking-a-comprehensive-guide', '/sharding-postgresql-techniques-for-horizontal-scalability', '/postgresql-14-eol', '/insights/pg-upgrade-check-failures']) {
+  const routes = page(route).match(/<p class="small article-offer-routes">(.*?)<\/p>/s)?.[1] || '';
+  ok(['href="/snapshot"', 'href="/postgresql-performance-investigation"', 'href="/postgresql-upgrade-readiness"'].every((href) => routes.includes(href)) && routes.includes('$450') && routes.includes('$600'), route + ' callout should list all three ways to start with prices');
+}
+ok(/"@type":"FAQPage"/.test(page('/sharding-postgresql-techniques-for-horizontal-scalability')) && page('/sharding-postgresql-techniques-for-horizontal-scalability').includes('Does PostgreSQL support sharding natively?'), 'Sharding guide FAQ missing');
 const primaryTerms = {
   '/': 'PostgreSQL Performance Consultant',
   '/postgresql-performance-investigation': 'PostgreSQL Performance Investigation',

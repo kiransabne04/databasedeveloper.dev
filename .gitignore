@@ -12,3 +12,6 @@ CLAUDE.md
 AGENTS.md
 docs/business/
 .walstack-business-ops/
+
+# Search Console exports (owner data)
+gsc-data/

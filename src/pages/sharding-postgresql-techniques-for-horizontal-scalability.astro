@@ -2,8 +2,15 @@
 import ArticleLayout from '../layouts/ArticleLayout.astro';
 import ArticleOffer from '../components/ArticleOffer.astro';
 import { Content as Original } from '../originals/sharding-postgresql-techniques-for-horizontal-scalability.md';
+const faq = [
+  { q: "Does PostgreSQL support sharding natively?", a: "Not as a built-in feature. Declarative partitioning splits a table inside one server. postgres_fdw lets a partition live on another PostgreSQL server, but it does not give you distributed query planning, rebalancing or atomic writes across servers. Extensions such as Citus add distributed tables on top of PostgreSQL." },
+  { q: "How do I scale PostgreSQL horizontally?", a: "In order of cost: fix the statements that dominate total time, add connection pooling, send safe reads to replicas, move analytical work off the primary, and partition large tables. Shard only when a measured single-node limit remains after those steps. Read replicas scale reads; only sharding spreads writes." },
+  { q: "Can I shard PostgreSQL without changing my application code?", a: "Rarely all of it. A distributed extension keeps the SQL interface, but queries perform well only when they filter on the distribution key, and some cross-shard joins, constraints and transactions behave differently or are restricted. Plan to change the queries that do not include the shard key." },
+  { q: "When does sharding PostgreSQL make more sense than switching to a different database?", a: "When the data is relational, the team already operates PostgreSQL, and most requests stay within one key such as a tenant. If the workload needs global transactions across all data or multi-region writes from day one, compare a distributed SQL database before building sharding yourself." },
+  { q: "What are the limitations of PostgreSQL sharding in production?", a: "Cross-shard transactions and joins, unique constraints and sequences that span shards, rebalancing a hot tenant, running schema migrations on every shard, consistent backups and restores, and the extra operational work of monitoring many nodes. Each needs a design before the first row moves." }
+];
 ---
-<ArticleLayout title="Sharding PostgreSQL: Partitioning vs Sharding, Alternatives and Techniques" description="PostgreSQL partitioning vs sharding, the alternatives to try first, and a decision guide: prove the single-node limit, choose a shard key, quantify cross-shard work and design routing, rebalancing and recovery." eyebrow="PostgreSQL architecture" published="2025-07-05" updated="2026-10-14" original>
+<ArticleLayout title="Sharding PostgreSQL: Partitioning vs Sharding, Alternatives and Techniques" description="PostgreSQL partitioning vs sharding, the alternatives to try first, and a decision guide: prove the single-node limit, choose a shard key, quantify cross-shard work and design routing, rebalancing and recovery." eyebrow="PostgreSQL architecture" published="2025-07-05" updated="2026-11-24" original faq={faq}>
   <Original />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
@@ -34,4 +41,7 @@ import { Content as Original } from '../originals/sharding-postgresql-techniques
 
   <h3>A practical decision gate</h3>
   <p>Proceed only when the expected capacity gain is tied to a measurable workload and the team can operate the routing, backups, schema changes and failure modes. The first deliverable should be a workload and risk assessment, not a shard count. See the <a href="/olap-analytical-performance">analytical workload</a> and <a href="/postgresql-performance-investigation">PostgreSQL investigation</a> pages for related review scopes.</p>
+
+  <h2 id="faq">Sharding PostgreSQL: common questions</h2>
+  <div class="faq">{faq.map((item) => (<><h3>{item.q}</h3><p>{item.a}</p></>))}</div>
 </ArticleLayout>

@@ -12,11 +12,21 @@ interface Props {
 const { offer, title, text } = Astro.props;
 const details = offers[offer];
 const step = nextStep(offer, Astro.url.pathname);
+// PostgreSQL guides offer all three ways to start, the topic's own route first.
+const allRoutes = {
+  snapshot: { label: 'Free performance snapshot', href: '/snapshot', track: 'primary_cta_click' },
+  investigation: { label: 'Slowdown investigation, $450 for the first 3 clients', href: '/postgresql-performance-investigation', track: 'article_offer_click' },
+  upgrade: { label: 'Upgrade readiness, $600 founding price', href: '/postgresql-upgrade-readiness', track: 'article_offer_click' }
+};
+const routes = offer === 'upgrade' ? [allRoutes.upgrade, allRoutes.snapshot, allRoutes.investigation]
+  : offer === 'investigation' ? [allRoutes.snapshot, allRoutes.investigation, allRoutes.upgrade]
+  : undefined;
 ---
 <aside class="article-offer" aria-label={`About the ${details.name}`}>
   <p class="article-offer-title"><strong>{title}</strong></p>
   <p>{text}</p>
   <p class="small">
-    <a href={step.href} data-track={step.track} data-offer={offer}>{step.label}</a> · <a href={details.href}>About the {details.name}</a> · <a href={details.magnet.href} data-track={details.magnet.track}>{details.magnet.label}</a>
+    <a href={step.href} data-track={step.track} data-offer={offer}>{step.label}</a> · {!routes && <><a href={details.href}>About the {details.name}</a> · </>}<a href={details.magnet.href} data-track={details.magnet.track}>{details.magnet.label}</a>
   </p>
+  {routes && <p class="small article-offer-routes">Ways to start: {routes.map((r, i) => <>{i > 0 && ' · '}<a href={r.href} data-track={r.track} data-offer={offer}>{r.label}</a></>)}</p>}
 </aside>
