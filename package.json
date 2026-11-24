@@ -8,7 +8,8 @@
     "build": "astro check && astro build",
     "audit:content": "node scripts/audit-content.mjs && node scripts/audit-launch.mjs && node scripts/audit-funnels.mjs",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "page-dates": "node scripts/page-dates.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",

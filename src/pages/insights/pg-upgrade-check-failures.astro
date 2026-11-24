@@ -68,6 +68,7 @@ Once you start the new server, consider running these two commands:
 
   <h2>The RDS and Aurora equivalent</h2>
   <p>On RDS and Aurora you do not run <code>pg_upgrade</code> yourself. The managed upgrade runs a precheck first and writes the result to <code>pg_upgrade_precheck.log</code> in the instance logs. AWS documents the same classes of blocker: prepared transactions, <code>reg*</code> columns, invalid databases, logical replication slots, extensions not supported on the target, and very large numbers of large objects. The safe way to see the list is to restore a snapshot (or clone an Aurora cluster), start the upgrade on the copy and read that log. See the <a href="https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_UpgradeDBInstance.PostgreSQL.MajorVersion.Process.html">RDS major upgrade process</a>.</p>
+  <p>The precheck does not compare query performance before and after. That comparison, plus the blockers above, is what the <a href="/postgresql-upgrade-readiness">PostgreSQL 14 upgrade readiness assessment for RDS and Aurora</a> covers. For RDS-specific performance evidence, see <a href="/aws-rds-aurora-postgresql">RDS and Aurora PostgreSQL performance tuning</a>.</p>
 
   <h2>Run all the checks before the window</h2>
 <pre><code>{`-- Prepared transactions

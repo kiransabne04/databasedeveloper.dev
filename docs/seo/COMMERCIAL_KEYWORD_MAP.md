@@ -175,17 +175,21 @@ The owner decided on 23 November to target the primary map below now, rather tha
 
 ### Primary map (one main term per page)
 
-| Page | Primary term (title) | Secondary terms (eyebrow, H2s, body) |
+Revised 24 November 2026 (owner-approved indexing-recovery brief). Titles lead with the primary term, and the funnel audit enforces it.
+
+| Page | Primary term (title) | Secondary terms (eyebrow, H2s, FAQ) |
 | --- | --- | --- |
 | `/` | PostgreSQL performance consultant | PostgreSQL consultant, PostgreSQL consulting |
-| `/postgresql-performance-investigation` | PostgreSQL performance investigation | slow PostgreSQL database, Postgres slowdown, RDS/Aurora slow queries, PostgreSQL performance audit |
-| `/postgresql-upgrade-readiness` | PostgreSQL upgrade readiness assessment | PostgreSQL upgrade consulting, RDS PostgreSQL 14 end of support, PostgreSQL 14 to 17/18 upgrade, query regression testing |
-| `/aws-rds-aurora-postgresql` | RDS & Aurora PostgreSQL performance | Aurora/RDS high CPU, slow queries, RDS Proxy pinning, Database Insights |
-| `/sql-server-performance` | SQL Server performance consulting | SQL Server consulting services, Query Store, blocking investigation, parameter sniffing |
-| `/query-rescue` | Slow SQL query review | Postgres slow query fix, query plan review, ORM-generated SQL |
-| `/database-code-review` | Database migration review | PostgreSQL migration review, schema change review, ALTER TABLE lock risk |
+| `/postgresql-performance-investigation` | PostgreSQL performance tuning & slowdown audit | Postgres slowdown investigation, performance audit, RDS/Aurora slow queries |
+| `/postgresql-upgrade-readiness` | PostgreSQL 14 upgrade readiness assessment | RDS PostgreSQL 14 end of support, 14 to 17/18 upgrade, query regression testing, upgrade consulting |
+| `/aws-rds-aurora-postgresql` | AWS RDS & Aurora PostgreSQL performance tuning | cost optimization, high CPU, RDS Proxy pinning, Database Insights |
+| `/query-rescue` | PostgreSQL slow query optimization | execution plan review, EXPLAIN ANALYZE review, ORM-generated SQL |
+| `/database-code-review` | PostgreSQL schema & migration code review | migration lock risk, ALTER TABLE review |
+| `/snapshot` | Free PostgreSQL health check | performance snapshot |
 | `/partners` | PostgreSQL consultant for agencies | white-label database specialist, fractional CTO |
 | `/pricing` | PostgreSQL consulting pricing | fixed-price PostgreSQL review |
+
+Out of the index since 24 November (noindex,follow and out of the sitemap): `/sql-server-performance`, `/snowflake-performance`, `/olap-analytical-performance`, `/partner-kit`, `/privacy`, `/terms`. The SQL Server, Snowflake and pgvector guides stay indexed.
 
 Guides stay informational. Each one hands off to the matching offer.
 

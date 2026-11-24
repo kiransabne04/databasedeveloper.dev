@@ -20,6 +20,7 @@ const allRoutes = {
 };
 const routes = offer === 'upgrade' ? [allRoutes.upgrade, allRoutes.snapshot, allRoutes.investigation]
   : offer === 'investigation' ? [allRoutes.snapshot, allRoutes.investigation, allRoutes.upgrade]
+  : offer === 'pgvector' ? [allRoutes.snapshot, allRoutes.investigation]
   : undefined;
 ---
 <aside class="article-offer" aria-label={`About the ${details.name}`}>

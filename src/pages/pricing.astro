@@ -1,7 +1,6 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ConversionActions from '../components/ConversionActions.astro';
-import InvestigationDeliverables from '../components/InvestigationDeliverables.astro';
 import { site } from '../config/site';
 ---
 <BaseLayout title="PostgreSQL Consulting Pricing: Fixed-Price Reviews | WalStack" description="Start with a free snapshot. A slowdown investigation costs $450 for my first 3 clients, then $750. See upgrade pricing and exactly what each review includes.">
@@ -13,7 +12,13 @@ import { site } from '../config/site';
       <tr><th scope="row"><a href="/postgresql-upgrade-readiness">PostgreSQL Upgrade Readiness</a></th><td>{site.upgradeOffer.display}</td><td>Pre-upgrade checks, current query timings, a comparison plan and a rollback plan.</td></tr>
     </tbody></table></div>
     <p>After an investigation, you can ask me about a monthly check-in.</p>
-    <div class="prose"><h2>Inside the slowdown investigation</h2><InvestigationDeliverables />
-    <p>I invoice upfront and deliver the report in 3 business days after I get access or your script output.</p><ConversionActions /></div>
+    <div class="prose"><h2>Which one to start with</h2>
+    <ul>
+      <li><strong>Production is slow now and you don't know why:</strong> send the free snapshot. If the findings point to a deeper cause, the <a href="/postgresql-performance-investigation">slowdown audit</a> follows the same evidence.</li>
+      <li><strong>You already know the problem is worth a paid answer:</strong> book the audit directly. It covers one production database.</li>
+      <li><strong>You are planning a major-version upgrade:</strong> the <a href="/postgresql-upgrade-readiness">upgrade readiness assessment</a> covers compatibility and regression risk. The snapshot looks only at today's workload.</li>
+    </ul>
+    <h2>Payment and timing</h2>
+    <p>I invoice upfront in USD and confirm payment details before you commit. The audit report arrives 3 business days after I get read-only access or your script output. Founding prices apply to the first clients only, and the standard price is shown next to each one.</p><ConversionActions /></div>
   </div></section>
 </BaseLayout>

@@ -3,11 +3,23 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import ConversionActions from '../components/ConversionActions.astro';
 import { site } from '../config/site';
 import { pg14Facts } from '../data/facts';
+import ServiceFAQ from '../components/ServiceFAQ.astro';
+import ExampleFinding from '../components/ExampleFinding.astro';
+import { servicePageSchema, upgradeOffers, type Faq } from '../lib/schema';
+
+const description = `A fixed-price PostgreSQL 14 upgrade readiness assessment for RDS, Aurora or self-managed servers: blockers, a query baseline, regression checks and a rollback plan before ${pg14Facts.rdsStandardSupportEnd}.`;
+const faq: Faq[] = [
+  { q: 'Should I upgrade PostgreSQL 14 to 17 or 18?', a: 'Pick the newest version that your platform, extensions, drivers, CDC tooling and ORM all support. On RDS and Aurora the allowed targets depend on your exact minor version, so check them with aws rds describe-db-engine-versions before choosing.' },
+  { q: 'Do you carry out the upgrade?', a: 'No. This is a readiness assessment. Your team runs the production change. You get the blockers, the rehearsal steps, go and no-go criteria and a rollback plan, and I answer questions during your rehearsal.' },
+  { q: 'How do I avoid RDS Extended Support charges?', a: `Upgrade to a supported major version before ${pg14Facts.rdsStandardSupportEnd}. Instances still on 14 after that date are enrolled in paid Extended Support. The charges stop once you upgrade to a supported major version or delete the database.` },
+  { q: 'How do you check for query regressions after the upgrade?', a: 'Before the upgrade, I help you save the top statements by total time from pg_stat_statements and EXPLAIN (ANALYZE, BUFFERS) for the queries users depend on. After the upgrade, run ANALYZE and compare the same statements. pg_upgrade only carries planner statistics from PostgreSQL 18 onward.' },
+  { q: 'Is the assessment only for PostgreSQL 14?', a: 'No. It covers any major-version upgrade. PostgreSQL 14 is the urgent case because RDS and Aurora standard support ends in February 2027.' }
+];
 ---
-<BaseLayout title="PostgreSQL Upgrade Readiness Assessment for RDS & Aurora | WalStack" description="A major-version upgrade assessment for PostgreSQL on RDS, Aurora or self-managed servers: blockers, a query baseline, regression checks and a rollback plan."
-  schema={{ '@context': 'https://schema.org', '@type': 'Service', name: 'PostgreSQL Upgrade Readiness', provider: { '@id': site.url + '/#practice' }, url: site.url + '/postgresql-upgrade-readiness' }}>
-  <header class="container hero"><p class="eyebrow">PostgreSQL upgrade readiness assessment</p><h1>Know what breaks and what slows down before the upgrade window.</h1>
-    <p class="lede">A readiness review for a PostgreSQL major-version upgrade on RDS, Aurora or a self-managed server. You get the blockers, a baseline of your busiest queries and clear go, no-go and rollback criteria.</p>
+<BaseLayout title="PostgreSQL 14 Upgrade Readiness Assessment for RDS & Aurora (Feb 2027) | WalStack" description={description}
+  schema={servicePageSchema({ name: 'PostgreSQL 14 upgrade readiness assessment', path: '/postgresql-upgrade-readiness', description, breadcrumb: 'PostgreSQL 14 upgrade readiness assessment', faq, offers: upgradeOffers })}>
+  <header class="container hero"><p class="eyebrow">PostgreSQL upgrade readiness assessment</p><h1>PostgreSQL 14 upgrade readiness assessment for RDS and Aurora</h1>
+    <p class="lede">Know what breaks and what slows down before the upgrade window. A readiness review for a PostgreSQL major-version upgrade on RDS, Aurora or a self-managed server. You get the blockers, a baseline of your busiest queries and clear go, no-go and rollback criteria.</p>
     <ConversionActions offer="upgrade" call="Book a 15-minute call" />
     <h2 style="margin-top: 2.5rem">Upgrading RDS or Aurora PostgreSQL 14 before end of standard support</h2>
     <p>RDS standard support ends on 28 February 2027. From 1 March, keeping an enrolled database on 14 adds an hourly charge.</p>
@@ -29,8 +41,20 @@ import { pg14Facts } from '../data/facts';
     <p>On RDS or Aurora, I check whether a blue/green deployment fits. That means testing the new version on a separate environment before switching traffic.</p>
     <p>I check replication slots, the bookmarks other systems use to resume copying changes. I document how to restart those systems and check for missing changes.</p>
     <p>Lab-tested guides behind this review: <a href="/insights/pg-upgrade-check-failures">pg_upgrade --check failures</a> · <a href="/insights/postgresql-upgrade-logical-replication-slots">logical replication slots after pg_upgrade</a> · <a href="/insights/rds-aurora-postgresql-14-to-18-blue-green">RDS and Aurora Blue/Green</a> · <a href="/insights/postgresql-slow-after-major-upgrade">why queries slow down after an upgrade</a> · <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a></p>
+    <h2>Example finding</h2>
+    <ExampleFinding label="From a lab-tested PostgreSQL 14 to 18 upgrade on generated data. Not a client result."
+      symptom="pg_upgrade --check stops with: old cluster does not use data checksums but the new one does."
+      cause="PostgreSQL 18's initdb enables data checksums by default. The PostgreSQL 14 cluster was created without them, and pg_upgrade needs both clusters to match."
+      fix={`# Recreate the new cluster without checksums
+/usr/lib/postgresql/18/bin/initdb -D /var/lib/postgresql/18/main --no-data-checksums
+# Or, to keep checksums, enable them on the stopped old cluster first
+pg_checksums --enable -D /var/lib/postgresql/14/main`}
+      lockRisk="No table locks, but pg_checksums needs the old cluster shut down and rewrites every data file. That is downtime proportional to database size, so time it on a copy."
+      validation="pg_controldata on both data directories shows the same data checksum version, and pg_upgrade --check passes."
+      source={{ href: '/insights/pg-upgrade-check-failures', label: 'All pg_upgrade --check failures from the lab run' }} />
     <h2>Price</h2><p><strong>{site.upgradeOffer.display}</strong> for one cluster and its proposed target version. It is fixed-scope upgrade consulting, not an open-ended retainer. Bring your current version, hosting platform and intended upgrade date to the call.</p>
     <p>The review covers compatibility and upgrade risk. It is not the same as the free performance snapshot, which looks at today's workload only.</p>
+    <ServiceFAQ items={faq} />
     <ConversionActions offer="upgrade" call="Book a 15-minute call" />
   </div></section>
 </BaseLayout>

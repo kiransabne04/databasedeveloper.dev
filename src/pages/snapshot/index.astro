@@ -2,11 +2,21 @@
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import SnapshotForm from '../../components/SnapshotForm.astro';
 import { site } from '../../config/site';
+import ServiceFAQ from '../../components/ServiceFAQ.astro';
+import { servicePageSchema, snapshotOffers, type Faq } from '../../lib/schema';
+const description = 'A free PostgreSQL health check: run one read-only script on RDS, Aurora or self-managed PostgreSQL. If it fits, get 3 written performance findings within 2 business days.';
+const faq: Faq[] = [
+  { q: 'Is the health check script safe to run on production?', a: 'It sets the session to read-only, gives each statement a 10-second timeout and a 1-second lock timeout, and reads only PostgreSQL statistics and catalogs. It creates nothing and changes no persistent setting.' },
+  { q: 'Does the script send data anywhere?', a: 'No. It writes a text file on your machine. You read it, remove anything you do not want to share, and upload it yourself through the form.' },
+  { q: 'Can I leave out query text and table structure?', a: 'Yes. Add -v show_query_text=off to omit query text and -v show_schema=off to omit the column listing. The findings are less specific without query text.' },
+  { q: 'Why only a few snapshots a month?', a: `Each one is read and written up by hand, by one person. I accept up to ${site.snapshotMonthlyCap} a month and tell you within 1 business day if the month is full or the output is not usable.` },
+  { q: 'What happens after I get the findings?', a: 'Nothing, unless you ask. If a finding needs a deeper answer, I say whether the paid slowdown audit fits and what it would cover.' }
+];
 const scriptPath = '/snapshot/walstack-snapshot.sql';
 const command = 'psql -X -h <host> -p 5432 -U <user> -d <database> ' + '\\' + '\n     -f walstack-snapshot.sql -o walstack-snapshot-1.txt';
 ---
-<BaseLayout title="Free PostgreSQL Snapshot Review | WalStack" description="Run one read-only PostgreSQL script. If it fits, I’ll email 3 written findings within 2 business days. Free for RDS, Aurora and self-managed PostgreSQL.">
-  <header class="container hero"><h1>Free PostgreSQL snapshot review</h1>
+<BaseLayout title="Free PostgreSQL Health Check & Performance Snapshot | WalStack" description={description} schema={servicePageSchema({ name: 'Free PostgreSQL health check and performance snapshot', path: '/snapshot', description, breadcrumb: 'Free PostgreSQL health check', faq, offers: snapshotOffers })}>
+  <header class="container hero"><h1>Free PostgreSQL health check and performance snapshot</h1>
     <p class="lede">Run one read-only script against your database and send me the output. I'll email 3 findings covering what stands out, why it matters and what I'd check next.</p>
     <p>Free, no call needed. I review up to {site.snapshotMonthlyCap} snapshots a month from companies running PostgreSQL in production. I first check that the output is usable and the request fits. If it doesn't, or the month is full, I'll tell you within 1 business day. Accepted snapshots get 3 written findings within 2 business days of acceptance.</p><div class="actions"><a class="button primary" href="#download">Get the script</a><a class="button" href={site.bookingUrl} data-track="book_call_click">{site.callLabel}</a></div>
   </header>
@@ -35,6 +45,7 @@ const command = 'psql -X -h <host> -p 5432 -U <user> -d <database> ' + '\\' + '\
     <h2 id="send">4. Send your snapshot</h2><SnapshotForm />
     <h2>5. What happens to your data?</h2>
     <p>I use your output only to write your findings. Formspree handles the upload. I keep the files private and delete them after {site.retentionDays} days unless you hire me. <a href="/privacy">Read my privacy policy</a>.</p>
+    <ServiceFAQ items={faq} />
   </div></section>
   <script>
     const copy = document.querySelector<HTMLButtonElement>('#copy-command');

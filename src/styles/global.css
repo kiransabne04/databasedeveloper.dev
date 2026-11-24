@@ -348,3 +348,8 @@ main p a:not(.button), .pricing-table a { color: var(--accent); text-decoration:
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 .card .card-heading, .card-link h2 { font-size: 1.35rem; margin: .1rem 0 .55rem; }
+.example-finding { margin:1.2rem 0 1.8rem; padding:1rem 1.2rem; border:1px solid var(--line); border-radius:14px; }
+.example-finding dl { margin:.4rem 0 0; }
+.example-finding dt { margin-top:.8rem; font-weight:600; color:var(--text); }
+.example-finding dd { margin:.2rem 0 0; }
+.example-finding pre { margin:.3rem 0; }

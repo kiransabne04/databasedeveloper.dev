@@ -34,12 +34,12 @@ for (const route of ['/postgresql-concurrency-and-locking-a-comprehensive-guide'
 ok(/"@type":"FAQPage"/.test(page('/sharding-postgresql-techniques-for-horizontal-scalability')) && page('/sharding-postgresql-techniques-for-horizontal-scalability').includes('Does PostgreSQL support sharding natively?'), 'Sharding guide FAQ missing');
 const primaryTerms = {
   '/': 'PostgreSQL Performance Consultant',
-  '/postgresql-performance-investigation': 'PostgreSQL Performance Investigation',
-  '/postgresql-upgrade-readiness': 'PostgreSQL Upgrade Readiness Assessment',
-  '/aws-rds-aurora-postgresql': 'RDS &amp; Aurora PostgreSQL Performance',
-  '/sql-server-performance': 'SQL Server Performance Consulting',
-  '/query-rescue': 'Slow SQL Query Review',
-  '/database-code-review': 'Database Migration Review',
+  '/postgresql-performance-investigation': 'PostgreSQL Performance Tuning &amp; Slowdown Audit',
+  '/postgresql-upgrade-readiness': 'PostgreSQL 14 Upgrade Readiness Assessment',
+  '/aws-rds-aurora-postgresql': 'AWS RDS &amp; Aurora PostgreSQL Performance Tuning',
+  '/query-rescue': 'PostgreSQL Slow Query Optimization',
+  '/database-code-review': 'PostgreSQL Schema &amp; Migration Code Review',
+  '/snapshot': 'Free PostgreSQL Health Check',
   '/partners': 'PostgreSQL Consultant for Agencies',
   '/pricing': 'PostgreSQL Consulting Pricing'
 };
@@ -74,13 +74,37 @@ for (const [, href] of page('/').match(/<nav class="desktop-nav"[^>]*>(.*?)<\/na
 
 // 3. Indexability.
 const sitemap = readFileSync(join(dist, 'sitemap-0.xml'), 'utf8');
-for (const route of ['/', '/snapshot', '/postgresql-performance-investigation', '/postgresql-upgrade-readiness', '/sql-server-performance', '/query-rescue', '/database-code-review', '/pricing', '/partners']) {
+for (const route of ['/', '/snapshot', '/postgresql-performance-investigation', '/postgresql-upgrade-readiness', '/aws-rds-aurora-postgresql', '/query-rescue', '/database-code-review', '/pricing', '/partners']) {
   const url = 'https://walstack.io' + route;
   ok(sitemap.includes(`<loc>${url}</loc>`), `Sitemap missing ${route}`);
   ok(page(route).includes(`<link rel="canonical" href="${url}"`), `Canonical ${route}`);
   ok(!/<meta name="robots"[^>]*noindex/.test(page(route)), `${route} must be indexable`);
 }
 ok(!sitemap.includes('/snapshot/thank-you'), 'Receipt page in sitemap');
+for (const route of ['/sql-server-performance', '/snowflake-performance', '/olap-analytical-performance', '/partner-kit', '/privacy', '/terms']) {
+  ok(!sitemap.includes(`<loc>https://walstack.io${route}</loc>`), `${route} should be out of the sitemap`);
+  ok(page(route).includes('<meta name="robots" content="noindex,follow"'), `${route} should be noindex,follow`);
+}
+const sitemapEntries = [...sitemap.matchAll(/<url>(.*?)<\/url>/gs)].map((m) => m[1]);
+ok(sitemapEntries.length > 0 && sitemapEntries.every((entry) => /<lastmod>\d{4}-\d{2}-\d{2}/.test(entry)), 'Every sitemap URL needs a lastmod date');
+const footer = page('/').match(/<footer[\s\S]*?<\/footer>/)?.[0] || '';
+ok(!footer.includes('href="/sql-server-performance"') && !footer.includes('mssqlserver.dev') && footer.includes('href="/how-it-works"') && footer.includes('href="/aws-rds-aurora-postgresql"'), 'Footer should be PostgreSQL-only and link How it works and RDS');
+const servicePages = { '/postgresql-performance-investigation': [450, 750], '/postgresql-upgrade-readiness': [600, 900], '/aws-rds-aurora-postgresql': [450, 750], '/snapshot': [0], '/query-rescue': null, '/database-code-review': null };
+const faqSets = {};
+for (const [route, prices] of Object.entries(servicePages)) {
+  const nodes = [...page(route).matchAll(/<script type="application\/ld\+json"[^>]*>(.*?)<\/script>/gs)].map((m) => JSON.parse(m[1]));
+  const service = nodes.find((n) => n['@type'] === 'Service');
+  const faqNode = nodes.find((n) => n['@type'] === 'FAQPage');
+  ok(service?.provider?.['@id'] === 'https://walstack.io/#practice' && service.provider.founder?.name === 'Kiran Sabne', `${route} Service provider`);
+  ok(nodes.some((n) => n['@type'] === 'BreadcrumbList'), `${route} BreadcrumbList`);
+  ok(faqNode?.mainEntity?.length >= 4, `${route} FAQPage with 4+ questions`);
+  for (const q of faqNode?.mainEntity || []) ok(page(route).includes(q.name.replace(/&/g, '&amp;')), `${route} FAQ question must be visible: ${q.name}`);
+  faqSets[route] = (faqNode?.mainEntity || []).map((q) => q.name);
+  if (prices) ok(JSON.stringify((service.offers || []).map((o) => Number(o.price))) === JSON.stringify(prices) && service.offers.every((o) => o.priceCurrency === 'USD'), `${route} offers should be ${prices.join('/')} USD`);
+}
+const allQuestions = Object.values(faqSets).flat();
+ok(new Set(allQuestions).size === allQuestions.length, 'Service FAQ questions must be unique across pages');
+ok(!/<script type="application\/ld\+json"[^>]*>[^<]*FAQPage/.test(page('/')), 'Homepage should not carry a service FAQPage');
 ok(/<meta name="robots" content="noindex/.test(page('/snapshot/thank-you')), 'Receipt page must be noindex');
 ok(!/databasedeveloper\.dev/.test(sitemap), 'Sitemap must use the production domain only');
 const robots = readFileSync(join(dist, 'robots.txt'), 'utf8');

@@ -46,6 +46,7 @@ EXPLAIN (ANALYZE, BUFFERS) &lt;the regressed query with representative parameter
       <li>The candidate fixes (statistics, an index, a query rewrite or plan-cache settings) each carry risk, and someone has to pick one.</li>
     </ul>
     <p>See the <a href="/case-studies/lab-generic-plan-regression">measured generic-plan regression lab</a> for a complete change, evidence and response sequence. If the regression started after a major version upgrade, check for <a href="/insights/postgresql-slow-after-major-upgrade">missing optimizer statistics</a> first.</p>
+    <p>If you can name the regressed statement, a <a href="/query-rescue">slow query and execution plan review</a> covers it. If the regression followed a major-version upgrade, see the <a href="/postgresql-upgrade-readiness">PostgreSQL 14 upgrade readiness assessment</a>.</p>
   </div></section>
   <section><div class="container"><CTA /></div></section>
 </BaseLayout>

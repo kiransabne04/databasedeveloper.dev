@@ -1,0 +1,15 @@
+---
+interface Props { label: string; symptom: string; cause: string; fix: string; lockRisk: string; validation: string; source?: { href: string; label: string }; }
+const { label, symptom, cause, fix, lockRisk, validation, source } = Astro.props;
+---
+<div class="example-finding">
+  <p class="small muted">{label}</p>
+  <dl>
+    <dt>Symptom</dt><dd>{symptom}</dd>
+    <dt>Root cause</dt><dd>{cause}</dd>
+    <dt>SQL fix</dt><dd><pre><code>{fix}</code></pre></dd>
+    <dt>Lock risk</dt><dd>{lockRisk}</dd>
+    <dt>Validation</dt><dd>{validation}</dd>
+  </dl>
+  {source && <p class="small"><a href={source.href}>{source.label}</a></p>}
+</div>
