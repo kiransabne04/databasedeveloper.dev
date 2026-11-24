@@ -12,6 +12,10 @@ const faq = [
     a: `The PostgreSQL Global Development Group lists ${f.communityEol} as the final release date for PostgreSQL 14. After that release there are no more community bug or security fixes for the 14 branch. Managed services have later dates: AWS RDS and Aurora end standard support on ${f.rdsStandardSupportEnd}, and Azure Database for PostgreSQL Flexible Server on ${f.azureStandardSupportEnd}.`
   },
   {
+    q: 'When is AWS RDS and Aurora PostgreSQL 14 end of life?',
+    a: `There are two AWS dates. RDS for PostgreSQL 14 and Aurora PostgreSQL 14 reach end of standard support on ${f.rdsStandardSupportEnd}. After that, instances still on 14 move into paid RDS Extended Support, which runs until ${f.rdsExtendedSupportEnd}. Some RDS and Aurora 14 minor versions reach end of standard support earlier.`
+  },
+  {
     q: 'Will PostgreSQL 14 stop working after end of life?',
     a: 'No. Existing servers keep running and accepting connections. End of life means the community stops publishing fixes. Any security issue or data-corruption bug found later and fixed in 15 to 18 is not fixed in 14 by the community.'
   },
