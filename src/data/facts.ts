@@ -1,5 +1,8 @@
 export const pg14Facts = {
-  verifiedOn: '2026-11-20',
+  verifiedOn: '2026-11-26',
+  // PostgreSQL 19 was released 19 Nov 2026; RDS and Aurora calendars did not list it on 26 Nov 2026.
+  pg19Release: '19 November 2026',
+  pg19CommunityEnd: '19 November 2031',
   communityEol: '12 November 2026',
   // RDS for PostgreSQL and Aurora PostgreSQL publish the same PG14 major-version dates.
   rdsStandardSupportEnd: '28 February 2027',

@@ -63,7 +63,7 @@ aws rds describe-pending-maintenance-actions</code></pre>
       <li><strong>Check pending maintenance now.</strong> If your minor-version date has passed, inspect the running version and pending actions. Where a deadline is still ahead, schedule a supported 14.x minor version on your own tested change window.</li>
       <li><strong>Take a baseline first.</strong> Save a <code>pg_stat_statements</code> snapshot (or run the <a href="/evidence-collection">evidence collector</a>) so you can compare before and after.</li>
       <li><strong>Upgrade a non-production copy first,</strong> including read replicas and extensions, and check that the application reconnects cleanly after the restart.</li>
-      <li><strong>Don’t stop at the minor version.</strong> PostgreSQL 14 itself loses standard support on {pg14Facts.rdsStandardSupportEnd}, and Extended Support pricing starts {pg14Facts.rdsExtendedSupportYear1Start}. The minor upgrade buys about four months.</li>
+      <li><strong>Don’t stop at the minor version.</strong> PostgreSQL 14 itself loses standard support on {pg14Facts.rdsStandardSupportEnd}, and Extended Support pricing starts {pg14Facts.rdsExtendedSupportYear1Start}. The minor upgrade buys about four months. See what <a href="/insights/rds-aurora-postgresql-14-extended-support-cost">RDS PostgreSQL 14 Extended Support costs</a> and the <a href="/postgresql-14-eol">PostgreSQL 14 end-of-life guide</a>.</li>
     </ol>
     <p>For the performance side of the move, see <a href="/aws-rds-aurora-postgresql">RDS and Aurora PostgreSQL consulting and performance tuning</a>.</p>
   </div></section>

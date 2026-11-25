@@ -17,7 +17,7 @@ const faq = [
   },
   {
     q: 'Will PostgreSQL 14 stop working after end of life?',
-    a: 'No. Existing servers keep running and accepting connections. End of life means the community stops publishing fixes. Any security issue or data-corruption bug found later and fixed in 15 to 18 is not fixed in 14 by the community.'
+    a: 'No. Existing servers keep running and accepting connections. End of life means the community stops publishing fixes. Any security issue or data-corruption bug found later and fixed in 15 to 19 is not fixed in 14 by the community.'
   },
   {
     q: 'What happens to RDS and Aurora PostgreSQL 14 instances?',
@@ -42,7 +42,7 @@ const faq = [
   description={description}
   eyebrow="PostgreSQL upgrades · End of life"
   published="2026-10-13"
-  updated="2026-11-11"
+  updated="2026-11-26"
   offer="upgrade"
   schemaType="Article"
   faq={faq}
@@ -90,7 +90,7 @@ const faq = [
   <p>The PostgreSQL project ships a final minor release for a branch on its end-of-life date, then stops. In practice:</p>
   <ul>
     <li><strong>Your servers keep running.</strong> Nothing in PostgreSQL checks a date. Connections, replication and backups behave exactly as before.</li>
-    <li><strong>No new fixes.</strong> A security vulnerability or data-corruption bug found after {f.communityEol} is fixed in 15 to 18 only. The fix and its description are public, which makes an unpatched 14 server easier to target over time, not harder.</li>
+    <li><strong>No new fixes.</strong> A security vulnerability or data-corruption bug found after {f.communityEol} is fixed in 15 to 19 only. The fix and its description are public, which makes an unpatched 14 server easier to target over time, not harder.</li>
     <li><strong>Run the final community minor.</strong> As of {f.verifiedOn}, PostgreSQL {f.latestMinorAtEol} is the final community release in the 14 branch. Managed services can publish supported minor versions on separate schedules, so check the current engine version and provider release notes. An in-major upgrade replaces binaries without a dump or <code>pg_upgrade</code>; read release notes for any required follow-up such as reindexing.</li>
     <li><strong>The ecosystem moves on gradually.</strong> Extension authors, drivers, ORMs, monitoring agents and CDC tools drop older branches at their own pace. Expect new extension releases to stop being built for 14.</li>
     <li><strong>Audit findings.</strong> Vulnerability scanners and security questionnaires commonly flag unsupported database versions. If you sell to companies that run vendor reviews, "PostgreSQL 14 after end of life" tends to become a written finding with a remediation date.</li>
@@ -209,11 +209,13 @@ FROM pg_database WHERE datallowconn ORDER BY pg_database_size(datname) DESC;`}</
       <tbody>
         <tr><td>PostgreSQL 18</td><td>14 November 2030</td><td>Your platform, extensions, drivers and CDC tool support it. You get the longest runway, and pg_upgrade to 18 transfers most optimizer statistics.</td></tr>
         <tr><td>PostgreSQL 17</td><td>8 November 2029</td><td>A required extension, vendor certification or tool does not support 18 yet. You want a version that has had more minor releases.</td></tr>
+        <tr><td>PostgreSQL 19</td><td>19 November 2031</td><td>Self-managed servers only for now, and only after your extensions, drivers and CDC tool support it. It was released on {f.pg19Release}; the RDS and Aurora release calendars did not list it on {f.verifiedOn}.</td></tr>
         <tr><td>PostgreSQL 15 or 16</td><td>November 2027 / 2028</td><td>Only when a hard dependency forces it. You will be planning the next major upgrade within one or two years.</td></tr>
       </tbody>
     </table>
   </div>
   <p>Going straight from 14 to 18 is supported by pg_upgrade, logical replication and the managed services, and is usually less total work than stepping through each version: you test one combined change instead of four. Do not pick a version from the release notes alone. The question that matters is whether your queries keep their plans. In a <a href="/insights/postgresql-slow-after-major-upgrade">reproduced 14-to-17 upgrade</a>, a join went from 222 ms to 904 ms because statistics were missing after pg_upgrade.</p>
+  <p>When several clusters, CDC or extension support make the choice uncertain, a <a href="/postgresql-upgrade-readiness">PostgreSQL upgrade readiness review</a> checks the target against your own extensions, drivers and busiest queries before you commit to it.</p>
 
   <h2 id="breaks">What breaks between 14 and 18</h2>
   <p>The release notes for 15, 16, 17 and 18 each have a "Migration" section. These are the items that most often affect applications coming from 14:</p>

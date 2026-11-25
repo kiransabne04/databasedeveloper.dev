@@ -86,6 +86,6 @@ SELECT extname FROM pg_extension WHERE extname IN ('pg_partman', 'pg_cron', 'pgl
     <li><strong>Blue/Green</strong> when the outage must be short and you can freeze DDL, handle tables without keys and large objects, and rebuild CDC afterwards.</li>
     <li><strong>DMS or self-managed logical replication</strong> when write volume is too high for a single apply worker, or you need more control over cutover and fallback.</li>
   </ul>
-  <p>Whichever path you choose, the performance risk is the same: plans that change on the new version. Capture a baseline before you start. The full order of work is in the <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a>.</p>
+  <p>Whichever path you choose, the performance risk is the same: plans that change on the new version. Capture a baseline before you start. The full order of work is in the <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a>. If the switchover time or the replication limits are still unknown, an <a href="/postgresql-upgrade-readiness">upgrade readiness review</a> measures both on a copy.</p>
   <p>If plans or load change after the switchover, an <a href="/aws-rds-aurora-postgresql">Aurora and RDS PostgreSQL performance tuning consultant</a> review compares the new workload with your baseline.</p>
 </ArticleLayout>
