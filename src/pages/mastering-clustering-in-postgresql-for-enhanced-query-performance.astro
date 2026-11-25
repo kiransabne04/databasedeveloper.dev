@@ -3,7 +3,7 @@ import ArticleLayout from '../layouts/ArticleLayout.astro';
 import ArticleOffer from '../components/ArticleOffer.astro';
 import { Content as Original } from '../originals/mastering-clustering-in-postgresql-for-enhanced-query-performance.md';
 ---
-<ArticleLayout title="PostgreSQL CLUSTER and Clustered Indexes: When a Table Rewrite Helps" description="PostgreSQL has no clustered index. Test whether CLUSTER improves heap locality for range scans, then weigh ACCESS EXCLUSIVE locking, disk space and how fast the benefit decays." eyebrow="PostgreSQL physical design" published="2025-01-30" updated="2026-10-14" original>
+<ArticleLayout title="PostgreSQL CLUSTER and Clustered Indexes: When a Table Rewrite Helps" description="PostgreSQL has no clustered index. Test whether CLUSTER improves heap locality for range scans, then weigh ACCESS EXCLUSIVE locks, disk space and decay." eyebrow="PostgreSQL physical design" published="2025-01-30" updated="2026-10-14" original>
   <h2>How physical row order affects reads</h2>
   <Original />
 

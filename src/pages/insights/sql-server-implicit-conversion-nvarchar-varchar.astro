@@ -3,8 +3,8 @@ import ArticleLayout from '../../layouts/ArticleLayout.astro';
 import ArticleOffer from '../../components/ArticleOffer.astro';
 import { site } from '../../config/site';
 
-const title = 'SQL Server Implicit Conversion: nvarchar Parameters That Scan a varchar Index';
-const description = 'Tested on SQL Server 2022: one ORM-style nvarchar parameter turned a 6-read index seek into a 4,484-read scan. How collation decides whether it happens, how to find affected queries in Query Store, and the driver settings that fix it.';
+const title = 'SQL Server Implicit Conversion: nvarchar vs varchar Scans';
+const description = 'Tested on SQL Server 2022: one nvarchar parameter turned a 6-read seek into a 4,484-read scan. How collation decides it, Query Store checks and driver fixes.';
 
 const faq = [
   {

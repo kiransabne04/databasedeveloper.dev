@@ -10,7 +10,7 @@ const faq = [
   { q: "What are the limitations of PostgreSQL sharding in production?", a: "Cross-shard transactions and joins, unique constraints and sequences that span shards, rebalancing a hot tenant, running schema migrations on every shard, consistent backups and restores, and the extra operational work of monitoring many nodes. Each needs a design before the first row moves." }
 ];
 ---
-<ArticleLayout title="Sharding PostgreSQL: Partitioning vs Sharding, Alternatives and Techniques" description="PostgreSQL partitioning vs sharding, the alternatives to try first, and a decision guide: prove the single-node limit, choose a shard key, quantify cross-shard work and design routing, rebalancing and recovery." eyebrow="PostgreSQL architecture" published="2025-07-05" updated="2026-11-24" original faq={faq}>
+<ArticleLayout title="Sharding PostgreSQL: Partitioning vs Sharding, Alternatives and Techniques" description="PostgreSQL partitioning vs sharding, alternatives to try first, and a decision guide: prove the single-node limit, pick a shard key, plan routing, rebalancing." eyebrow="PostgreSQL architecture" published="2025-07-05" updated="2026-11-24" original faq={faq}>
   <Original />
 
   <h2 id="production-notes">Production notes (October 2026)</h2>
