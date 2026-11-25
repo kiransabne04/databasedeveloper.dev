@@ -224,4 +224,4 @@ No measured volume for any of these. Most are probably 0 to 10 searches a month.
 
 - **Search Console:** re-inspect the nine service pages around 6 and 20 December. Request indexing once, after this change deploys, for each page whose title changed (investigation, upgrade, RDS/Aurora, Query Rescue, Code Review, pricing, homepage), and for `/partners`, which Google did not know about, only if it is still unknown on 6 December.
 - **Bing Webmaster Tools:** import the walstack.io property from Search Console and confirm `sitemap-index.xml` is read. Bing powers several AI assistants' web results, and the import takes a few minutes.
-- **IndexNow:** optional. It needs a key file committed to `public/` and a submission on each deploy. Decide after Bing shows whether crawling is a problem at all.
+- **IndexNow:** built 25 November (`npm run indexnow`, key file in `public/`). Run it after each deploy that changes pages. See the indexing runbook, §3.4.
