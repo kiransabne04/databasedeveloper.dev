@@ -7,7 +7,7 @@ import ServiceFAQ from '../components/ServiceFAQ.astro';
 import ExampleFinding from '../components/ExampleFinding.astro';
 import { servicePageSchema, upgradeOffers, type Faq } from '../lib/schema';
 
-const description = `A fixed-price PostgreSQL 14 upgrade readiness assessment for RDS, Aurora or self-managed servers: blockers, a query baseline, regression checks and a rollback plan before ${pg14Facts.rdsStandardSupportEnd}.`;
+const description = `Fixed-price PostgreSQL 14 upgrade readiness for RDS, Aurora or self-managed: blockers, query baseline, regression checks and rollback before ${pg14Facts.rdsStandardSupportEnd}.`;
 const faq: Faq[] = [
   { q: 'Should I upgrade PostgreSQL 14 to 17 or 18?', a: 'Pick the newest version that your platform, extensions, drivers, CDC tooling and ORM all support. On RDS and Aurora the allowed targets depend on your exact minor version, so check them with aws rds describe-db-engine-versions before choosing.' },
   { q: 'Do you carry out the upgrade?', a: 'No. This is a readiness assessment. Your team runs the production change. You get the blockers, the rehearsal steps, go and no-go criteria and a rollback plan, and I answer questions during your rehearsal.' },
@@ -16,7 +16,7 @@ const faq: Faq[] = [
   { q: 'Is the assessment only for PostgreSQL 14?', a: 'No. It covers any major-version upgrade. PostgreSQL 14 is the urgent case because RDS and Aurora standard support ends in February 2027.' }
 ];
 ---
-<BaseLayout title="PostgreSQL 14 Upgrade Readiness Assessment for RDS & Aurora (Feb 2027) | WalStack" description={description}
+<BaseLayout title="PostgreSQL 14 Upgrade Readiness Assessment | WalStack" description={description}
   schema={servicePageSchema({ name: 'PostgreSQL 14 upgrade readiness assessment', path: '/postgresql-upgrade-readiness', description, breadcrumb: 'PostgreSQL 14 upgrade readiness assessment', faq, offers: upgradeOffers })}>
   <header class="container hero"><p class="eyebrow">PostgreSQL upgrade readiness assessment</p><h1>PostgreSQL 14 upgrade readiness assessment for RDS and Aurora</h1>
     <p class="lede">Know what breaks and what slows down before the upgrade window. A readiness review for a PostgreSQL major-version upgrade on RDS, Aurora or a self-managed server. You get the blockers, a baseline of your busiest queries and clear go, no-go and rollback criteria.</p>

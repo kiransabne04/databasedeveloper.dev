@@ -6,7 +6,7 @@ import ExampleFinding from '../components/ExampleFinding.astro';
 import { site } from '../config/site';
 import { servicePageSchema, investigationOffers, type Faq } from '../lib/schema';
 
-const description = 'A fixed-price PostgreSQL performance tuning and slowdown audit for RDS, Aurora or self-managed servers: the cause, the SQL fix, its lock risk, rollback and a 14-day check.';
+const description = 'Fixed-price PostgreSQL performance tuning and slowdown audit for RDS, Aurora or self-managed: the cause, the SQL fix, lock risk, rollback and a 14-day check.';
 const faq: Faq[] = [
   { q: 'What do you need from me to start?', a: 'A read-only role with pg_monitor, or the output of scripts you run yourself. The time the slowdown started and the releases around it. On RDS or Aurora, Database Insights and CloudWatch exports for the same window. No write access and no AWS credentials.' },
   { q: 'Which PostgreSQL views and tools do you inspect?', a: 'pg_stat_statements for workload cost, pg_stat_activity and pg_locks with pg_blocking_pids() for waits and blocking, pg_stat_user_tables for dead tuples and vacuum history, pg_stat_io on PostgreSQL 16 and later, auto_explain or slow-query logs, and EXPLAIN (ANALYZE, BUFFERS) only with your written approval because it executes the query.' },
@@ -15,7 +15,7 @@ const faq: Faq[] = [
   { q: 'What if two causes look alike?', a: 'I say so in the report and ask for the smallest extra measurement that would tell them apart, for example a second pg_stat_statements capture an hour later or one EXPLAIN for a slow parameter value.' }
 ];
 ---
-<BaseLayout title="PostgreSQL Performance Tuning & Slowdown Audit for RDS & Aurora | WalStack" description={description}
+<BaseLayout title="PostgreSQL Performance Tuning & Slowdown Audit | WalStack" description={description}
   schema={servicePageSchema({ name: 'PostgreSQL performance tuning and slowdown audit', path: '/postgresql-performance-investigation', description, breadcrumb: 'PostgreSQL performance tuning and slowdown audit', faq, offers: investigationOffers })}>
   <header class="container hero"><p class="eyebrow">Postgres Slowdown Investigation · fixed price</p><h1>PostgreSQL performance tuning and slowdown audit</h1>
     <p class="lede">Find out why pages slowed down or the database bill went up. Get a written fix your engineers can test and undo.</p>

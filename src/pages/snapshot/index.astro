@@ -4,7 +4,7 @@ import SnapshotForm from '../../components/SnapshotForm.astro';
 import { site } from '../../config/site';
 import ServiceFAQ from '../../components/ServiceFAQ.astro';
 import { servicePageSchema, snapshotOffers, type Faq } from '../../lib/schema';
-const description = 'A free PostgreSQL health check: run one read-only script on RDS, Aurora or self-managed PostgreSQL. If it fits, get 3 written performance findings within 2 business days.';
+const description = 'Free PostgreSQL health check: run one read-only script on RDS, Aurora or self-managed PostgreSQL. If it fits, get 3 written findings in 2 business days.';
 const faq: Faq[] = [
   { q: 'Is the health check script safe to run on production?', a: 'It sets the session to read-only, gives each statement a 10-second timeout and a 1-second lock timeout, and reads only PostgreSQL statistics and catalogs. It creates nothing and changes no persistent setting.' },
   { q: 'Does the script send data anywhere?', a: 'No. It writes a text file on your machine. You read it, remove anything you do not want to share, and upload it yourself through the form.' },

@@ -48,8 +48,8 @@ for (const [route, html] of allHtml) {
 }
 const page = (route) => allHtml.find(([path]) => path === route)?.[1] || '';
 const reviewPages = [
-  ['query-rescue', 'PostgreSQL slow query optimization and execution plan review', 'PostgreSQL Slow Query Optimization &amp; Execution Plan Review | WalStack'],
-  ['database-code-review', 'PostgreSQL schema and migration code review', 'PostgreSQL Schema &amp; Migration Code Review Service | WalStack'],
+  ['query-rescue', 'PostgreSQL slow query optimization and execution plan review', 'PostgreSQL Slow Query Optimization &amp; Plan Review | WalStack'],
+  ['database-code-review', 'PostgreSQL schema and migration code review', 'PostgreSQL Schema &amp; Migration Code Review | WalStack'],
 ];
 for (const [key, heading, title] of reviewPages) {
   const route = '/' + key;
