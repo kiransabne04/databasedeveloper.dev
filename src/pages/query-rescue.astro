@@ -30,6 +30,6 @@ const faq: Faq[] = [
     source={{ href: '/insights/postgresql-foreign-key-index-slow-delete', label: 'The full foreign-key lab' }} />
   <h2>Which evidence fits your database?</h2>
   <h3>PostgreSQL</h3><p>An existing <code>EXPLAIN (ANALYZE, BUFFERS)</code> plan can show where estimates diverge or a sort spills. If executing the query is costly or changes data, start with plain <code>EXPLAIN</code> or a prior capture. The <a href="/insights/how-to-profile-slow-postgresql-queries">slow-query profiling guide</a> explains safe collection options.</p>
-  <h3>SQL Server</h3><p>Query Store can show when a different plan appeared and how its runtime statistics changed. An existing actual execution plan adds runtime row counts. Include representative parameter types and whether latency varies by value. See the <a href="/insights/sql-server-parameter-sniffing-query-store">parameter-sensitivity lab</a>.</p>
+  <h3>SQL Server</h3><p>Query Store can show when a different plan appeared and how its runtime statistics changed. An existing actual execution plan adds runtime row counts. Include representative parameter types and whether latency varies by value.</p>
   <h3>When the bottleneck spans queries</h3><p>If several endpoints slow down together, locks move between sessions or the dominant statement is unknown, scope a <a href="/postgresql-performance-investigation">PostgreSQL Performance Investigation</a> or <a href="/sql-server-performance">SQL Server Performance Review</a>.</p>
 </FocusedOfferLayout>

@@ -13,6 +13,8 @@ const legacyArticles = [
   '/how-to-scale-postgresql-databases-with-partitioning',
   '/postgresql-concurrency-and-locking-a-comprehensive-guide'
 ];
+// Kept live for old-domain links, but noindex and out of the sitemap, feeds and listings since 26 Nov 2026.
+const noindexLegacy = new Set(['/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive']);
 const sitemap = readFileSync(join(root, 'dist/sitemap-0.xml'), 'utf8');
 const insights = readFileSync(join(root, 'dist/insights/index.html'), 'utf8');
 const rss = readFileSync(join(root, 'dist/rss.xml'), 'utf8');
@@ -26,9 +28,15 @@ for (const route of legacyArticles) {
   const html = readFileSync(file, 'utf8');
   const url = `${origin}${route}`;
   assert(html.includes(`<link rel="canonical" href="${url}"`), `Bad canonical: ${route}`);
-  assert(sitemap.includes(`<loc>${url}</loc>`), `Missing sitemap URL: ${route}`);
-  assert(insights.includes(`href="${route}"`), `Missing insights listing: ${route}`);
-  assert(rss.includes(`<link>${url}</link>`), `Missing RSS item: ${route}`);
+  if (noindexLegacy.has(route)) {
+    assert(html.includes('<meta name="robots" content="noindex,follow"'), `${route} should be noindex,follow`);
+    assert(!sitemap.includes(`<loc>${url}</loc>`), `${route} should be out of the sitemap`);
+    assert(!insights.includes(`href="${route}"`) && !rss.includes(`<link>${url}</link>`), `${route} should be out of the listing and RSS`);
+  } else {
+    assert(sitemap.includes(`<loc>${url}</loc>`), `Missing sitemap URL: ${route}`);
+    assert(insights.includes(`href="${route}"`), `Missing insights listing: ${route}`);
+    assert(rss.includes(`<link>${url}</link>`), `Missing RSS item: ${route}`);
+  }
   assert(html.includes('<meta property="og:type" content="article"'), `Missing article Open Graph type: ${route}`);
   assert(/<h1\b[^>]*>.+?<\/h1>/s.test(html), `Missing H1: ${route}`);
   assert(/<meta name="description" content="[^"]+"/.test(html), `Missing description: ${route}`);

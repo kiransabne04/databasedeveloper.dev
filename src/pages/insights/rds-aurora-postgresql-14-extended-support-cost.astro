@@ -131,8 +131,8 @@ aws rds describe-db-major-engine-versions --engine postgres \\
     <li>Run the inventory in every Region and write down vCPUs per instance, including standbys and replicas.</li>
     <li>Multiply by your Region's rate to put a monthly number on staying.</li>
     <li>Pick the target version, 17 or 18 unless something rules them out.</li>
-    <li>Restore a snapshot, upgrade it, and record the blockers and the time it took.</li>
-    <li>Baseline <code>pg_stat_statements</code> on production so you can compare after the upgrade.</li>
+    <li>Restore a snapshot, upgrade it, and record the blockers and the time it took. A <a href="/postgresql-upgrade-readiness">PostgreSQL 14 upgrade readiness assessment</a> does this on a copy and adds a go/no-go list per cluster.</li>
+    <li>Baseline <code>pg_stat_statements</code> on production so you can compare after the upgrade. The <a href="/snapshot">free PostgreSQL health check</a> captures a read-only baseline with one script.</li>
   </ol>
   <p>The <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a> covers each step in order.</p>
   <p>If the upgrade or the cost question is part of a wider RDS or Aurora performance problem, an <a href="/aws-rds-aurora-postgresql">AWS RDS and Aurora PostgreSQL consultant</a> review ranks the workload first.</p>

@@ -27,7 +27,7 @@ for (const source of walk(pages, '.astro')) {
   const canonicalAliases = { '/postgresql-query-rescue': '/query-rescue', '/postgresql-pr-review': '/database-code-review' };
   const canonical = `https://walstack.io${canonicalAliases[normalized] || (normalized === '/' ? '/' : normalized)}`;
   assert(html.includes(`<link rel="canonical" href="${canonical}"`), `Bad canonical ${normalized}`);
-  const noindexFollow = ['/sql-server-performance', '/snowflake-performance', '/olap-analytical-performance', '/partner-kit', '/privacy', '/terms'].includes(normalized);
+  const noindexFollow = ['/sql-server-performance', '/snowflake-performance', '/olap-analytical-performance', '/partner-kit', '/privacy', '/terms', '/capabilities', '/insights/snowflake-gen2-vs-adaptive-warehouses', '/insights/sql-server-implicit-conversion-nvarchar-varchar', '/insights/sql-server-parameter-sniffing-query-store', '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive'].includes(normalized);
   if (noindexFollow) assert(html.includes('<meta name="robots" content="noindex,follow"'), `${normalized} should be noindex,follow`);
   const excludedFromSitemap = noindexFollow || ['/postgresql-query-rescue', '/postgresql-pr-review', '/snapshot/thank-you'].includes(normalized);
   if (!excludedFromSitemap) assert(!/<meta name="robots"[^>]*noindex/.test(html), `${normalized} is in the sitemap but noindex`);
@@ -88,7 +88,7 @@ const newGuides = [
   ['/postgresql-14-eol', ['dates', 'what-changes', 'managed', 'inventory', 'target', 'breaks', 'paths', 'plan', 'faq', 'sources'], ['/postgresql-14-upgrade-checklist', '/insights/rds-aurora-postgresql-14-extended-support-cost', '/insights/postgresql-upgrade-logical-replication-slots']],
   ['/insights/postgresql-find-unused-indexes', ['test', 'replicas', 'reset', 'query', 'duplicates', 'cost', 'drop', 'managed', 'faq', 'sources'], ['/insights/postgresql-create-index-concurrently-stuck', '/insights/postgresql-slow-queries-pg-stat-statements']],
   ['/insights/pgvector-hnsw-index-build-slow', ['setup', 'memory', 'workers', 'shm', 'progress', 'production', 'faq', 'sources'], ['/insights/pgvector-hnsw-vs-ivfflat', '/insights/postgresql-create-index-concurrently-stuck']],
-  ['/insights/sql-server-implicit-conversion-nvarchar-varchar', ['repro', 'collation', 'find', 'fix', 'cast', 'validate', 'faq', 'sources'], ['/insights/sql-server-parameter-sniffing-query-store']]
+  ['/insights/sql-server-implicit-conversion-nvarchar-varchar', ['repro', 'collation', 'find', 'fix', 'cast', 'validate', 'faq', 'sources'], []]
 ];
 for (const [route, sections, links] of newGuides) {
   const html = page(route);

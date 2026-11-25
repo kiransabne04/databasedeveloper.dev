@@ -29,7 +29,7 @@ const faq = [
   }
 ];
 ---
-<ArticleLayout
+<ArticleLayout noindexFollow
   title={title}
   description={description}
   eyebrow="SQL Server · Lab-tested"
@@ -171,7 +171,7 @@ ORDER BY avg_logical_reads DESC;`}</code></pre>
     <li>Confirm the new plan shows an <code>Index Seek</code> and no <code>PlanAffectingConvert</code> warning.</li>
     <li>Check total CPU on the instance. When a scan like this runs thousands of times a minute, fixing one query often moves the whole server.</li>
   </ol>
-  <p>To read a captured plan operator by operator, paste it into <a href={site.planReaderSqlServerUrl} data-track="planreader_click">PlanReader's SQL Server analyzer</a>. If the same query is fast for some values and slow for others, the cause is more likely <a href="/insights/sql-server-parameter-sniffing-query-store">parameter sniffing</a>.</p>
+  <p>To read a captured plan operator by operator, paste it into <a href={site.planReaderSqlServerUrl} data-track="planreader_click">PlanReader's SQL Server analyzer</a>. If the same query is fast for some values and slow for others, the cause is more likely parameter sniffing.</p>
 
   <h2 id="faq">FAQ</h2>
   {faq.map((item) => (<><h3>{item.q}</h3><p>{item.a}</p></>))}

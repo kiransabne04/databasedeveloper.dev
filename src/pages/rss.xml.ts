@@ -10,7 +10,7 @@ export const GET: APIRoute = () => {
     link: `${site.url}/insights`,
     description: site.description,
     author: site.personName,
-    items: posts
+    items: posts.filter((post) => post.postgresql)
   });
   return new Response(feed, { headers: { 'Content-Type': 'application/rss+xml; charset=utf-8' } });
 };
