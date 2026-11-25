@@ -16,7 +16,7 @@ const faq: Faq[] = [
   { q: 'Is the assessment only for PostgreSQL 14?', a: 'No. It covers any major-version upgrade. PostgreSQL 14 is the urgent case because RDS and Aurora standard support ends in February 2027.' }
 ];
 ---
-<BaseLayout title="PostgreSQL 14 Upgrade Readiness Assessment | WalStack" description={description}
+<BaseLayout title="PostgreSQL 14 Upgrade Readiness Assessment for RDS & Aurora" description={description}
   schema={servicePageSchema({ name: 'PostgreSQL 14 upgrade readiness assessment', path: '/postgresql-upgrade-readiness', description, breadcrumb: 'PostgreSQL 14 upgrade readiness assessment', faq, offers: upgradeOffers })}>
   <header class="container hero"><p class="eyebrow">PostgreSQL upgrade readiness assessment</p><h1>PostgreSQL 14 upgrade readiness assessment for RDS and Aurora</h1>
     <p class="lede">Know what breaks and what slows down before the upgrade window. A readiness review for a PostgreSQL major-version upgrade on RDS, Aurora or a self-managed server. You get the blockers, a baseline of your busiest queries and clear go, no-go and rollback criteria.</p>

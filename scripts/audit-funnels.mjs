@@ -36,7 +36,7 @@ const primaryTerms = {
   '/': 'PostgreSQL Performance Consultant',
   '/postgresql-performance-investigation': 'PostgreSQL Performance Tuning &amp; Slowdown Audit',
   '/postgresql-upgrade-readiness': 'PostgreSQL 14 Upgrade Readiness Assessment',
-  '/aws-rds-aurora-postgresql': 'AWS RDS &amp; Aurora PostgreSQL Performance Tuning',
+  '/aws-rds-aurora-postgresql': 'AWS RDS &amp; Aurora PostgreSQL Performance Tuning Consultant',
   '/query-rescue': 'PostgreSQL Slow Query Optimization',
   '/database-code-review': 'PostgreSQL Schema &amp; Migration Code Review',
   '/snapshot': 'Free PostgreSQL Health Check',

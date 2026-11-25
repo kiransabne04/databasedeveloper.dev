@@ -175,19 +175,20 @@ The owner decided on 23 November to target the primary map below now, rather tha
 
 ### Primary map (one main term per page)
 
-Revised 24 November 2026 (owner-approved indexing-recovery brief). Titles lead with the primary term, and the funnel audit enforces it.
+Revised 24 November 2026 (owner-approved indexing-recovery brief) and 25 November 2026 (consulting-keyword audit). Service titles stay within about 60 characters. Titles lead with the primary term, and the funnel audit enforces it.
 
 | Page | Primary term (title) | Secondary terms (eyebrow, H2s, FAQ) |
 | --- | --- | --- |
-| `/` | PostgreSQL performance consultant | PostgreSQL consultant, PostgreSQL consulting |
+| `/` | PostgreSQL performance consultant | PostgreSQL consultant, PostgreSQL consulting services (About H2, lede, Organization schema) |
 | `/postgresql-performance-investigation` | PostgreSQL performance tuning & slowdown audit | Postgres slowdown investigation, performance audit, RDS/Aurora slow queries |
 | `/postgresql-upgrade-readiness` | PostgreSQL 14 upgrade readiness assessment | RDS PostgreSQL 14 end of support, 14 to 17/18 upgrade, query regression testing, upgrade consulting |
-| `/aws-rds-aurora-postgresql` | AWS RDS & Aurora PostgreSQL performance tuning | cost optimization, high CPU, RDS Proxy pinning, Database Insights |
+| `/aws-rds-aurora-postgresql` | AWS RDS & Aurora PostgreSQL performance tuning consultant | RDS PostgreSQL consultant, Aurora PostgreSQL consultant (H1, eyebrow, H2, FAQ), cost optimization, high CPU, RDS Proxy pinning, Database Insights |
 | `/query-rescue` | PostgreSQL slow query optimization | execution plan review, EXPLAIN ANALYZE review, ORM-generated SQL |
 | `/database-code-review` | PostgreSQL schema & migration code review | migration lock risk, ALTER TABLE review |
 | `/snapshot` | Free PostgreSQL health check | performance snapshot |
 | `/partners` | PostgreSQL consultant for agencies | white-label database specialist, fractional CTO |
-| `/pricing` | PostgreSQL consulting pricing | fixed-price PostgreSQL review |
+| `/pricing` | PostgreSQL consulting pricing | fixed-price PostgreSQL review (H1 now matches the title) |
+| `/about` | Kiran Sabne, PostgreSQL performance consultant | RDS and Aurora PostgreSQL consultant |
 
 Out of the index since 24 November (noindex,follow and out of the sitemap): `/sql-server-performance`, `/snowflake-performance`, `/olap-analytical-performance`, `/partner-kit`, `/privacy`, `/terms`. The SQL Server, Snowflake and pgvector guides stay indexed.
 
@@ -199,7 +200,7 @@ No measured volume for any of these. Most are probably 0 to 10 searches a month.
 
 **Investigation:** postgresql database slow after deploy consultant · hire postgresql expert to find slow queries · postgresql performance audit for saas · postgres high cpu root cause analysis service · pg_stat_statements analysis consultant · postgresql query regression investigation · why is my postgres database slow suddenly · one-time postgresql performance review fixed price · postgresql consultant for startups without a dba · postgres database bill went up
 
-**RDS / Aurora:** aurora postgresql high cpu troubleshooting expert · rds postgresql slow queries performance insights analysis · aurora postgresql performance review consultant · rds postgresql cpu spike root cause · aws database insights postgresql help · rds proxy connection issues postgresql · aurora postgresql io cost too high · scale up rds instance or fix queries
+**RDS / Aurora (pushed hardest from 25 Nov; the consultant query has no independent consultants ranking):** aws rds postgresql consultant · aurora postgresql consultant · rds postgresql performance tuning consultant · aurora postgresql cost optimization consultant · remote aurora postgresql consultant · rds postgresql consultant cost · rds parameter group tuning postgresql · aurora postgresql high cpu troubleshooting expert · rds postgresql slow queries performance insights analysis · aurora postgresql performance review consultant · rds postgresql cpu spike root cause · aws database insights postgresql help · rds proxy connection issues postgresql · aurora postgresql io cost too high · scale up rds instance or fix queries
 
 **Upgrade:** rds postgresql 14 upgrade before february 2027 · aurora postgresql 14 upgrade assessment · postgresql 14 to 17 upgrade risk assessment · postgresql 14 to 18 upgrade consultant · rds postgresql extended support avoid cost · pg_upgrade compatibility check · postgresql major version upgrade query regression testing · postgresql upgrade rollback plan · rds blue green deployment postgresql major upgrade · postgresql slow after upgrade to 16 or 17
 

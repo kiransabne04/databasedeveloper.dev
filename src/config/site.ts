@@ -3,7 +3,7 @@ export const site = {
   legalName: 'WalStack',
   url: 'https://walstack.io',
   description:
-    'WalStack helps engineering teams diagnose PostgreSQL performance problems and validate risky database upgrades through independent, evidence-backed assessments.',
+    'WalStack is an independent PostgreSQL performance consulting practice for AWS RDS, Aurora and self-managed PostgreSQL. It diagnoses slowdowns and validates risky upgrades with evidence-backed, fixed-price assessments.',
   email: 'hello@walstack.io',
   personName: 'Kiran Sabne',
   linkedinUrl: 'https://www.linkedin.com/in/kiransabne/',
