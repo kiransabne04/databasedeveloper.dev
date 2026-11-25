@@ -64,6 +64,7 @@ aws rds describe-pending-maintenance-actions</code></pre>
       <li><strong>Upgrade a non-production copy first,</strong> including read replicas and extensions, and check that the application reconnects cleanly after the restart.</li>
       <li><strong>Don’t stop at the minor version.</strong> PostgreSQL 14 itself loses standard support on {pg14Facts.rdsStandardSupportEnd}, and Extended Support pricing starts {pg14Facts.rdsExtendedSupportYear1Start}. The minor upgrade buys about four months.</li>
     </ol>
+    <p>For the performance side of the move, see <a href="/aws-rds-aurora-postgresql">RDS and Aurora PostgreSQL consulting and performance tuning</a>.</p>
   </div></section>
   <section><div class="container"><CTA offer="upgrade" eyebrow="Upgrade readiness" title="Planning the PostgreSQL 14 move?" description="Start with your platform, versions and extension list. The first step is scoping the smallest useful readiness review." /></div></section>
 </BaseLayout>

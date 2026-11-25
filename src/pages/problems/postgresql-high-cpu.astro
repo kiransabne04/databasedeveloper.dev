@@ -49,7 +49,7 @@ ORDER BY 3 DESC;</code></pre>
       <li>The obvious fix is an index on a write-heavy table, so the read win has a write cost to weigh.</li>
     </ul>
     <p>To rank the statements behind the CPU, see <a href="/insights/postgresql-slow-queries-pg-stat-statements">finding slow queries with pg_stat_statements</a>. For the index decision, see <a href="/postgresql-indexing-when-brin-beats-b-tree">how to test BRIN against B-tree</a> on large, physically ordered tables.</p>
-    <p>Before moving to a bigger instance, the <a href="/postgresql-performance-investigation">PostgreSQL performance tuning and slowdown audit</a> ranks the statements behind the CPU. On RDS or Aurora, see <a href="/aws-rds-aurora-postgresql">how Database Insights separates CPU from waits</a>.</p>
+    <p>Before moving to a bigger instance, the <a href="/postgresql-performance-investigation">PostgreSQL performance tuning and slowdown audit</a> ranks the statements behind the CPU. On RDS or Aurora, see <a href="/aws-rds-aurora-postgresql">how an RDS and Aurora PostgreSQL consultant separates CPU from waits</a>.</p>
   </div></section>
   <section><div class="container"><CTA /></div></section>
 </BaseLayout>
