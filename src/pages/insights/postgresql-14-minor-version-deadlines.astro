@@ -10,8 +10,9 @@ const schema = [{
   '@context': 'https://schema.org', '@type': 'BlogPosting',
   headline: 'RDS PostgreSQL 14.18 and 14.19 reached end of standard support on 31 October 2026',
   mainEntityOfPage: postUrl, datePublished: '2026-10-13', dateModified: '2026-11-08',
-  author: { '@type': 'Person', name: site.personName, url: `${site.url}/about` },
-  publisher: { '@type': 'Organization', name: site.brand, url: site.url }
+  image: `${site.url}/og-default.png`,
+  author: { '@type': 'Person', '@id': `${site.url}/#kiran`, name: site.personName, url: `${site.url}/about` },
+  publisher: { '@type': 'Organization', '@id': `${site.url}/#practice`, name: site.brand, url: site.url, logo: `${site.url}/og-default.png` }
 }];
 ---
 <BaseLayout ogType="article" published="2026-10-13" updated="2026-11-20" schema={schema} title="RDS PostgreSQL 14.18/14.19 Standard Support Ended 31 Oct 2026 — WalStack" description="RDS PostgreSQL 14.18 and 14.19 lost standard support on 31 October 2026. Aurora 14.17 and 14.18 have separate dates. What to check next.">

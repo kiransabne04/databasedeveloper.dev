@@ -33,8 +33,9 @@ const articleSchema = {
   headline: title,
   description,
   mainEntityOfPage: pageUrl,
-  author: { '@type': 'Person', name: site.personName, url: `${site.url}/about` },
-  publisher: { '@type': 'Organization', name: site.brand, url: site.url },
+  image: `${site.url}/og-default.png`,
+  author: { '@type': 'Person', '@id': `${site.url}/#kiran`, name: site.personName, url: `${site.url}/about` },
+  publisher: { '@type': 'Organization', '@id': `${site.url}/#practice`, name: site.brand, url: site.url, logo: `${site.url}/og-default.png` },
   datePublished: published,
   dateModified: updated
 };
