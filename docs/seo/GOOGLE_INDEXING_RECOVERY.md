@@ -17,7 +17,7 @@ Submitting a sitemap, requesting indexing or filing a Change of Address helps Go
 | `https://walstack.io/postgresql-performance-investigation/` (trailing slash) | 200, duplicate of the slash-less URL. Its canonical points to the slash-less URL. | **Fixed** (live since 22 Nov) with `trailingSlash: false` (308 to the slash-less URL) |
 | Canonicals | Self-referencing, slash-less, on `https://walstack.io` | OK |
 | `robots.txt` | `Allow: /` and `Sitemap: https://walstack.io/sitemap-index.xml` | OK |
-| Sitemap | `sitemap-index.xml` lists `sitemap-0.xml` with 64 URLs. It excludes `/snapshot/thank-you` and the two noindex alias pages. | OK |
+| Sitemap | `sitemap-index.xml` lists `sitemap-0.xml` with 64 URLs. It excludes `/snapshot/thank-you` and the two noindex alias pages. | OK. Since 24 Nov: 58 URLs, each with `lastmod` (see §3.4). |
 | `/snapshot/thank-you` | `noindex,nofollow`, not in the sitemap | OK |
 | Production build | Live homepage H1 and snapshot form match `main` at `f94b72a` | Deployed |
 
@@ -78,13 +78,14 @@ Each line should end on `200` at `https://walstack.io/...` with `hops=1`. `/pric
 ### 3.4 Sitemap
 
 1. In the `walstack.io` property, open **Sitemaps**. Confirm `https://walstack.io/sitemap-index.xml` is listed with status **Success** and a recent "Last read" date. If not, submit it.
-2. Do not submit a walstack.io sitemap in the old property. The old property keeps no sitemap. Google finds the redirects by recrawling old URLs.
+2. Since 24 November the sitemap has 58 URLs, each with a `lastmod` taken from the page file's last git commit (`src/data/page-dates.json`). Run `npm run page-dates` before committing a page edit, or the sitemap keeps the old date. Six pages are now `noindex,follow` and out of the sitemap: `/sql-server-performance`, `/snowflake-performance`, `/olap-analytical-performance`, `/partner-kit`, `/privacy`, `/terms`.
+3. Do not submit a walstack.io sitemap in the old property. The old property keeps no sitemap. Google finds the redirects by recrawling old URLs.
 
 ### 3.5 Inspect the service pages
 
 Run **URL Inspection** on each page and record the coverage state, the Google-selected canonical and the last crawl date:
 
-`/`, `/postgresql-performance-investigation`, `/postgresql-upgrade-readiness`, `/query-rescue`, `/database-code-review`, `/sql-server-performance`, `/pricing`, `/snapshot`, `/partners`.
+`/`, `/postgresql-performance-investigation`, `/postgresql-upgrade-readiness`, `/aws-rds-aurora-postgresql`, `/query-rescue`, `/database-code-review`, `/pricing`, `/snapshot`, `/partners`, `/about`. (`/sql-server-performance` is noindex since 24 Nov; expect "Excluded by noindex".)
 
 Then click **Test live URL**. It should report "URL is available to Google" and show the self canonical. If the Google-selected canonical is a different URL, record that URL. It is the most useful signal for diagnosing duplication.
 
@@ -94,6 +95,8 @@ Request indexing for a page only after its content has changed and the change is
 
 **Status (owner, 22 Nov 2026):** after a live URL test, indexing was requested for all nine pages in §3.5. Do not request them again unless a page changes materially. Re-inspect them around 6 December 2026 and 20 December 2026.
 
+**To do (owner, after the 24-25 Nov deploys, PRs #20 and #22):** titles, H1s and content changed on every page in §3.5. Request indexing once for each of the ten pages after a live URL test. This round replaces the 22 Nov requests. Then resubmit `sitemap-index.xml` in **Sitemaps** if its status is not Success.
+
 ### 3.7 Reading the coverage states
 
 | State | Meaning | What to do |
@@ -101,7 +104,7 @@ Request indexing for a page only after its content has changed and the change is
 | Discovered, currently not indexed | Google knows the URL but has not crawled it yet. This is common for new URLs on a new domain. | Wait. Add internal links from pages that already get impressions. |
 | Crawled, currently not indexed | Google fetched the page and decided not to index it for now. That is a judgement about value or duplication, not a technical error. | Make the page clearly distinct from the homepage and its siblings. Add internal links from indexed guides. Request indexing again after a real change. |
 | Duplicate, Google chose different canonical | Google treats the page as a copy of another URL | Compare the two pages and make the intent of each distinct |
-| Excluded by noindex | Intended only for `/snapshot/thank-you`, `/postgresql-query-rescue` and `/postgresql-pr-review` | Investigate any other page in this state |
+| Excluded by noindex | Intended for `/snapshot/thank-you`, `/postgresql-query-rescue`, `/postgresql-pr-review` and, since 24 Nov, `/sql-server-performance`, `/snowflake-performance`, `/olap-analytical-performance`, `/partner-kit`, `/privacy`, `/terms` | Investigate any other page in this state |
 | Page with redirect | Expected for every old-domain URL and for slash variants | No action |
 | Not found (404) / Server error (5xx) | A genuine error | Fix and validate |
 
