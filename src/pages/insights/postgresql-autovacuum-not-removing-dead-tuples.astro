@@ -94,5 +94,6 @@ SELECT application_name, client_addr, age(backend_xmin) AS xmin_age FROM pg_stat
     <li>If absent, compare the trigger point with the table's size and the time each autovacuum takes.</li>
     <li>Rewrite a table only if the bloat stays and you have measured what it costs.</li>
   </ol>
+  <p>The <a href="/snapshot">free PostgreSQL health check</a> reports dead tuples and vacuum activity for your largest tables from one read-only script. If bloat keeps returning and nobody can find the session holding the horizon, the <a href="/postgresql-performance-investigation">PostgreSQL performance tuning and slowdown audit</a> traces it to its source.</p>
   <p>The same blockers also stop vacuum from freezing old rows, which is how a database gets close to <a href="/insights/postgresql-transaction-id-wraparound">transaction ID wraparound</a>. To see which statements suffer from bloat, rank them with <a href="/insights/postgresql-slow-queries-pg-stat-statements">pg_stat_statements</a>.</p>
 </ArticleLayout>

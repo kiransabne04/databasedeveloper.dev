@@ -55,21 +55,6 @@ const groups = [
       { href: '/insights/pgvector-hnsw-vs-ivfflat', kicker: 'Indexing', title: 'HNSW vs IVFFlat is a workload decision', text: 'Recall, latency, memory, build cost and filtering trade-offs.' },
       { href: '/building-a-semantic-similarity-search-api-with-fastapi-sentence-bert-and-postgresql-pgvector', kicker: 'Architecture', title: 'Semantic search API with FastAPI and pgvector', text: 'From a FastAPI demo to measured recall, tenant filtering and latency.' }
     ]
-  },
-  {
-    id: 'other-databases',
-    title: 'Other databases',
-    intro: 'Concurrency and performance guides beyond PostgreSQL. SQL Server, Snowflake and analytical workloads are covered on their capability pages.',
-    related: { label: 'All capabilities', href: '/capabilities' },
-    items: [
-      { href: '/insights/sql-server-implicit-conversion-nvarchar-varchar', kicker: 'SQL Server · Lab-tested · New', title: 'nvarchar parameters scanning a varchar index', text: 'One ORM default turned 6 logical reads into 4,484. Why collation decides it, and how to find every affected query in Query Store.' },
-      { href: '/insights/sql-server-parameter-sniffing-query-store', kicker: 'SQL Server · Lab-tested', title: 'SQL Server parameter sniffing', text: 'One cached plan read 9 pages for one customer and 900,524 for another. Query Store diagnosis and measured fixes.' },
-      { href: '/insights/snowflake-gen2-vs-adaptive-warehouses', kicker: 'Snowflake · New', title: 'Snowflake Gen2 vs Adaptive warehouses', text: 'Idle credits, spills, pruning and queuing from ACCOUNT_USAGE decide which one costs less for your workload.' },
-      { href: 'https://mssqlserver.dev', kicker: 'SQL Server · MSSQLServer.dev ↗', title: 'SQL Server tutorials', text: 'Window functions, CTEs, isolation levels, row versioning, temporal tables and change tracking, on Kiran\'s SQL Server blog.' },
-      { href: '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive', kicker: 'MongoDB', title: 'MongoDB locking and concurrency', text: 'WiredTiger lock modes, versioning, expiring lock fields and transaction retries.' },
-      { href: '/sql-server-performance', kicker: 'SQL Server', title: 'SQL Server performance review', text: 'Query Store, plan regressions, blocking chains and ORM implicit conversions.' },
-      { href: '/snowflake-performance', kicker: 'Snowflake', title: 'Snowflake performance and cost', text: 'Query history, warehouse sizing, pruning, spills and workload isolation.' }
-    ]
   }
 ];
 

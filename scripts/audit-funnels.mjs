@@ -88,9 +88,20 @@ for (const route of ['/', '/snapshot', '/postgresql-performance-investigation', 
   ok(!/<meta name="robots"[^>]*noindex/.test(page(route)), `${route} must be indexable`);
 }
 ok(!sitemap.includes('/snapshot/thank-you'), 'Receipt page in sitemap');
-for (const route of ['/sql-server-performance', '/snowflake-performance', '/olap-analytical-performance', '/partner-kit', '/privacy', '/terms']) {
+for (const route of ['/sql-server-performance', '/snowflake-performance', '/olap-analytical-performance', '/partner-kit', '/privacy', '/terms', '/capabilities', '/insights/snowflake-gen2-vs-adaptive-warehouses', '/insights/sql-server-implicit-conversion-nvarchar-varchar', '/insights/sql-server-parameter-sniffing-query-store', '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive']) {
   ok(!sitemap.includes(`<loc>https://walstack.io${route}</loc>`), `${route} should be out of the sitemap`);
   ok(page(route).includes('<meta name="robots" content="noindex,follow"'), `${route} should be noindex,follow`);
+}
+// Non-PostgreSQL pages are not linked from any indexable page.
+const offTopic = ['/insights/snowflake-gen2-vs-adaptive-warehouses', '/insights/sql-server-implicit-conversion-nvarchar-varchar', '/insights/sql-server-parameter-sniffing-query-store', '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive'];
+for (const [, loc] of sitemap.matchAll(/<loc>https:\/\/walstack\.io([^<]*)<\/loc>/g)) {
+  for (const target of offTopic) ok(!page(loc || '/').includes(`href="${target}"`), `${loc || '/'} links to noindexed ${target}`);
+}
+// Key PostgreSQL 14 and performance guides hand off to a service in their own text (not only in offer panels).
+for (const file of ['postgresql-14-upgrade-checklist', 'insights/pg-upgrade-check-failures', 'insights/rds-aurora-postgresql-14-extended-support-cost', 'insights/postgresql-slow-queries-pg-stat-statements', 'insights/postgresql-autovacuum-not-removing-dead-tuples']) {
+  const source = readFileSync(join(root, 'src/pages', file + '.astro'), 'utf8');
+  const inline = source.match(/<a href="\/(postgresql-upgrade-readiness|postgresql-performance-investigation|snapshot)"/g) || [];
+  ok(inline.length >= 2, `/${file} needs at least 2 inline links to upgrade readiness, the investigation or the snapshot (has ${inline.length})`);
 }
 const sitemapEntries = [...sitemap.matchAll(/<url>(.*?)<\/url>/gs)].map((m) => m[1]);
 ok(sitemapEntries.length > 0 && sitemapEntries.every((entry) => /<lastmod>\d{4}-\d{2}-\d{2}/.test(entry)), 'Every sitemap URL needs a lastmod date');

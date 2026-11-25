@@ -7,7 +7,10 @@ const site = 'https://walstack.io';
 const excluded = new Set([
   '/postgresql-query-rescue', '/postgresql-pr-review', '/snapshot/thank-you',
   '/sql-server-performance', '/snowflake-performance', '/olap-analytical-performance',
-  '/partner-kit', '/privacy', '/terms'
+  '/partner-kit', '/privacy', '/terms', '/capabilities',
+  // Non-PostgreSQL articles, noindex since 26 Nov 2026
+  '/insights/snowflake-gen2-vs-adaptive-warehouses', '/insights/sql-server-implicit-conversion-nvarchar-varchar',
+  '/insights/sql-server-parameter-sniffing-query-store', '/mastering-mongodb-locking-concurrency-and-performance-optimization-a-deep-dive'
 ].map((path) => site + path));
 // Last source change per route, from `npm run page-dates`.
 const pageDates = JSON.parse(readFileSync(new URL('./src/data/page-dates.json', import.meta.url), 'utf8'));

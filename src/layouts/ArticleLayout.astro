@@ -18,11 +18,13 @@ interface Props {
   /** Hide the header offer line where no offer matches the topic. */
   offerLine?: boolean;
   schemaType?: 'Article' | 'BlogPosting';
+  /** Keep out of search results (links still followed); also list the path in astro.config.mjs `excluded`. */
+  noindexFollow?: boolean;
   /** Questions answered in the article's FAQ section, as plain text, for FAQPage structured data. */
   faq?: { q: string; a: string }[];
 }
 
-const { title, description, eyebrow, published, updated, original = false, ctaTitle, ctaDescription, offer = 'investigation', offerLine = true, schemaType = 'BlogPosting', faq } = Astro.props;
+const { title, description, eyebrow, published, updated, original = false, ctaTitle, ctaDescription, offer = 'investigation', offerLine = true, schemaType = 'BlogPosting', faq, noindexFollow = false } = Astro.props;
 const details = offers[offer];
 const step = nextStep(offer, Astro.url.pathname);
 
@@ -53,7 +55,7 @@ const faqSchema = faq?.length ? {
   mainEntity: faq.map((item) => ({ '@type': 'Question', name: item.q, acceptedAnswer: { '@type': 'Answer', text: item.a } }))
 } : undefined;
 ---
-<BaseLayout title={`${title} — WalStack`} description={description} schema={faqSchema ? [articleSchema, breadcrumbSchema, faqSchema] : [articleSchema, breadcrumbSchema]} ogType="article" published={published} updated={updated}>
+<BaseLayout title={`${title} — WalStack`} description={description} schema={faqSchema ? [articleSchema, breadcrumbSchema, faqSchema] : [articleSchema, breadcrumbSchema]} ogType="article" published={published} updated={updated} {noindexFollow}>
   <article>
     <header class="container article-header">
       <nav class="article-breadcrumb small muted" aria-label="Breadcrumb"><a href="/insights">Guides</a><span aria-hidden="true"> / </span><span aria-current="page">{title}</span></nav>
