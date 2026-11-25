@@ -4,7 +4,7 @@ import { servicePageSchema, investigationOffers, type Faq } from '../lib/schema'
 import ServiceFAQ from '../components/ServiceFAQ.astro';
 import ExampleFinding from '../components/ExampleFinding.astro';
 
-const description = 'Performance tuning and cost review for AWS RDS and Aurora PostgreSQL: high CPU, slow queries, connection pressure, RDS Proxy pinning and Aurora I/O cost, from Database Insights and CloudWatch evidence.';
+const description = 'Performance tuning for AWS RDS and Aurora PostgreSQL: high CPU, slow queries, connection limits, RDS Proxy pinning and Aurora I/O cost, from Database Insights.';
 const faq: Faq[] = [
   { q: 'Should I scale up the RDS instance or fix the queries?', a: 'Look at Database Insights load by SQL statement first. If a few statements account for most of the load, a bigger instance only buys time until data grows again. Scale up when the load is spread across the workload and the instance is at a real CPU, memory or I/O ceiling.' },
   { q: 'Can you work without access to my AWS account?', a: 'Yes. Your team exports Database Insights views, CloudWatch metrics and the parameter group, and runs a read-only SQL script. No AWS credentials or database write access are needed.' },
@@ -16,7 +16,7 @@ import PageHero from '../components/PageHero.astro';
 import PG14Notice from '../components/PG14Notice.astro';
 import CTA from '../components/CTA.astro';
 ---
-<BaseLayout title="AWS RDS & Aurora PostgreSQL Performance Tuning & Cost Optimization | WalStack" description={description} schema={servicePageSchema({ name: 'AWS RDS and Aurora PostgreSQL performance tuning', path: '/aws-rds-aurora-postgresql', description, breadcrumb: 'AWS RDS and Aurora PostgreSQL performance tuning', faq, offers: investigationOffers })}>
+<BaseLayout title="AWS RDS & Aurora PostgreSQL Performance Tuning | WalStack" description={description} schema={servicePageSchema({ name: 'AWS RDS and Aurora PostgreSQL performance tuning', path: '/aws-rds-aurora-postgresql', description, breadcrumb: 'AWS RDS and Aurora PostgreSQL performance tuning', faq, offers: investigationOffers })}>
   <PageHero eyebrow="RDS and Aurora performance without defaulting to “scale the instance”" title="AWS RDS and Aurora PostgreSQL performance tuning and cost optimization" description="Use workload evidence to separate expensive statements, plan problems, connection amplification, waits and configuration from genuine capacity constraints." />
   <section>
     <div class="container grid three">

@@ -44,6 +44,13 @@ const primaryTerms = {
   '/pricing': 'PostgreSQL Consulting Pricing'
 };
 for (const [route, term] of Object.entries(primaryTerms)) ok((page(route).match(/<title>(.*?)<\/title>/s)?.[1] || '').startsWith(term), route + ' title should lead with its primary term: ' + term);
+const unescape = (v) => v.replace(/&amp;/g, '&').replace(/&#39;/g, "'").replace(/&quot;/g, '"');
+for (const route of Object.keys(primaryTerms)) {
+  const title = unescape(page(route).match(/<title>(.*?)<\/title>/s)?.[1] || '');
+  const desc = unescape(page(route).match(/<meta name="description" content="([^"]*)"/)?.[1] || '');
+  ok(title.length <= 62, `${route} title is ${title.length} characters; keep it near 60 so search results show it whole`);
+  ok(desc.length >= 70 && desc.length <= 160, `${route} description is ${desc.length} characters; keep it between 70 and 160`);
+}
 ok(main('/partners').includes('href="/contact?offer=partnership&amp;from=%2Fpartners"'), 'Partners enquiry route');
 ok(page('/contact').includes('value="partnership"'), 'Contact form must accept the partnership offer');
 ok(main('/partners').replace(/<[^>]+>/g, ' ').split(/\s+/).filter(Boolean).length > 400, 'Partners page is thin');
