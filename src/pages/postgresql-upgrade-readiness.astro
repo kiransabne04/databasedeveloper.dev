@@ -9,7 +9,8 @@ import { servicePageSchema, upgradeOffers, type Faq } from '../lib/schema';
 
 const description = `Fixed-price PostgreSQL 14 upgrade readiness for RDS, Aurora or self-managed: blockers, query baseline, regression checks and rollback before ${pg14Facts.rdsStandardSupportEnd}.`;
 const faq: Faq[] = [
-  { q: 'Should I upgrade PostgreSQL 14 to 17 or 18?', a: 'Pick the newest version that your platform, extensions, drivers, CDC tooling and ORM all support. On RDS and Aurora the allowed targets depend on your exact minor version, so check them with aws rds describe-db-engine-versions before choosing.' },
+  { q: 'Should I upgrade PostgreSQL 14 to 17 or 18?', a: `Pick the newest version that your platform, extensions, drivers, CDC tooling and ORM all support. On RDS and Aurora the allowed targets depend on your exact minor version, so check them with aws rds describe-db-engine-versions before choosing. PostgreSQL 19 was released on ${pg14Facts.pg19Release}, but the RDS and Aurora calendars did not list it on ${pg14Facts.verifiedOn}.` },
+  { q: 'Can I upgrade a production RDS or Aurora PostgreSQL 14 database safely before Extended Support charges begin?', a: `Usually yes, if you start with a rehearsal rather than the production window. Restore a snapshot, upgrade the copy, record the blockers and how long it took, and compare your busiest queries against a baseline. Whether it is safe for your database depends on what that rehearsal shows. The assessment turns it into go, no-go and rollback criteria, with a window before ${pg14Facts.rdsStandardSupportEnd}.` },
   { q: 'Do you carry out the upgrade?', a: 'No. This is a readiness assessment. Your team runs the production change. You get the blockers, the rehearsal steps, go and no-go criteria and a rollback plan, and I answer questions during your rehearsal.' },
   { q: 'How do I avoid RDS Extended Support charges?', a: `Upgrade to a supported major version before ${pg14Facts.rdsStandardSupportEnd}. Instances still on 14 after that date are enrolled in paid Extended Support. The charges stop once you upgrade to a supported major version or delete the database.` },
   { q: 'How do you check for query regressions after the upgrade?', a: 'Before the upgrade, I help you save the top statements by total time from pg_stat_statements and EXPLAIN (ANALYZE, BUFFERS) for the queries users depend on. After the upgrade, run ANALYZE and compare the same statements. pg_upgrade only carries planner statistics from PostgreSQL 18 onward.' },
@@ -26,7 +27,27 @@ const faq: Faq[] = [
     <p>For provisioned instances, AWS charges per virtual CPU-hour. The rate depends on the region and support year. Count each billable standby and replica. If you disabled Extended Support, AWS can upgrade the database instead.</p>
     <p>For example, at a regional rate of $0.10 per virtual CPU-hour, four virtual CPUs running for 720 hours add $288. Check your region for the actual rate.</p>
     <p><a href={pg14Facts.awsSource}>AWS release calendar</a> · <a href="https://aws.amazon.com/rds/postgresql/pricing/">RDS pricing</a> · <a href={pg14Facts.auroraSource}>Aurora release calendar</a> · <a href="/postgresql-14-eol">PostgreSQL 14 end-of-life guide</a></p></header>
-  <section><div class="container prose"><h2>What I check</h2>
+  <section><div class="container prose"><h2>Can you still upgrade safely before Extended Support starts?</h2>
+    <p>The upgrade command is rarely what takes time. The unknowns are: which blockers your clusters have, how long the switch takes, which queries change plans and how you would roll back. Work backwards from {pg14Facts.rdsStandardSupportEnd}:</p>
+    <ol>
+      <li><strong>Inventory now.</strong> Every instance, its exact 14.x minor, extensions, read replicas and replication slots. Some minor versions lose support earlier: on Aurora, {pg14Facts.auroraEarlyMinorEnds}. See <a href="/insights/postgresql-14-minor-version-deadlines">PostgreSQL 14 minor-version deadlines</a>.</li>
+      <li><strong>Rehearse on a restored snapshot.</strong> Run the real upgrade path on a copy and record blockers and duration.</li>
+      <li><strong>Compare query performance.</strong> Run the busiest statements on the upgraded copy against a baseline from production.</li>
+      <li><strong>Choose the path and the rollback.</strong> In-place or Blue/Green, how CDC restarts, and what happens to writes accepted after the switch.</li>
+      <li><strong>Book the window with slack.</strong> Leave room for a second attempt and for change freezes before the deadline.</li>
+    </ol>
+    <h3>When a readiness review is worth paying for</h3>
+    <ul>
+      <li>Several production clusters, or clusters on different RDS or Aurora minor versions.</li>
+      <li>Debezium or other CDC reading from logical replication slots.</li>
+      <li>Extensions whose support on the target version you have not confirmed.</li>
+      <li>No measured upgrade duration, so the downtime is a guess.</li>
+      <li>Queries your customers depend on and no baseline to compare after the switch.</li>
+      <li>No written rollback plan.</li>
+      <li>A decision to make between upgrading now and paying for <a href="/insights/rds-aurora-postgresql-14-extended-support-cost">RDS PostgreSQL 14 Extended Support</a> for a while.</li>
+    </ul>
+    <p>If none of these apply, the <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a> may be enough on its own.</p>
+    <h2>What I check</h2>
     <p>I check which target version your application can use and which add-ons need attention. I look at the busiest queries before the move so your engineers know what to compare afterwards.</p>
     <ul><li>Database and extension versions, application drivers and how the application opens connections.</li>
       <li>Large tables, replicas and any systems that copy changes from the database.</li>

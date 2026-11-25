@@ -70,5 +70,5 @@ WHERE slot_type = 'logical';`}</code></pre>
     <li>Rehearse the drop, upgrade, recreate and connector restart on a copy.</li>
     <li>Reconcile row counts after cutover.</li>
   </ul>
-  <p>The rest of the sequence is in the <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a>. For blockers that <code>pg_upgrade --check</code> does catch, see <a href="/insights/pg-upgrade-check-failures">pg_upgrade --check failures and fixes</a>.</p>
+  <p>The rest of the sequence is in the <a href="/postgresql-14-upgrade-checklist">PostgreSQL 14 upgrade checklist</a>. For blockers that <code>pg_upgrade --check</code> does catch, see <a href="/insights/pg-upgrade-check-failures">pg_upgrade --check failures and fixes</a>. When a CDC pipeline depends on the slot, the <a href="/postgresql-upgrade-readiness">PostgreSQL upgrade readiness review</a> plans the slot recreation and the re-sync before the window.</p>
 </ArticleLayout>

@@ -4,7 +4,8 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync, globSync } from 'node:fs';
 
-const today = new Date().toISOString().slice(0, 10);
+// Local date, to match git's %cs (committer's local date). toISOString() would give UTC.
+const today = new Date().toLocaleDateString('en-CA');
 const dirty = new Set(execFileSync('git', ['status', '--porcelain'], { encoding: 'utf8' })
   .split('\n').filter(Boolean).map((line) => line.slice(3).trim()));
 const fileDate = (file) => {
