@@ -1,7 +1,7 @@
 ---
 import ArticleLayout from '../../layouts/ArticleLayout.astro';
 ---
-<ArticleLayout title="What AI Misses in a Production PostgreSQL Performance Diagnosis" description="AI can help interpret a PostgreSQL plan. A safe production recommendation also needs workload frequency, waits, write cost, change history and validation." eyebrow="PostgreSQL investigation" published="2026-10-13" updated="2026-10-13">
+<ArticleLayout title="What AI Misses in PostgreSQL Performance Diagnosis" description="AI can help interpret a PostgreSQL plan. A safe production recommendation also needs workload frequency, waits, write cost, change history and validation." eyebrow="PostgreSQL investigation" published="2026-10-13" updated="2026-10-13">
   <h2>A plausible answer can be the wrong production change</h2>
   <p>Paste a slow <code>EXPLAIN</code> plan into an assistant and it may suggest a missing index or a query rewrite. That can be useful as a hypothesis. It does not establish that this statement dominates the workload, that the plan caused the user's wait, or that the proposed index improves the system after its write and storage costs are included.</p>
   <p>For example, a query with a good plan can still be slow because it is blocked behind a transaction. The first useful evidence is then the blocker and wait timeline, not another index. Conversely, a fast individual query executed thousands of times per request can dominate total database time. Single-plan analysis misses both patterns.</p>

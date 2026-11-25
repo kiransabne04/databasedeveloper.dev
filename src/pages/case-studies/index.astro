@@ -11,6 +11,25 @@ import PageHero from '../../components/PageHero.astro';
     <p class="small muted">These are synthetic labs using generated data in an isolated environment, not client incidents.</p>
     <h2>What a lab case shows</h2>
     <p>Each lab reproduces a kind of production problem I have worked on, using a fresh PostgreSQL instance and generated data. The <a href="https://github.com/kiransabne04/databasedeveloper.dev/tree/main/labs">setup and workload scripts</a> and captured output are public, so you can rerun them and check the numbers. The point is the reasoning: which evidence pointed to the cause, which response was tested, and how the result was validated. That is the same structure a client report follows; see the <a href="/sample-report">sample report</a>.</p>
+    <h2>How to read a lab case</h2>
+    <ul>
+      <li><strong>Symptom:</strong> what an engineer would notice first, such as p95 latency rising for one tenant or reads stalling during a deploy.</li>
+      <li><strong>Evidence:</strong> the plans, lock views and timings captured during the run, with the commands that produced them.</li>
+      <li><strong>Cause:</strong> the explanation the evidence supports, and the alternatives it rules out.</li>
+      <li><strong>Response:</strong> the change that was tested, its lock risk and how to roll it back.</li>
+      <li><strong>Validation:</strong> the measurement repeated after the change, on the same workload.</li>
+    </ul>
+    <h2>Which service uses this reasoning</h2>
+    <p>The generic plan regression is the kind of problem the <a href="/postgresql-performance-investigation">PostgreSQL performance tuning and slowdown audit</a> and <a href="/query-rescue">slow query optimization</a> look for. The DDL lock queue is what a <a href="/database-code-review">schema and migration code review</a> catches before deploy.</p>
+    <h2>More lab-tested guides</h2>
+    <ul>
+      <li><a href="/insights/postgresql-foreign-key-index-slow-delete">Slow DELETE from unindexed foreign keys</a></li>
+      <li><a href="/insights/postgresql-transaction-id-wraparound">Transaction ID wraparound, from warning to recovery</a></li>
+      <li><a href="/insights/postgresql-work-mem-temp-file-spills">work_mem and temp file spills, measured</a></li>
+      <li><a href="/insights/postgresql-find-unused-indexes">Finding unused indexes with a replica in the picture</a></li>
+      <li><a href="/insights/postgresql-create-index-concurrently-stuck">CREATE INDEX CONCURRENTLY stuck behind a transaction</a></li>
+      <li><a href="/insights/pg-upgrade-check-failures">pg_upgrade --check failures from PostgreSQL 14 to 18</a></li>
+    </ul>
     <h2>Client cases</h2>
     <p>Client engagements are confidential by default. A client case appears here only after the client has approved an anonymised write-up in writing. None is published yet.</p>
   </div></section>

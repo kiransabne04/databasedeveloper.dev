@@ -7,8 +7,21 @@ import { site } from '../config/site';
   <header class="container hero"><h1>From a slow page to a fix you can check.</h1><p class="lede">You choose what to share and when to make a change. I investigate and write down how to test the result.</p><ConversionActions /></header>
   <section><div class="container prose"><h2>Start with the free snapshot</h2>
     <p>You run a read-only script and inspect the output. If the request fits, I send 3 written findings within 2 business days.</p>
-    <h2>Dig into one slowdown</h2><p>The <a href="/postgresql-performance-investigation">paid investigation</a> costs {site.investigationOffer.display}. You can grant a read-only role or run the scripts yourself. I deliver the report in 3 business days after access or receipt of your output.</p>
+    <p>I accept up to {site.snapshotMonthlyCap} snapshots a month. If the month is full or the output is not usable, I tell you within 1 business day, so you are not left waiting.</p>
+    <h2>Dig into one slowdown</h2><p>The <a href="/postgresql-performance-investigation">paid investigation</a> costs {site.investigationOffer.display}. You can grant a read-only role or run the scripts yourself. I deliver the report in {site.investigationTurnaround} after access or receipt of your output.</p>
+    <p>Before any payment, I confirm the scope in writing: which database, which symptom, and what is out of scope. You pay upfront in USD once the scope is agreed.</p>
+    <h2>What you share, and what you keep</h2>
+    <ul>
+      <li><strong>Shared:</strong> output from read-only queries such as <code>pg_stat_statements</code>, <code>pg_settings</code> and lock views, plus exports from Database Insights or CloudWatch on RDS and Aurora. The <a href="/evidence-collection">evidence collector</a> lists every query it runs.</li>
+      <li><strong>Kept:</strong> admin credentials, write access and production data. You can read the output and remove table names, literals or anything sensitive before sending it.</li>
+      <li><strong>Optional:</strong> a short-lived read-only role, if running scripts on your side is slower for your team.</li>
+    </ul>
+    <h2>What the report gives you</h2>
+    <p>Each finding has the same fields: severity, confidence, the evidence it rests on, what was observed, the likely cause, the recommended change, its lock risk, how to roll it back and how to check it worked. Findings are ranked, so your team knows which change to make first.</p>
     <h2>Make and measure the change</h2><p>I explain the proposed changes, risks and rollback steps on a 45-minute call. Your engineers choose what to apply. I follow up 14 days later to compare the results.</p>
+    <p>The 14-day check uses the same queries as the first run, so the comparison is like for like. If the numbers do not show an improvement, the follow-up says so and names the next measurement to take.</p>
+    <h2>What is not included</h2>
+    <p>There is no 24/7 on-call or incident response, and I do not apply changes to your production database. For a planned major-version move, the <a href="/postgresql-upgrade-readiness">PostgreSQL 14 upgrade readiness assessment</a> follows the same steps with upgrade-specific checks. On AWS, see <a href="/aws-rds-aurora-postgresql">RDS and Aurora PostgreSQL consulting</a>.</p>
     <p><a href="/sample-report">See the report format</a>. This example uses demo data.</p><ConversionActions />
   </div></section>
 </BaseLayout>
