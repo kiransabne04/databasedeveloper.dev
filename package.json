@@ -9,7 +9,8 @@
     "audit:content": "node scripts/audit-content.mjs && node scripts/audit-launch.mjs && node scripts/audit-funnels.mjs",
     "preview": "astro preview",
     "check": "astro check",
-    "page-dates": "node scripts/page-dates.mjs"
+    "page-dates": "node scripts/page-dates.mjs",
+    "indexnow": "node scripts/indexnow.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.4",

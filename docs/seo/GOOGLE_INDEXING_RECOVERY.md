@@ -79,7 +79,16 @@ Each line should end on `200` at `https://walstack.io/...` with `hops=1`. `/pric
 
 1. In the `walstack.io` property, open **Sitemaps**. Confirm `https://walstack.io/sitemap-index.xml` is listed with status **Success** and a recent "Last read" date. If not, submit it.
 2. Since 24 November the sitemap has 58 URLs, each with a `lastmod` taken from the page file's last git commit (`src/data/page-dates.json`). Run `npm run page-dates` before committing a page edit, or the sitemap keeps the old date. Six pages are now `noindex,follow` and out of the sitemap: `/sql-server-performance`, `/snowflake-performance`, `/olap-analytical-performance`, `/partner-kit`, `/privacy`, `/terms`.
-3. Do not submit a walstack.io sitemap in the old property. The old property keeps no sitemap. Google finds the redirects by recrawling old URLs.
+3. Do not submit a walstack.io sitemap in the old property.
+
+**Bing and IndexNow.** Import the walstack.io property into [Bing Webmaster Tools](https://www.bing.com/webmasters) from Search Console and confirm the sitemap is processed. After each deploy that changes pages, tell IndexNow engines (Bing, Yandex, Seznam, Naver; not Google) what changed:
+
+```bash
+npm run indexnow             # dry run: lists live-sitemap URLs whose lastmod changed since the last submission
+npm run indexnow -- --submit # sends them, then writes src/data/indexnow-state.json; commit that file
+```
+
+The first run needs `--since YYYY-MM-DD`. Add `--url /path` for pages that left the sitemap, such as newly noindexed ones, so Bing recrawls them and drops them. The key file is `public/<key>.txt`; it is public by design. Never run the script from build or CI. The old property keeps no sitemap. Google finds the redirects by recrawling old URLs.
 
 ### 3.5 Inspect the service pages
 
