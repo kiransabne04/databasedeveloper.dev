@@ -56,7 +56,8 @@ const changed = entries.filter(({ url, lastmod }) => {
 for (const path of extra) {
   if (!path?.startsWith('/')) throw new Error('--url takes a path such as /privacy');
   const url = ORIGIN + (path === '/' ? '/' : path.replace(/\/$/, ''));
-  if (!changed.some((e) => e.url === url)) changed.push({ url, lastmod: 'extra' });
+  const known = entries.find((e) => e.url === url);
+  if (!changed.some((e) => e.url === url)) changed.push({ url, lastmod: known ? known.lastmod : 'extra' });
 }
 for (const { url } of changed) if (new URL(url).host !== HOST) throw new Error(`Foreign host: ${url}`);
 
