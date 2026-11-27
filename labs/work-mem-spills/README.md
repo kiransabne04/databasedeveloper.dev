@@ -1,5 +1,7 @@
 # Lab: work_mem and temp file spills
 
+Write-up: https://walstack.io/insights/postgresql-work-mem-temp-file-spills
+
 Synthetic reproduction behind `/insights/postgresql-work-mem-temp-file-spills`.
 Every plan line and number on that page comes from `out-lab.txt` in this folder.
 

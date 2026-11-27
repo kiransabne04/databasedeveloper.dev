@@ -1,5 +1,7 @@
 # Lab: PostgreSQL 18 asynchronous I/O (io_method)
 
+Write-up: https://walstack.io/insights/postgresql-18-async-io-io-method
+
 Synthetic reproduction behind `/insights/postgresql-18-async-io-io-method`.
 Every plan line and number on that page comes from `out-lab.txt` in this folder.
 

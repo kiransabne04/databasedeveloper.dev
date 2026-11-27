@@ -1,5 +1,7 @@
 # Snapshot script lab
 
+Write-up: https://walstack.io/snapshot
+
 Runs `public/snapshot/walstack-snapshot.sql` (v1.2) against disposable `postgres:13` to `postgres:18` Docker containers. The data is generated (20,000 customers, 200,000 orders). No real database is involved.
 
 ```bash

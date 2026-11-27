@@ -1,5 +1,7 @@
 # Lab: pg_upgrade from PostgreSQL 14 to 18
 
+Write-ups: https://walstack.io/insights/pg-upgrade-check-failures · https://walstack.io/insights/postgresql-upgrade-logical-replication-slots · https://walstack.io/sample-upgrade-readiness-report
+
 Synthetic reproduction behind `/insights/pg-upgrade-check-failures` and
 `/insights/postgresql-upgrade-logical-replication-slots`.
 Every message and number on those pages comes from `out-lab.txt` in this folder.

@@ -1,5 +1,7 @@
 # Lab: PostgreSQL 14 end-of-life inventory
 
+Write-up: https://walstack.io/postgresql-14-eol
+
 Behind `/postgresql-14-eol`. Every output quoted on that page comes from `out-lab.txt` in this folder.
 
 Run on 11 Nov 2026 on a laptop (Docker, arm64):

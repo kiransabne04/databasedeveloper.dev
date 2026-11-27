@@ -1,5 +1,7 @@
 # Lab: autovacuum blocked by an idle-in-transaction session
 
+Write-up: https://walstack.io/insights/postgresql-autovacuum-not-removing-dead-tuples
+
 Synthetic reproduction behind `/insights/postgresql-autovacuum-not-removing-dead-tuples`.
 Every message and number on that page comes from `out-lab.txt` in this folder.
 

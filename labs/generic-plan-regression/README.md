@@ -1,5 +1,7 @@
 # Lab: forced generic plan on a multi-tenant query
 
+Write-up: https://walstack.io/case-studies/lab-generic-plan-regression
+
 Synthetic reproduction behind `/sample-report` and `/case-studies/lab-generic-plan-regression`.
 Every number on those pages comes from the `out-*.txt` files in this folder.
 
