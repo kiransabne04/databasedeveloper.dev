@@ -1,5 +1,7 @@
 # Lab: unindexed foreign keys and slow parent deletes
 
+Write-up: https://walstack.io/insights/postgresql-foreign-key-index-slow-delete
+
 Synthetic reproduction behind `/insights/postgresql-foreign-key-index-slow-delete`.
 Every plan line and number on that page comes from `out-lab.txt` in this folder.
 

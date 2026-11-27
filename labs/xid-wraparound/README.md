@@ -1,5 +1,7 @@
 # Lab: transaction ID wraparound warning, stop and recovery
 
+Write-up: https://walstack.io/insights/postgresql-transaction-id-wraparound
+
 Synthetic reproduction behind `/insights/postgresql-transaction-id-wraparound`.
 Every message and number on that page comes from `out-lab.txt` in this folder.
 

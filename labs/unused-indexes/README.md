@@ -1,5 +1,7 @@
 # Lab: unused indexes on a primary and a streaming replica
 
+Write-up: https://walstack.io/insights/postgresql-find-unused-indexes
+
 Behind `/insights/postgresql-find-unused-indexes`. Every number on that page comes from `out-lab.txt` in this folder.
 
 Run on 11 Nov 2026: PostgreSQL 18.6 (`postgres:18` image) on a laptop (Docker Desktop, arm64, 10 cores).

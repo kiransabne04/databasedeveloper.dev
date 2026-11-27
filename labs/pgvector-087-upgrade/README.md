@@ -1,5 +1,7 @@
 # Lab: upgrading pgvector 0.8.6 to 0.8.7
 
+Write-up: https://walstack.io/insights/pgvector-087-cve-upgrade
+
 Reproduction behind `/insights/pgvector-087-cve-upgrade`. Every output line on that
 page comes from `out-lab.txt` in this folder. The lab does not reproduce the
 CVE-2026-103484 buffer overflow; it shows how to check versions, what the upgrade

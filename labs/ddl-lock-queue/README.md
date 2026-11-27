@@ -1,5 +1,7 @@
 # Lab: DDL lock queue behind an idle transaction
 
+Write-up: https://walstack.io/case-studies/lab-lock-queue
+
 Synthetic reproduction behind `/case-studies/lab-lock-queue`.
 Every number on that page comes from the `out-*.txt` files in this folder.
 

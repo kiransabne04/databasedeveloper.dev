@@ -1,5 +1,7 @@
 # Lab: pgvector HNSW build time, parallel workers and /dev/shm
 
+Write-up: https://walstack.io/insights/pgvector-hnsw-index-build-slow
+
 Behind `/insights/pgvector-hnsw-index-build-slow`. Every number on that page comes from the output files in this folder.
 
 Run on 11 Nov 2026: `pgvector/pgvector:0.8.7-pg18` (PostgreSQL 18.6, pgvector 0.8.7) on a laptop, Docker Desktop

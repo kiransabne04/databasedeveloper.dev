@@ -1,5 +1,7 @@
 # Lab: CREATE INDEX CONCURRENTLY waits, failures and recovery
 
+Write-up: https://walstack.io/insights/postgresql-create-index-concurrently-stuck
+
 Synthetic reproduction for the draft article "CREATE INDEX CONCURRENTLY Stuck? Diagnose, Recover, and Deploy Safely in PostgreSQL".
 Every claim in this README comes from `out-pg17.txt` or `out-pg18.txt` in this folder.
 
